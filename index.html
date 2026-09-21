@@ -24867,7 +24867,7 @@ function renderCommentList(list, opts){
         <span class="badge ${c.sentimento}">${commentBadgeLabel(c.sentimento)}</span>
         ${tagsComentario(c)}
       </div>
-      <div class="comment-text">${c.texto}</div>
+      <div class="comment-text">${escapeHtml(c.texto)}</div>
     </div>
   `;
     }
@@ -24881,7 +24881,7 @@ function renderCommentList(list, opts){
           <span class="badge ${c.sentimento}">${commentBadgeLabel(c.sentimento)}</span>
           ${tagsComentario(c)}
         </div>
-        <div class="comment-text">${c.texto}</div>
+        <div class="comment-text">${escapeHtml(c.texto)}</div>
       </div>
     </div>
   `;
@@ -25196,6 +25196,19 @@ function baixarPdfSetor(){
   escreverSetorNoPDF(doc, setorId, 20);
   doc.save('CPA_setor_' + setorId + '.pdf');
   mostrarAviso('PDF do setor gerado com sucesso!', 'good');
+}
+
+// Qualquer texto que venha de aluno, de formulário público ou de outro usuário
+// (comentário, nome, descrição de plano etc.) passa por aqui antes de entrar
+// em innerHTML — nunca confiamos em texto livre como HTML.
+function escapeHtml(texto){
+  if(texto === null || texto === undefined) return '';
+  return String(texto)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 let avisoTimeout = null;
@@ -26934,7 +26947,7 @@ function renderContextoCausaEfeito(it){
   if(!notaLinha) return '';
 
   const comentsHTML = coments.length > 0
-    ? coments.map(c=>`<div style="font-size:12px;font-style:italic;color:var(--ink-soft);margin-top:4px;">"${c.texto}"</div>`).join('')
+    ? coments.map(c=>`<div style="font-size:12px;font-style:italic;color:var(--ink-soft);margin-top:4px;">"${escapeHtml(c.texto)}"</div>`).join('')
     : '<div style="font-size:12px;color:var(--ink-soft);margin-top:4px;">Nenhum comentário crítico específico disponível pra esse recorte.</div>';
 
   return `<div style="background:var(--card-2);border-radius:6px;padding:10px 12px;margin-top:8px;border-left:3px solid var(--navy);">
@@ -26960,23 +26973,23 @@ function renderPlanoItemHTML(it, opts){
   const queixaHTML = (it.externa && it.queixaAluno)
     ? `<div style="background:var(--card-2);border-radius:6px;padding:10px 12px;margin-top:8px;border-left:3px solid var(--amber);">
          <div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:4px;">Queixa do aluno relatada:</div>
-         <div style="font-size:12.5px;color:var(--ink);">${it.queixaAluno}</div>
+         <div style="font-size:12.5px;color:var(--ink);">${escapeHtml(it.queixaAluno)}</div>
        </div>`
     : '';
 
   const comentarioHTML = (status==='devolvido' && it.comentarioRevisor)
     ? `<div style="background:var(--amber-bg);border-radius:6px;padding:10px 12px;margin-top:8px;">
-         <div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:4px;">Comentário de ${it.revisadoPor||'revisão'}:</div>
-         <div style="font-size:12.5px;color:var(--ink);">${it.comentarioRevisor}</div>
+         <div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:4px;">Comentário de ${escapeHtml(it.revisadoPor||'revisão')}:</div>
+         <div style="font-size:12.5px;color:var(--ink);">${escapeHtml(it.comentarioRevisor)}</div>
        </div>`
     : '';
 
   const aprovadoHTML = (status==='concluido')
-    ? `<div style="font-size:11.5px;color:var(--green);margin-top:6px;">🏁 Concluído${it.dataConclusao ? ' em ' + it.dataConclusao : ''}${it.revisadoPor ? ' · ' + it.revisadoPor : ''}</div>`
+    ? `<div style="font-size:11.5px;color:var(--green);margin-top:6px;">🏁 Concluído${it.dataConclusao ? ' em ' + escapeHtml(it.dataConclusao) : ''}${it.revisadoPor ? ' · ' + escapeHtml(it.revisadoPor) : ''}</div>`
     : (status==='aprovado')
-    ? `<div style="font-size:11.5px;color:var(--green);margin-top:6px;">Aprovado por ${it.revisadoPor||'—'}</div>`
+    ? `<div style="font-size:11.5px;color:var(--green);margin-top:6px;">Aprovado por ${escapeHtml(it.revisadoPor||'—')}</div>`
     : (status==='aguardando_pro_reitoria')
-    ? `<div style="font-size:11.5px;color:var(--amber);margin-top:6px;">Validado pela CPA (${it.validadoPor||'—'}) · encaminhado para aprovação final da Pró-reitoria</div>`
+    ? `<div style="font-size:11.5px;color:var(--amber);margin-top:6px;">Validado pela CPA (${escapeHtml(it.validadoPor||'—')}) · encaminhado para aprovação final da Pró-reitoria</div>`
     : '';
 
   const contextoHTML = opts.mostrarContexto ? renderContextoCausaEfeito(it) : '';
@@ -26984,7 +26997,7 @@ function renderPlanoItemHTML(it, opts){
   const comentariosBaseHTML = (it.comentariosSelecionados && it.comentariosSelecionados.length > 0)
     ? `<div style="background:var(--card-2);border-radius:6px;padding:10px 12px;margin-top:8px;border-left:3px solid var(--navy);">
          <div style="font-size:11px;font-weight:600;color:var(--navy);margin-bottom:6px;">💬 Comentários que embasaram este plano (${it.comentariosSelecionados.length}):</div>
-         ${it.comentariosSelecionados.map(txt=>`<div style="font-size:12px;font-style:italic;color:var(--ink-soft);margin-top:5px;">"${txt}"</div>`).join('')}
+         ${it.comentariosSelecionados.map(txt=>`<div style="font-size:12px;font-style:italic;color:var(--ink-soft);margin-top:5px;">"${escapeHtml(txt)}"</div>`).join('')}
        </div>`
     : '';
 
@@ -27052,18 +27065,18 @@ function renderPlanoItemHTML(it, opts){
   }
 
   return `<div class="plan-item ${prioridadeBorda}">
-    <div class="plan-item-head"><h4>${it.titulo || (alvoLabel(it)+(it.categoria?' — '+it.categoria:''))}</h4>${badge}</div>
+    <div class="plan-item-head"><h4>${escapeHtml(it.titulo) || (alvoLabel(it)+(it.categoria?' — '+it.categoria:''))}</h4>${badge}</div>
     <div class="meta" style="margin-bottom:6px;flex-wrap:wrap;">
-      <span>${alvoLabel(it)}</span>${it.categoria ? `<span>${CATEGORIA_ICONE[it.categoria]||''} ${it.categoria}</span>` : ''}
-      <span class="badge ${prioridadeCls}">Prioridade ${it.prioridade}</span>
+      <span>${alvoLabel(it)}</span>${it.categoria ? `<span>${CATEGORIA_ICONE[it.categoria]||''} ${escapeHtml(it.categoria)}</span>` : ''}
+      <span class="badge ${prioridadeCls}">Prioridade ${escapeHtml(it.prioridade)}</span>
       ${statusBadgeHTML(status)}
       ${prazoStatusHTML(it)}
-      ${opts.coordNome ? `<span class="comment-tag">Coordenador(a): ${opts.coordNome}</span>` : ''}
-      ${opts.autorNome ? `<span class="comment-tag">Criado por: ${opts.autorNome}</span>` : ''}
-      ${opts.setorNome ? `<span class="comment-tag">Setor: ${opts.setorNome}</span>` : ''}
+      ${opts.coordNome ? `<span class="comment-tag">Coordenador(a): ${escapeHtml(opts.coordNome)}</span>` : ''}
+      ${opts.autorNome ? `<span class="comment-tag">Criado por: ${escapeHtml(opts.autorNome)}</span>` : ''}
+      ${opts.setorNome ? `<span class="comment-tag">Setor: ${escapeHtml(opts.setorNome)}</span>` : ''}
     </div>
-    <p class="desc">${it.desc}</p>
-    ${it.indicador ? `<p class="desc" style="color:var(--ink-soft);font-size:12px;"><strong style="color:var(--ink);font-weight:600;">Indicador de sucesso:</strong> ${it.indicador}</p>` : ''}
+    <p class="desc">${escapeHtml(it.desc)}</p>
+    ${it.indicador ? `<p class="desc" style="color:var(--ink-soft);font-size:12px;"><strong style="color:var(--ink);font-weight:600;">Indicador de sucesso:</strong> ${escapeHtml(it.indicador)}</p>` : ''}
     <div class="meta"><span>${prazoLinha}</span></div>
     ${aprovadoHTML}
     ${contextoHTML}
@@ -28189,22 +28202,26 @@ async function renderAprovacoes(){
   if(pendentes.length===0){ box.innerHTML = '<div class="empty-state">Nenhuma solicitação pendente no momento.</div>'; return; }
 
   box.innerHTML = pendentes.map(s=>{
-    const cursosNomes = (s.cursos||[]).map(cid=>CURSOS[cid]?cursoLabel(cid):cid).join(', ') || '—';
+    // s.nome/email/setor/perfil/cursos/setorInfra/nucleoSetor vêm do formulário
+    // público de solicitação de acesso (sem login) — nunca confiar neles como HTML.
+    const cursosNomes = escapeHtml((s.cursos||[]).map(cid=>CURSOS[cid]?cursoLabel(cid):cid).join(', ') || '—');
     let linhaAlvo;
     if(s.perfil==='setor'){
-      linhaAlvo = `<p class="desc"><strong style="color:var(--ink);font-weight:600;">Setor:</strong> ${SETORES[s.setorInfra] ? SETORES[s.setorInfra].nome : (s.setorInfra||'—')}</p>`;
+      const nomeSetor = escapeHtml(SETORES[s.setorInfra] ? SETORES[s.setorInfra].nome : (s.setorInfra||'—'));
+      linhaAlvo = `<p class="desc"><strong style="color:var(--ink);font-weight:600;">Setor:</strong> ${nomeSetor}</p>`;
     }else if(s.perfil==='diretor_nucleo_setor'){
-      const setoresNomes = (NUCLEO_SETORES[s.nucleoSetor]||[]).map(sid=>SETORES[sid].nome).join(', ');
-      linhaAlvo = `<p class="desc"><strong style="color:var(--ink);font-weight:600;">Núcleo de setores:</strong> ${NUCLEO_SETOR_LABELS[s.nucleoSetor]||s.nucleoSetor} (${setoresNomes})</p>`;
+      const setoresNomes = escapeHtml((NUCLEO_SETORES[s.nucleoSetor]||[]).map(sid=>SETORES[sid].nome).join(', '));
+      const nucleoLabel = escapeHtml(NUCLEO_SETOR_LABELS[s.nucleoSetor]||s.nucleoSetor);
+      linhaAlvo = `<p class="desc"><strong style="color:var(--ink);font-weight:600;">Núcleo de setores:</strong> ${nucleoLabel} (${setoresNomes})</p>`;
     }else{
       linhaAlvo = `<p class="desc"><strong style="color:var(--ink);font-weight:600;">Cursos:</strong> ${cursosNomes}</p>`;
     }
     return `<div class="plan-item">
-      <div class="plan-item-head"><h4>${s.nome}</h4><span class="badge warn">Pendente</span></div>
+      <div class="plan-item-head"><h4>${escapeHtml(s.nome)}</h4><span class="badge warn">Pendente</span></div>
       <div class="meta" style="margin-bottom:6px;">
-        <span>${s.email}</span><span>${s.setor||'—'}</span>
+        <span>${escapeHtml(s.email)}</span><span>${escapeHtml(s.setor||'—')}</span>
       </div>
-      <p class="desc"><strong style="color:var(--ink);font-weight:600;">Perfil solicitado:</strong> ${ROLE_LABELS[s.perfil]||s.perfil}</p>
+      <p class="desc"><strong style="color:var(--ink);font-weight:600;">Perfil solicitado:</strong> ${escapeHtml(ROLE_LABELS[s.perfil]||s.perfil)}</p>
       ${linhaAlvo}
       <div style="display:flex;gap:10px;margin-top:12px;">
         <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarSolicitacao('${s.id}')">Aprovar</button>
@@ -28232,7 +28249,11 @@ function mapRowParaSolicitacao(row){
 
 async function carregarSolicitacoes(){
   try{
-    const { data, error } = await supabaseClient.from('solicitacoes_acesso').select('*').order('criado_em', { ascending: true });
+    // Nunca busca a coluna "senha" pro navegador do admin — a aprovação agora
+    // lê a senha direto no servidor (Edge Function admin-aprovar-solicitacao).
+    const { data, error } = await supabaseClient.from('solicitacoes_acesso')
+      .select('id, nome, email, setor_cargo, perfil, cursos, setor_infra, nucleo_setor, status, criado_em')
+      .order('criado_em', { ascending: true });
     if(error) throw error;
     return (data || []).map(mapRowParaSolicitacao);
   }catch(e){
@@ -28253,7 +28274,7 @@ async function aprovarSolicitacao(id){
 
   const { data, error } = await supabaseClient.functions.invoke('admin-aprovar-solicitacao', {
     body: {
-      nome: item.nome, email: item.email, senha: item.senha, perfil: item.perfil,
+      solicitacaoId: id, perfil: item.perfil,
       cursos: item.cursos || [], setorInfra: item.setorInfra, nucleoSetor: item.nucleoSetor
     }
   });
@@ -28265,22 +28286,14 @@ async function aprovarSolicitacao(id){
     return;
   }
 
-  try{
-    const { error: erroUpdate } = await supabaseClient.from('solicitacoes_acesso')
-      .update({ status: 'aprovado', senha: null })
-      .eq('id', id);
-    if(erroUpdate) throw erroUpdate;
-  }catch(e){
-    console.error('Acesso criado, mas falhou ao marcar a solicitação como aprovada:', e);
-  }
-
+  if(data && data.aviso) console.warn(data.aviso);
   mostrarAviso('Acesso criado com sucesso! ' + item.nome + ' já pode entrar com o e-mail e a senha que escolheu.', 'good');
   renderAprovacoes();
 }
 
 async function recusarSolicitacao(id){
   try{
-    const { error } = await supabaseClient.from('solicitacoes_acesso').update({ status: 'recusado' }).eq('id', id);
+    const { error } = await supabaseClient.from('solicitacoes_acesso').update({ status: 'recusado', senha: null }).eq('id', id);
     if(error) throw error;
   }catch(e){
     console.error('Erro ao recusar solicitação:', e);
