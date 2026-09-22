@@ -117,18 +117,37 @@ function fundoBase(ctx, sparkleColor, fotoImg){
   trianguloRodape(ctx);
 }
 
-// Logo OFICIAL da UniFECAF (versão com fundo transparente) direto sobre o
-// fundo — sem cartão branco atrás — com uma sombra suave só pra garantir
-// leitura em qualquer trecho da foto. Nunca recriada à mão.
+// Versão branca (negativo) da logo oficial — mesmo arquivo, só recolorido
+// via canvas (source-in), sem redesenhar nenhum traço à mão. Necessário
+// porque a parte navy do wordmark fica ilegível em cima do fundo navy.
+let LOGO_BRANCO_CACHE = null;
+function logoBranco(img){
+  if(LOGO_BRANCO_CACHE) return LOGO_BRANCO_CACHE;
+  const off = document.createElement('canvas');
+  off.width = img.width;
+  off.height = img.height;
+  const octx = off.getContext('2d');
+  octx.drawImage(img, 0, 0);
+  octx.globalCompositeOperation = 'source-in';
+  octx.fillStyle = '#FFFFFF';
+  octx.fillRect(0, 0, off.width, off.height);
+  LOGO_BRANCO_CACHE = off;
+  return off;
+}
+
+// Logo OFICIAL da UniFECAF, em branco, direto sobre o fundo — sem cartão
+// atrás — com uma sombra suave só pra garantir leitura em qualquer trecho
+// da foto. Nunca recriada à mão.
 function logoCard(ctx, x, y, logoImg, alturaAlvo){
   if(!logoImg) return 0;
+  const imgBranco = logoBranco(logoImg);
   alturaAlvo = alturaAlvo || 90;
   const largura = alturaAlvo * (logoImg.width / logoImg.height);
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur = 16;
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 10;
   ctx.shadowOffsetY = 2;
-  ctx.drawImage(logoImg, x, y, largura, alturaAlvo);
+  ctx.drawImage(imgBranco, x, y, largura, alturaAlvo);
   ctx.restore();
   return largura;
 }
