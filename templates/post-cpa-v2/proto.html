@@ -184,6 +184,9 @@ function rodapeAtribuicao(ctx, curso, coordenador){
 }
 
 // ---------- SLIDE 1: CAPA ----------
+// Hierarquia em camadas (tipo os posts "Acho chique..."): frase de abertura,
+// depois o CURSO ganha destaque numa caixa colorida — é o gancho pessoal
+// da peça, não só um rodapé pequeno.
 function desenharCapa(ctx, dados){
   fundoBase(ctx, 'rgba(255,255,255,0.85)', dados.foto);
   logoCard(ctx, 60, 60, dados.logo);
@@ -193,22 +196,22 @@ function desenharCapa(ctx, dados){
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.font = '800 64px Poppins';
-  const linhas1 = quebrarTexto(ctx, 'Você respondeu a CPA.', 940);
   let y = 420;
-  linhas1.forEach(l=>{ ctx.fillText(l, 60, y); y += 74; });
+  quebrarTexto(ctx, 'Você respondeu a CPA.', 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 74; });
 
   ctx.fillStyle = '#DCE7F5';
-  ctx.font = '600 40px "Work Sans"';
-  const linhas2 = quebrarTexto(ctx, 'Isso é o que fizemos com a sua resposta.', 940);
-  y += 20;
-  linhas2.forEach(l=>{ ctx.fillText(l, 60, y); y += 52; });
+  ctx.font = '600 38px "Work Sans"';
+  y += 16;
+  quebrarTexto(ctx, 'Isso é o que fizemos com a sua resposta:', 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 50; });
 
-  ctx.fillStyle = GREEN;
-  ctx.font = '800 46px Poppins';
-  ctx.fillText(dados.curso, 60, y + 60);
+  y += 34;
+  y = caixaDestaque(ctx, dados.curso, GREEN, y, 50);
+
+  y += 26;
   ctx.fillStyle = '#B9C1D6';
+  ctx.textAlign = 'left';
   ctx.font = '500 30px "Work Sans"';
-  ctx.fillText('Coordenação: ' + dados.coordenador, 60, y + 104);
+  ctx.fillText('Coordenação: ' + dados.coordenador, 60, y);
 }
 
 // ---------- SLIDE: UM ITEM (problema + solução juntos, mais denso) ----------
@@ -244,19 +247,35 @@ function desenharItem(ctx, dados){
 }
 
 // ---------- SLIDE 4: ENCERRAMENTO ----------
+// Fecha a história em vez de ser um slide genérico solto: mesmo cabeçalho
+// (selo) das outras telas, um resumo com número real de ações do curso, e
+// atribuição de curso/coordenador no rodapé, igual as telas anteriores.
 function desenharEncerramento(ctx, dados){
   fundoBase(ctx, 'rgba(255,255,255,0.85)', dados.foto);
-  logoCard(ctx, (1080-260)/2, 480, dados.logo);
+  logoCard(ctx, 60, 60, dados.logo);
+  seloTopo(ctx, 'RESULTADO DA CPA', 60, 170);
 
   ctx.fillStyle = WHITE;
-  ctx.textAlign = 'center';
-  ctx.font = '700 44px Poppins';
-  quebrarTexto(ctx, 'Esse plano passa pela Coordenação, pela CPA e pela Direção da Faculdade.', 780)
-    .forEach((l,i)=>ctx.fillText(l, 540, 660 + i*56));
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = '800 50px Poppins';
+  let y = 420;
+  const n = dados.totalItens || 1;
+  const tituloResumo = n === 1 ? '1 ação já em andamento pro seu curso.' : n + ' ações já em andamento pro seu curso.';
+  quebrarTexto(ctx, tituloResumo, 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 58; });
 
+  y += 30;
+  ctx.fillStyle = '#DCE7F5';
+  ctx.font = '600 34px "Work Sans"';
+  quebrarTexto(ctx, 'Esse plano passa pela Coordenação, pela CPA e pela Direção da Faculdade — sua opinião muda a faculdade de verdade.', 940)
+    .forEach(l=>{ ctx.fillText(l, 60, y); y += 46; });
+
+  y += 40;
   ctx.fillStyle = GREEN;
-  ctx.font = '800 40px Poppins';
-  ctx.fillText('Seu sonho, nossa meta!', 540, 900);
+  ctx.font = '800 42px Poppins';
+  ctx.fillText('Seu sonho, nossa meta!', 60, y);
+
+  rodapeAtribuicao(ctx, dados.curso, dados.coordenador);
 }
 
 function carregarImagem(src){
@@ -283,7 +302,9 @@ async function main(){
     problema: 'Falta de horários de atendimento no laboratório em turnos alternativos, principalmente pra quem trabalha durante o dia.',
     solucao: 'Ampliação do horário dos laboratórios para os períodos noturno e sábado, começando já no próximo semestre.'
   });
-  desenharEncerramento(document.getElementById('c-fim').getContext('2d'), { foto, logo });
+  desenharEncerramento(document.getElementById('c-fim').getContext('2d'), {
+    curso: 'Odontologia', coordenador: 'Profa. Maria Silva', foto, logo, totalItens: 1
+  });
 
   window.PRONTO = true;
 }
