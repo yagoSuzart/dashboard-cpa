@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Prototipo carrossel CPA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #222; display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; }
+  canvas { width: 270px; height: 337.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+</style>
+</head>
+<body>
+<canvas id="c-capa" width="1080" height="1350"></canvas>
+<canvas id="c-problema" width="1080" height="1350"></canvas>
+<canvas id="c-solucao" width="1080" height="1350"></canvas>
+<canvas id="c-fim" width="1080" height="1350"></canvas>
+
+<script>
+const NAVY = '#12395E';
+const BLUE = '#1C6DB3';
+const GREEN = '#2FAE60';
+const WHITE = '#FFFFFF';
+
+function estrela(ctx, cx, cy, tamanho, cor){
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = cor;
+  ctx.beginPath();
+  const pontas = [
+    [0,-tamanho],[tamanho*0.18,-tamanho*0.18],[tamanho,0],
+    [tamanho*0.18,tamanho*0.18],[0,tamanho],[-tamanho*0.18,tamanho*0.18],
+    [-tamanho,0],[-tamanho*0.18,-tamanho*0.18]
+  ];
+  ctx.moveTo(pontas[0][0], pontas[0][1]);
+  for(let i=1;i<pontas.length;i++) ctx.lineTo(pontas[i][0], pontas[i][1]);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function trianguloRodape(ctx){
+  const cores = [NAVY, BLUE, GREEN, BLUE, NAVY, GREEN, BLUE];
+  const larguraTri = 1080 / cores.length;
+  const altura = 70;
+  cores.forEach((cor, i)=>{
+    ctx.fillStyle = cor;
+    ctx.beginPath();
+    if(i % 2 === 0){
+      ctx.moveTo(i*larguraTri, 1350);
+      ctx.lineTo((i+1)*larguraTri, 1350);
+      ctx.lineTo(i*larguraTri, 1350 - altura);
+    }else{
+      ctx.moveTo(i*larguraTri, 1350);
+      ctx.lineTo((i+1)*larguraTri, 1350);
+      ctx.lineTo((i+1)*larguraTri, 1350 - altura);
+    }
+    ctx.closePath();
+    ctx.fill();
+  });
+}
+
+function quebrarTexto(ctx, texto, maxLargura){
+  const palavras = texto.split(' ');
+  const linhas = [];
+  let atual = '';
+  palavras.forEach(p=>{
+    const teste = atual ? atual + ' ' + p : p;
+    if(ctx.measureText(teste).width > maxLargura && atual){
+      linhas.push(atual);
+      atual = p;
+    }else{
+      atual = teste;
+    }
+  });
+  if(atual) linhas.push(atual);
+  return linhas;
+}
+
+function fundoBase(ctx, sparkleColor){
+  ctx.fillStyle = NAVY;
+  ctx.fillRect(0, 0, 1080, 1350);
+  estrela(ctx, 130, 260, 26, sparkleColor);
+  estrela(ctx, 940, 180, 18, sparkleColor);
+  estrela(ctx, 90, 620, 16, sparkleColor);
+  estrela(ctx, 980, 900, 22, sparkleColor);
+  trianguloRodape(ctx);
+}
+
+function logoCard(ctx, x, y){
+  ctx.fillStyle = WHITE;
+  const w = 260, h = 74;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 16);
+  ctx.fill();
+  // marca simplificada (quadrado verde + texto), já que não temos o mascote
+  ctx.fillStyle = GREEN;
+  ctx.fillRect(x+24, y+22, 30, 30);
+  ctx.strokeStyle = NAVY; ctx.lineWidth = 6;
+  ctx.strokeRect(x+16, y+14, 46, 46);
+  ctx.fillStyle = NAVY;
+  ctx.font = '800 30px Poppins';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Uni', x+80, y+37);
+  ctx.fillStyle = BLUE;
+  ctx.font = '800 30px Poppins';
+  const wUni = ctx.measureText('Uni').width;
+  ctx.fillText('FECAF', x+80+wUni, y+37);
+}
+
+function seloTopo(ctx, texto, x, y){
+  ctx.font = '700 26px Poppins';
+  const largura = ctx.measureText(texto).width + 48;
+  ctx.fillStyle = GREEN;
+  ctx.beginPath();
+  ctx.roundRect(x, y, largura, 56, 28);
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(texto, x + 24, y + 29);
+}
+
+function caixaDestaque(ctx, texto, cor, y0, alturaExtra){
+  ctx.font = '800 52px Poppins';
+  const maxLargura = 900;
+  const linhas = quebrarTexto(ctx, texto, maxLargura);
+  const linhaAltura = 64;
+  const padY = 44;
+  const altura = linhas.length * linhaAltura + padY * 2;
+  const largura = 940;
+  const x = (1080 - largura) / 2;
+  ctx.fillStyle = cor;
+  ctx.beginPath();
+  ctx.roundRect(x, y0, largura, altura, 24);
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  linhas.forEach((linha, i)=>{
+    ctx.fillText(linha, x + 40, y0 + padY + i * linhaAltura);
+  });
+  return y0 + altura;
+}
+
+function rodapeAtribuicao(ctx, curso, coordenador){
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#B9C1D6';
+  ctx.font = '600 30px "Work Sans"';
+  ctx.fillText(curso, 540, 1170);
+  ctx.font = '500 24px "Work Sans"';
+  ctx.fillText('Coordenação: ' + coordenador, 540, 1206);
+}
+
+// ---------- SLIDE 1: CAPA ----------
+function desenharCapa(ctx, dados){
+  fundoBase(ctx, 'rgba(255,255,255,0.85)');
+  logoCard(ctx, 60, 60);
+  seloTopo(ctx, 'RESULTADO DA CPA', 60, 170);
+
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = '800 64px Poppins';
+  const linhas1 = quebrarTexto(ctx, 'Você respondeu a CPA.', 940);
+  let y = 420;
+  linhas1.forEach(l=>{ ctx.fillText(l, 60, y); y += 74; });
+
+  ctx.fillStyle = '#DCE7F5';
+  ctx.font = '600 40px "Work Sans"';
+  const linhas2 = quebrarTexto(ctx, 'Isso é o que fizemos com a sua resposta.', 940);
+  y += 20;
+  linhas2.forEach(l=>{ ctx.fillText(l, 60, y); y += 52; });
+
+  ctx.fillStyle = GREEN;
+  ctx.font = '800 46px Poppins';
+  ctx.fillText(dados.curso, 60, y + 60);
+  ctx.fillStyle = '#B9C1D6';
+  ctx.font = '500 30px "Work Sans"';
+  ctx.fillText('Coordenação: ' + dados.coordenador, 60, y + 104);
+}
+
+// ---------- SLIDE 2: PROBLEMA ----------
+function desenharProblema(ctx, dados){
+  fundoBase(ctx, 'rgba(255,255,255,0.75)');
+  logoCard(ctx, 60, 60);
+  seloTopo(ctx, 'O QUE OS ALUNOS DISSERAM', 60, 170);
+
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
+  ctx.font = '800 58px Poppins';
+  let y = 420;
+  quebrarTexto(ctx, 'Identificamos isso na análise da CPA:', 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 68; });
+
+  y += 30;
+  const yFinal = caixaDestaque(ctx, dados.problema, BLUE, y, 0);
+
+  rodapeAtribuicao(ctx, dados.curso, dados.coordenador);
+}
+
+// ---------- SLIDE 3: SOLUÇÃO ----------
+function desenharSolucao(ctx, dados){
+  fundoBase(ctx, 'rgba(255,255,255,0.75)');
+  logoCard(ctx, 60, 60);
+  seloTopo(ctx, 'NOSSO PLANO DE AÇÃO', 60, 170);
+
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
+  ctx.font = '800 58px Poppins';
+  let y = 420;
+  quebrarTexto(ctx, 'Aqui está o que vamos fazer:', 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 68; });
+
+  y += 30;
+  caixaDestaque(ctx, dados.solucao, GREEN, y, 0);
+
+  rodapeAtribuicao(ctx, dados.curso, dados.coordenador);
+}
+
+// ---------- SLIDE 4: ENCERRAMENTO ----------
+function desenharEncerramento(ctx){
+  fundoBase(ctx, 'rgba(255,255,255,0.85)');
+  logoCard(ctx, (1080-260)/2, 480);
+
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'center';
+  ctx.font = '700 44px Poppins';
+  quebrarTexto(ctx, 'Esse plano passa pela Coordenação, pela CPA e pela Direção da Faculdade.', 780)
+    .forEach((l,i)=>ctx.fillText(l, 540, 660 + i*56));
+
+  ctx.fillStyle = GREEN;
+  ctx.font = '800 40px Poppins';
+  ctx.fillText('Seu sonho, nossa meta!', 540, 900);
+}
+
+async function main(){
+  await document.fonts.load('800 64px Poppins');
+  await document.fonts.load('600 40px "Work Sans"');
+  await document.fonts.ready;
+
+  desenharCapa(document.getElementById('c-capa').getContext('2d'), {
+    curso: 'Odontologia', coordenador: 'Profa. Maria Silva'
+  });
+  desenharProblema(document.getElementById('c-problema').getContext('2d'), {
+    curso: 'Odontologia', coordenador: 'Profa. Maria Silva',
+    problema: 'Falta de horários de atendimento no laboratório em turnos alternativos.'
+  });
+  desenharSolucao(document.getElementById('c-solucao').getContext('2d'), {
+    curso: 'Odontologia', coordenador: 'Profa. Maria Silva',
+    solucao: 'Ampliação do horário dos laboratórios para os períodos noturno e sábado.'
+  });
+  desenharEncerramento(document.getElementById('c-fim').getContext('2d'));
+
+  window.PRONTO = true;
+}
+main();
+</script>
+</body>
+</html>
