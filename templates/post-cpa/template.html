@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>CPA - Resultado do Curso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #12395E;
+    --blue: #1C6DB3;
+    --green: #2FAE60;
+    --white: #FFFFFF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    font-family: 'Work Sans', sans-serif;
+    background: var(--navy);
+  }
+
+  #card {
+    width: 1080px;
+    height: 1350px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* ---------- HEADER ---------- */
+  #header {
+    position: relative;
+    width: 100%;
+    height: 430px;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center 60%;
+    overflow: hidden;
+  }
+
+  #header .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(18,57,94,0.55) 0%,
+      rgba(18,57,94,0.55) 30%,
+      rgba(18,57,94,0.88) 78%,
+      rgba(18,57,94,0.97) 100%);
+  }
+
+  #header .content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 56px 36px;
+  }
+
+  #header .top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  #logo-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 14px 22px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+  }
+
+  #logo-card img { height: 44px; display: block; }
+
+  #seal {
+    background: var(--green);
+    color: var(--white);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    white-space: nowrap;
+  }
+
+  #header .bottom-block { }
+
+  #curso-nome {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 54px;
+    line-height: 1.12;
+    color: var(--white);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    max-width: 900px;
+  }
+
+  #coordenador {
+    margin-top: 14px;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 500;
+    font-size: 26px;
+    color: #E9F1FC;
+  }
+
+  #coordenador b { font-weight: 700; color: var(--white); }
+
+  /* ---------- IMPACT PHRASE ---------- */
+  #impacto {
+    flex-shrink: 0;
+    background: var(--navy);
+    padding: 34px 70px 30px;
+    text-align: center;
+  }
+
+  #impacto .l1 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    color: var(--white);
+  }
+
+  #impacto .l2 {
+    margin-top: 6px;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 500;
+    font-size: 26px;
+    color: #B9C1D6;
+  }
+
+  /* ---------- BLOCKS ---------- */
+  .block {
+    flex-shrink: 0;
+    margin: 0 56px;
+    border-radius: 24px;
+    padding: 30px 38px 26px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  }
+
+  #bloco-identificamos { background: var(--blue); margin-top: 26px; }
+  #bloco-plano { background: var(--green); margin-top: 22px; }
+
+  .block-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 27px;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    margin-bottom: 18px;
+  }
+
+  .block-title .icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .item-row:last-child { margin-bottom: 0; }
+
+  .item-num {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    color: var(--navy);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #bloco-plano .item-num { color: #1E7A45; }
+
+  .item-text {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--white);
+    padding-top: 4px;
+  }
+
+  .item-text.placeholder {
+    opacity: 0.75;
+    font-style: italic;
+  }
+
+  /* ---------- FOOTER ---------- */
+  #footer {
+    margin-top: auto;
+    flex-shrink: 0;
+    position: relative;
+    height: 250px;
+    background-size: cover;
+    background-position: center 40%;
+    overflow: hidden;
+  }
+
+  #footer .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg,
+      rgba(18,57,94,0.97) 0%,
+      rgba(18,57,94,0.90) 45%,
+      rgba(18,57,94,0.60) 100%);
+  }
+
+  #footer .content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 90px;
+  }
+
+  #footer .aviso {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--white);
+    max-width: 780px;
+  }
+
+  #footer .marca {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  #footer .marca img { height: 30px; filter: brightness(0) invert(1); }
+
+  #footer .tagline {
+    margin-top: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--green);
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+
+<div id="card">
+
+  <div id="header">
+    <div class="overlay"></div>
+    <div class="content">
+      <div class="top-row">
+        <div id="logo-card">
+          <img src="assets/logo-unifecaf.webp" alt="UniFECAF">
+        </div>
+        <div id="seal">RESULTADO DA CPA</div>
+      </div>
+      <div class="bottom-block">
+        <div id="curso-nome" data-field="curso">Nome do Curso</div>
+        <div id="coordenador"><b data-field="coordenador">Nome do(a) Coordenador(a)</b> — Coordenação do Curso</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="impacto">
+    <div class="l1">Você respondeu a CPA.</div>
+    <div class="l2">Isso é o que fizemos com a sua resposta.</div>
+  </div>
+
+  <div class="block" id="bloco-identificamos">
+    <div class="block-title"><span class="icon">🔍</span>O QUE IDENTIFICAMOS</div>
+    <div class="item-row"><div class="item-num">1</div><div class="item-text placeholder" data-field="ident1">Ponto identificado na análise das respostas dos alunos.</div></div>
+    <div class="item-row"><div class="item-num">2</div><div class="item-text placeholder" data-field="ident2">Ponto identificado na análise das respostas dos alunos.</div></div>
+    <div class="item-row"><div class="item-num">3</div><div class="item-text placeholder" data-field="ident3">Ponto identificado na análise das respostas dos alunos.</div></div>
+  </div>
+
+  <div class="block" id="bloco-plano">
+    <div class="block-title"><span class="icon">✅</span>NOSSO PLANO DE AÇÃO</div>
+    <div class="item-row"><div class="item-num">1</div><div class="item-text placeholder" data-field="acao1">Ação prevista pela coordenação para esse ponto.</div></div>
+    <div class="item-row"><div class="item-num">2</div><div class="item-text placeholder" data-field="acao2">Ação prevista pela coordenação para esse ponto.</div></div>
+    <div class="item-row"><div class="item-num">3</div><div class="item-text placeholder" data-field="acao3">Ação prevista pela coordenação para esse ponto.</div></div>
+  </div>
+
+  <div id="footer">
+    <div class="overlay"></div>
+    <div class="content">
+      <div class="aviso">Esse plano passa pela Coordenação, pela CPA e pela Direção da Faculdade.</div>
+      <div class="marca">
+        <img src="assets/logo-unifecaf.webp" alt="UniFECAF">
+      </div>
+      <div class="tagline">Seu sonho, nossa meta!</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Preenchimento automático via window.CPA_DATA (usado pelo render.js) ou
+  // edição manual direta dos textos acima (basta abrir este arquivo e trocar
+  // o conteúdo de cada elemento com atributo data-field).
+  window.applyCpaData = function (data) {
+    if (!data) return;
+    document.querySelectorAll('[data-field]').forEach(function (el) {
+      var key = el.getAttribute('data-field');
+      if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+        el.textContent = data[key];
+        el.classList.remove('placeholder');
+      }
+    });
+    if (data.fotoFundo) {
+      document.querySelectorAll('#header, #footer').forEach(function (el) {
+        el.style.backgroundImage = "url('" + data.fotoFundo + "')";
+      });
+    }
+  };
+
+  document.querySelectorAll('#header, #footer').forEach(function (el) {
+    el.style.backgroundImage = "url('assets/campus-fachada.jpg')";
+  });
+
+  if (window.CPA_DATA) window.applyCpaData(window.CPA_DATA);
+</script>
+
+</body>
+</html>
