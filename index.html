@@ -672,7 +672,7 @@
 
         <div class="section-label">Comentários gerais do questionário de Infraestrutura e Atendimento</div>
         <p style="font-size:12px;color:var(--ink-soft);margin:-8px 0 14px;">Esses comentários são de todo o questionário de Infraestrutura (útil porque um mesmo comentário do aluno pode falar de vários setores ao mesmo tempo). Use a busca abaixo pra encontrar mais rápido o que for do seu setor, e 💡 clique nos comentários relevantes pra usar como base do plano de melhoria logo abaixo.</p>
-        <input type="text" id="setor-comentarios-busca" oninput="renderSetorGeral()" placeholder="Buscar por palavra-chave (separe várias por vírgula: ex. manutenção, ar condicionado, sala de aula)" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:5px;font-size:13.5px;font-family:'Roboto Condensed',sans-serif;color:var(--ink);background:var(--card-2);margin-bottom:12px;">
+        <input type="text" id="setor-comentarios-busca" oninput="renderSetorGeralDebounced()" placeholder="Buscar por palavra-chave (separe várias por vírgula: ex. manutenção, ar condicionado, sala de aula)" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:5px;font-size:13.5px;font-family:'Roboto Condensed',sans-serif;color:var(--ink);background:var(--card-2);margin-bottom:12px;">
         <div class="card">
           <div id="setor-comentarios-gerais"></div>
         </div>
@@ -870,7 +870,7 @@
     <textarea id="modal-devolucao-texto" rows="4" placeholder="Ex: Falta detalhar como o resultado será medido..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:5px;font-size:13.5px;font-family:'Roboto Condensed',sans-serif;color:var(--ink);background:var(--card-2);resize:vertical;"></textarea>
     <div style="display:flex;gap:10px;margin-top:16px;">
       <button class="toggle-comments" style="flex:1;" onclick="fecharModalDevolucao()">Cancelar</button>
-      <button class="btn-primary" style="flex:1;margin-top:0;" onclick="confirmarDevolucao()">Confirmar devolução</button>
+      <button class="btn-primary" style="flex:1;margin-top:0;" onclick="confirmarDevolucao(this)">Confirmar devolução</button>
     </div>
   </div>
 </div>
@@ -26728,11 +26728,15 @@ function desenharListaRevisaoAuxiliares(){
   box.innerHTML = html;
 }
 
-async function enviarParaValidacao(itemId){
+async function enviarParaValidacao(itemId, btn){
+  if(btn){ if(btn.dataset.processando==='1') return; btn.dataset.processando='1'; btn.disabled = true; }
   const item = buscarItemEmCache(itemId);
   const rotulo = item ? `"${item.titulo || alvoLabel(item)}" (${cursoLabel(item.curso)}, de ${item._autorNome})` : 'Item';
   const ok = await atualizarPlano(itemId, { status: 'enviado' });
-  if(!ok) return;
+  if(!ok){
+    if(btn){ btn.dataset.processando='0'; btn.disabled = false; }
+    return;
+  }
   if(item) item.status = 'enviado';
   mostrarAviso(rotulo + ' aprovado e enviado para validação com sucesso!', 'good');
   desenharListaRevisaoAuxiliares();
@@ -26868,15 +26872,19 @@ async function marcarComoConcluido(itemId){
   renderPlanos();
 }
 
-async function excluirItemPlano(itemId, status){
+async function excluirItemPlano(itemId, status, btn){
   let mensagem = 'Tem certeza que quer excluir este item do plano de ação? Essa ação não pode ser desfeita.';
   if(status==='aprovado' || status==='aguardando_pro_reitoria'){
     mensagem = 'Atenção: este item já foi aprovado ou está em análise avançada — a Pró-reitoria/CPA já pode ter visto. Excluir agora vai remover ele de vez, inclusive de quem está analisando. Tem certeza?';
   }
   if(!confirm(mensagem)) return;
+  if(btn){ if(btn.disabled) return; btn.disabled = true; }
 
   const ok = await apagarPlano(itemId);
-  if(!ok) return;
+  if(!ok){
+    if(btn) btn.disabled = false;
+    return;
+  }
   const idx = PLANOS_REVISAO_AUXILIARES.findIndex(x=>x.id===itemId);
   if(idx > -1) PLANOS_REVISAO_AUXILIARES.splice(idx, 1);
   const idxSup = PLANOS_SUPERVISAO_DETALHE.findIndex(x=>x.id===itemId);
@@ -27104,23 +27112,23 @@ function renderPlanoItemHTML(it, opts){
     if(status==='enviado'){
       if(role==='diretor_cpa'){
         acoesHTML = `<div style="display:flex;gap:10px;margin-top:12px;">
-          <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aguardando_pro_reitoria')">Validar e encaminhar à Pró-reitoria</button>
+          <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aguardando_pro_reitoria',this)">Validar e encaminhar à Pró-reitoria</button>
           <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="abrirModalDevolucao('${opts.coordId}','${it.id}')">Devolver para revisão</button>
         </div>`;
       }else if(role==='admin'){
         acoesHTML = `<div style="display:flex;gap:10px;margin-top:12px;">
-          <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aprovado')">Aprovar diretamente</button>
+          <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aprovado',this)">Aprovar diretamente</button>
           <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="abrirModalDevolucao('${opts.coordId}','${it.id}')">Devolver para revisão</button>
         </div>`;
       }else if(role==='pro_reitoria'){
         acoesHTML = `<div style="display:flex;gap:10px;margin-top:12px;">
-          <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aprovado')">✅ Aprovação final (Pró-reitoria)</button>
+          <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aprovado',this)">✅ Aprovação final (Pró-reitoria)</button>
           <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="abrirModalDevolucao('${opts.coordId}','${it.id}')">Devolver para revisão</button>
         </div>`;
       }
     }else if(status==='aguardando_pro_reitoria' && (role==='pro_reitoria' || role==='admin')){
       acoesHTML = `<div style="display:flex;gap:10px;margin-top:12px;">
-        <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aprovado')">Aprovação final</button>
+        <button class="btn-primary" style="flex:1;margin-top:0;" onclick="aprovarItemPlano('${opts.coordId}','${it.id}','aprovado',this)">Aprovação final</button>
         <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="abrirModalDevolucao('${opts.coordId}','${it.id}')">Devolver para revisão</button>
       </div>`;
     }
@@ -27128,14 +27136,14 @@ function renderPlanoItemHTML(it, opts){
   if(opts.mode==='revisao_auxiliar'){
     if(status==='aguardando_coordenador' && !opts.somenteLeitura){
       acoesHTML = `<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-        <button class="btn-primary" style="flex:1;margin-top:0;" onclick="enviarParaValidacao('${it.id}')">✅ Aprovar e enviar para validação</button>
+        <button class="btn-primary" style="flex:1;margin-top:0;" onclick="enviarParaValidacao('${it.id}',this)">✅ Aprovar e enviar para validação</button>
         <button class="toggle-comments" style="flex:1;" onclick="abrirModalEdicao('${it.id}')">✏️ Editar</button>
-        <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="excluirItemPlano('${it.id}','${status}')">🗑️ Excluir</button>
+        <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="excluirItemPlano('${it.id}','${status}',this)">🗑️ Excluir</button>
       </div>`;
     }else if(status==='enviado' && !opts.somenteLeitura){
       acoesHTML = `<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
         <button class="toggle-comments" style="flex:1;" onclick="abrirModalEdicao('${it.id}')">✏️ Editar</button>
-        <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="excluirItemPlano('${it.id}','${status}')">🗑️ Excluir</button>
+        <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="excluirItemPlano('${it.id}','${status}',this)">🗑️ Excluir</button>
         <button class="toggle-comments" style="flex:1;" onclick="puxarParaRevisao('${it.id}')">↩️ Puxar de volta pra revisão</button>
       </div>`;
     }
@@ -27157,7 +27165,7 @@ function renderPlanoItemHTML(it, opts){
       ${btnConcluir}
       ${btnJaResolvi}
       <button class="toggle-comments" style="flex:1;" onclick="abrirModalEdicao('${it.id}')">✏️ Editar</button>
-      <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="excluirItemPlano('${it.id}','${status}')">🗑️ Excluir</button>
+      <button class="toggle-comments" style="flex:1;color:var(--red);border-color:var(--red);" onclick="excluirItemPlano('${it.id}','${status}',this)">🗑️ Excluir</button>
     </div>`;
   }
 
@@ -27184,7 +27192,8 @@ function renderPlanoItemHTML(it, opts){
   </div>`;
 }
 
-async function aprovarItemPlano(coordId, itemId, novoStatus){
+async function aprovarItemPlano(coordId, itemId, novoStatus, btn){
+  if(btn){ if(btn.dataset.processando==='1') return; btn.dataset.processando='1'; btn.disabled = true; }
   const status = novoStatus || 'aprovado';
   const patch = {
     status,
@@ -27197,7 +27206,12 @@ async function aprovarItemPlano(coordId, itemId, novoStatus){
     patch.revisado_por = currentCoord.nome;
   }
   const ok = await atualizarPlano(itemId, patch);
-  if(ok) renderPlanos();
+  if(ok){
+    renderPlanos();
+  }else if(btn){
+    btn.dataset.processando='0';
+    btn.disabled = false;
+  }
 }
 
 let devolucaoAlvo = null;
@@ -27289,6 +27303,8 @@ async function confirmarEdicaoPlano(){
 function abrirModalDevolucao(coordId, itemId){
   devolucaoAlvo = {coordId, itemId};
   document.getElementById('modal-devolucao-texto').value = '';
+  const btnConfirmar = document.querySelector('#modal-overlay .btn-primary');
+  if(btnConfirmar) btnConfirmar.disabled = false;
   document.getElementById('modal-overlay').style.display = 'flex';
   setTimeout(()=>document.getElementById('modal-devolucao-texto').focus(), 50);
 }
@@ -27298,10 +27314,11 @@ function fecharModalDevolucao(){
   document.getElementById('modal-overlay').style.display = 'none';
 }
 
-async function confirmarDevolucao(){
+async function confirmarDevolucao(btn){
   const comentario = document.getElementById('modal-devolucao-texto').value.trim();
   if(!comentario){ mostrarAviso('Escreva um comentário explicando o motivo da devolução.', 'warn'); return; }
   if(!devolucaoAlvo) return;
+  if(btn){ if(btn.disabled) return; btn.disabled = true; }
   const { itemId } = devolucaoAlvo;
 
   const ok = await atualizarPlano(itemId, {
@@ -27311,7 +27328,11 @@ async function confirmarDevolucao(){
     revisado_em: new Date().toISOString()
   });
   fecharModalDevolucao();
-  if(ok) renderPlanos();
+  if(ok){
+    renderPlanos();
+  }else if(btn){
+    btn.disabled = false;
+  }
 }
 
 async function reenviarItemPlano(itemId){
@@ -27741,6 +27762,12 @@ function rankClasseSetor(posicao, total){
   return 'setor-low';
 }
 
+let timeoutSetorGeral = null;
+function renderSetorGeralDebounced(){
+  clearTimeout(timeoutSetorGeral);
+  timeoutSetorGeral = setTimeout(renderSetorGeral, 250);
+}
+
 async function renderSetorGeral(){
   const meuSetorId = currentCoord.setor;
   const meuSetor = SETORES[meuSetorId];
@@ -27819,13 +27846,13 @@ async function renderSetorGeral(){
 
 async function getDemandasParaSetor(setorId){
   const responsaveisCurso = ALL_USERS.filter(u => u.role==='coordenador' || u.role==='professor_auxiliar' || u.role==='diretor_nucleo');
+  const grupos = await getPlanosAgrupados(responsaveisCurso.map(u=>u.id));
   let demandas = [];
-  for(const u of responsaveisCurso){
-    const lista = await getPlanos(u.id);
-    lista.filter(it => it.externa && it.area === setorId).forEach(it=>{
+  responsaveisCurso.forEach(u=>{
+    (grupos[u.id] || []).filter(it => it.externa && it.area === setorId).forEach(it=>{
       demandas.push({item: it, coordId: u.id, coordNome: u.nome});
     });
-  }
+  });
   demandas.sort((a,b)=>{
     if(!!a.item.atendidoPeloSetor !== !!b.item.atendidoPeloSetor) return a.item.atendidoPeloSetor ? 1 : -1;
     const ordem = {enviado:0, devolvido:1, aguardando_pro_reitoria:1, aprovado:2};
@@ -27913,11 +27940,11 @@ async function renderNucleoSetorGeral(){
   }).join('');
 
   const responsaveisSetor = ALL_USERS.filter(u => u.role==='setor' && setoresNucleo.includes(u.setor));
+  const gruposSetor = await getPlanosAgrupados(responsaveisSetor.map(u=>u.id));
   let itens = [];
-  for(const u of responsaveisSetor){
-    const lista = await getPlanos(u.id);
-    lista.forEach(it=>itens.push({item:it, coordId:u.id, setorNome: SETORES[u.setor].nome}));
-  }
+  responsaveisSetor.forEach(u=>{
+    (gruposSetor[u.id] || []).forEach(it=>itens.push({item:it, coordId:u.id, setorNome: SETORES[u.setor].nome}));
+  });
   const box = document.getElementById('nucleosetor-planos-list');
   if(itens.length===0){
     box.innerHTML = '<div class="empty-state">Nenhum plano de melhoria registrado pelos responsáveis destes setores ainda.</div>';
@@ -28108,11 +28135,11 @@ async function renderNucleo(){
     u.cursos.some(cid => nucleoCursos.includes(cid))
   );
 
+  const gruposCoordNucleo = await getPlanosAgrupados(coordenadoresDoNucleo.map(u=>u.id));
   let itensCoord = [];
-  for(const u of coordenadoresDoNucleo){
-    const lista = await getPlanos(u.id);
-    lista.filter(it=>nucleoCursos.includes(it.curso)).forEach(it=>itensCoord.push({item:it, coordId:u.id, coordNome:u.nome}));
-  }
+  coordenadoresDoNucleo.forEach(u=>{
+    (gruposCoordNucleo[u.id] || []).filter(it=>nucleoCursos.includes(it.curso)).forEach(it=>itensCoord.push({item:it, coordId:u.id, coordNome:u.nome}));
+  });
   const boxCoord = document.getElementById('nucleo-planos-coordenadores');
   if(itensCoord.length===0){
     boxCoord.innerHTML = '<div class="empty-state">Nenhum plano de ação registrado pelos coordenadores do núcleo ainda.</div>';
