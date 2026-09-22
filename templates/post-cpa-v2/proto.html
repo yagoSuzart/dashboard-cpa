@@ -14,7 +14,6 @@
 <body>
 <canvas id="c-capa" width="1080" height="1350"></canvas>
 <canvas id="c-problema" width="1080" height="1350"></canvas>
-<canvas id="c-solucao" width="1080" height="1350"></canvas>
 <canvas id="c-fim" width="1080" height="1350"></canvas>
 
 <script>
@@ -145,12 +144,19 @@ function seloTopo(ctx, texto, x, y){
   ctx.fillText(texto, x + 24, y + 29);
 }
 
-function caixaDestaque(ctx, texto, cor, y0, alturaExtra){
-  ctx.font = '800 52px Poppins';
+function truncarTexto(texto, maxChars){
+  texto = String(texto || '').trim();
+  if(texto.length <= maxChars) return texto;
+  return texto.slice(0, maxChars - 1).trim() + '…';
+}
+
+function caixaDestaque(ctx, texto, cor, y0, fontSizePx){
+  fontSizePx = fontSizePx || 52;
+  ctx.font = '800 ' + fontSizePx + 'px Poppins';
   const maxLargura = 900;
   const linhas = quebrarTexto(ctx, texto, maxLargura);
-  const linhaAltura = 64;
-  const padY = 44;
+  const linhaAltura = Math.round(fontSizePx * 1.23);
+  const padY = Math.round(fontSizePx * 0.85);
   const altura = linhas.length * linhaAltura + padY * 2;
   const largura = 940;
   const x = (1080 - largura) / 2;
@@ -205,38 +211,34 @@ function desenharCapa(ctx, dados){
   ctx.fillText('Coordenação: ' + dados.coordenador, 60, y + 104);
 }
 
-// ---------- SLIDE 2: PROBLEMA ----------
-function desenharProblema(ctx, dados){
+// ---------- SLIDE: UM ITEM (problema + solução juntos, mais denso) ----------
+function desenharItem(ctx, dados){
   fundoBase(ctx, 'rgba(255,255,255,0.75)', dados.foto);
   logoCard(ctx, 60, 60, dados.logo);
-  seloTopo(ctx, 'O QUE OS ALUNOS DISSERAM', 60, 170);
+  seloTopo(ctx, 'RESULTADO DA CPA', 60, 170);
 
   ctx.fillStyle = WHITE;
   ctx.textAlign = 'left';
-  ctx.font = '800 58px Poppins';
-  let y = 420;
-  quebrarTexto(ctx, 'Identificamos isso na análise da CPA:', 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 68; });
-
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = '800 44px Poppins';
+  let y = 400;
+  quebrarTexto(ctx, dados.curso, 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 52; });
   y += 30;
-  const yFinal = caixaDestaque(ctx, dados.problema, BLUE, y, 0);
 
-  rodapeAtribuicao(ctx, dados.curso, dados.coordenador);
-}
+  ctx.fillStyle = '#9FC3EE';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = '700 28px "Work Sans"';
+  ctx.fillText('🔍 O QUE OS ALUNOS DISSERAM', 60, y);
+  y += 22;
+  y = caixaDestaque(ctx, truncarTexto(dados.problema, 130), BLUE, y, 36);
+  y += 40;
 
-// ---------- SLIDE 3: SOLUÇÃO ----------
-function desenharSolucao(ctx, dados){
-  fundoBase(ctx, 'rgba(255,255,255,0.75)', dados.foto);
-  logoCard(ctx, 60, 60, dados.logo);
-  seloTopo(ctx, 'NOSSO PLANO DE AÇÃO', 60, 170);
-
-  ctx.fillStyle = WHITE;
-  ctx.textAlign = 'left';
-  ctx.font = '800 58px Poppins';
-  let y = 420;
-  quebrarTexto(ctx, 'Aqui está o que vamos fazer:', 940).forEach(l=>{ ctx.fillText(l, 60, y); y += 68; });
-
-  y += 30;
-  caixaDestaque(ctx, dados.solucao, GREEN, y, 0);
+  ctx.fillStyle = '#A9E8C4';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = '700 28px "Work Sans"';
+  ctx.fillText('✅ NOSSO PLANO DE AÇÃO', 60, y);
+  y += 22;
+  caixaDestaque(ctx, truncarTexto(dados.solucao, 130), GREEN, y, 36);
 
   rodapeAtribuicao(ctx, dados.curso, dados.coordenador);
 }
@@ -276,13 +278,10 @@ async function main(){
   desenharCapa(document.getElementById('c-capa').getContext('2d'), {
     curso: 'Odontologia', coordenador: 'Profa. Maria Silva', foto, logo
   });
-  desenharProblema(document.getElementById('c-problema').getContext('2d'), {
+  desenharItem(document.getElementById('c-problema').getContext('2d'), {
     curso: 'Odontologia', coordenador: 'Profa. Maria Silva', foto, logo,
-    problema: 'Falta de horários de atendimento no laboratório em turnos alternativos.'
-  });
-  desenharSolucao(document.getElementById('c-solucao').getContext('2d'), {
-    curso: 'Odontologia', coordenador: 'Profa. Maria Silva', foto, logo,
-    solucao: 'Ampliação do horário dos laboratórios para os períodos noturno e sábado.'
+    problema: 'Falta de horários de atendimento no laboratório em turnos alternativos, principalmente pra quem trabalha durante o dia.',
+    solucao: 'Ampliação do horário dos laboratórios para os períodos noturno e sábado, começando já no próximo semestre.'
   });
   desenharEncerramento(document.getElementById('c-fim').getContext('2d'), { foto, logo });
 

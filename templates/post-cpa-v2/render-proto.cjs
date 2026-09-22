@@ -9,7 +9,7 @@ async function main() {
   await page.goto('file://' + path.join(__dirname, 'proto.html'));
   await page.waitForFunction(() => window.PRONTO === true, { timeout: 15000 });
 
-  const ids = ['c-capa', 'c-problema', 'c-solucao', 'c-fim'];
+  const ids = ['c-capa', 'c-problema', 'c-fim'];
   for (const id of ids) {
     const b64 = await page.evaluate((elId) => {
       const canvas = document.getElementById(elId);
