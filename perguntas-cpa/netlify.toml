@@ -1,0 +1,6 @@
+# Publicação no Netlify (modo demonstração: sem login e com escolhas salvas no navegador).
+# Para login por e-mail e escolhas na nuvem, publique no Cloudflare Pages (ver README).
+[build]
+  base = "perguntas-cpa"
+  command = "npm run build"
+  publish = "dist"
