@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { carregarSessao, entrarDemo, sairDemo, carregarSelecoes, salvarSelecoes, carregarPlanilha } from './lib/api.js'
+import { carregarSessao, entrarDemo, sairDemo, entrarGoogle, sairSupabase, carregarSelecoes, salvarSelecoes, carregarPlanilha } from './lib/api.js'
 import { cobertura } from './lib/model.js'
 import { escolhidasDe } from './lib/escolhas.js'
 import { Loading } from './components/ui.jsx'
@@ -119,8 +119,20 @@ export default function App() {
   const cobSel = useMemo(() => (model ? cobertura(model, escolhidas.filter((q) => q.dim)) : []), [model, escolhidas])
 
   if (!sessao) return <Loading texto="Verificando acesso…" />
-  if (sessao.modo === 'negado') return <Login negado />
-  if (!sessao.email) return <Login onEntrar={(email) => setSessao(entrarDemo(email))} />
+  const sairConta = async () => {
+    if (sessao.modo === 'nuvem') return (location.href = '/cdn-cgi/access/logout')
+    if (sessao.modo === 'supabase' || (sessao.modo === 'negado' && sessao.email)) {
+      await sairSupabase()
+      setSel(null)
+      return setSessao({ modo: 'supabase', email: null })
+    }
+    sairDemo()
+    setSel(null)
+    setSessao({ modo: 'demo', email: null })
+  }
+  if (sessao.modo === 'negado') return <Login modo="negado" email={sessao.email} onSair={sairConta} />
+  if (!sessao.email)
+    return <Login modo={sessao.modo} onEntrar={(email) => setSessao(entrarDemo(email))} onGoogle={entrarGoogle} />
   if (erroPlanilha)
     return (
       <div className="center-screen">
@@ -140,14 +152,7 @@ export default function App() {
   const rotas = ROTAS.filter((r) => !r.admin || sessao.admin)
   const nDecididas = model.propostas.filter((q) => sel.decisoes[q.id]?.status).length
   const titulo = ROTAS.find((r) => r.k === rota)?.rotulo
-  const sair = () => {
-    if (sessao.modo === 'nuvem') location.href = '/cdn-cgi/access/logout'
-    else {
-      sairDemo()
-      setSel(null)
-      setSessao({ modo: 'demo', email: null })
-    }
-  }
+  const sair = sairConta
   const props = { model, sessao, sel, decidir, setSugestoes, cobHoje, cobSel, escolhidas, nDecididas, ir }
 
   return (
@@ -212,7 +217,7 @@ export default function App() {
           <span className="chip user-chip">
             <span className="avatar">{(sessao.nome || sessao.email)[0]}</span>
             {sessao.nome || sessao.email}
-            {sessao.admin && sessao.modo === 'nuvem' ? ' · admin' : ''}
+            {sessao.admin && sessao.modo !== 'demo' ? ' · admin' : ''}
           </span>
           <button className="btn sm" onClick={sair}>
             Sair

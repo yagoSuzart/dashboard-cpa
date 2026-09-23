@@ -1,0 +1,18 @@
+// Configuração para publicar como Cloudflare Worker (ver README).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "perguntas-cpa",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  // Mantém as variáveis cadastradas no painel do Cloudflare a cada nova publicação
+  "keep_vars": true,
+  "observability": { "enabled": true }
+  // Etapa 4 (escolhas na nuvem): descomente e coloque o ID do KV criado no painel
+  // ,"kv_namespaces": [{ "binding": "CPA_KV", "id": "COLE_AQUI_O_ID_DO_KV" }]
+}

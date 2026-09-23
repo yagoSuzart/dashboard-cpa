@@ -3,8 +3,15 @@
 // sem senha) e as escolhas de cada pessoa ficam no Cloudflare KV, separadas por e-mail.
 // Modo "demonstração": sem backend (ex.: rodando local ou no Netlify sem funções) —
 // as escolhas ficam só no navegador.
+import { createClient } from '@supabase/supabase-js'
 import { readWorkbook } from './xlsx.js'
 import { buildModel } from './model.js'
+import { SUPABASE } from './config.js'
+
+// Modo "supabase": login com Google (Supabase Auth) e escolhas na tabela pcpa_selecoes.
+export const sb = SUPABASE.url && SUPABASE.chave
+  ? createClient(SUPABASE.url, SUPABASE.chave, { auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true } })
+  : null
 
 const DEMO_KEY = 'cpa-demo-email'
 const vazio = () => ({ decisoes: {}, sugestoes: [], atualizadoEm: null })
@@ -21,6 +28,15 @@ async function getJson(url, opts) {
 }
 
 export async function carregarSessao() {
+  if (sb) {
+    const { data } = await sb.auth.getSession()
+    const user = data.session?.user
+    if (!user) return { modo: 'supabase', email: null }
+    const email = String(user.email || '').toLowerCase()
+    const { data: perfil } = await sb.from('pcpa_autorizados').select('nome, admin').eq('email', email).maybeSingle()
+    if (!perfil) return { modo: 'negado', email }
+    return { modo: 'supabase', email, nome: perfil.nome || user.user_metadata?.full_name || email.split('@')[0], admin: perfil.admin }
+  }
   try {
     const me = await getJson('/api/me')
     return { ...me, modo: 'nuvem' }
@@ -34,6 +50,21 @@ export async function carregarSessao() {
     }
     return { modo: 'demo', email, nome: email ? email.split('@')[0] : null, admin: true }
   }
+}
+
+export async function entrarGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: location.origin + '/',
+      queryParams: { prompt: 'select_account', ...(SUPABASE.dominio ? { hd: SUPABASE.dominio } : {}) },
+    },
+  })
+  if (error) throw error
+}
+
+export async function sairSupabase() {
+  await sb.auth.signOut()
 }
 
 export function entrarDemo(email) {
@@ -56,6 +87,11 @@ export function sairDemo() {
 const demoKey = (email) => 'cpa-demo-sel:' + email
 
 export async function carregarSelecoes(sessao) {
+  if (sessao.modo === 'supabase') {
+    const { data, error } = await sb.from('pcpa_selecoes').select('decisoes, sugestoes, atualizado_em').eq('email', sessao.email).maybeSingle()
+    if (error) throw error
+    return { ...vazio(), ...(data ? { decisoes: data.decisoes, sugestoes: data.sugestoes, atualizadoEm: data.atualizado_em } : {}) }
+  }
   if (sessao.modo === 'nuvem') {
     const data = await getJson('/api/selecoes')
     return { ...vazio(), ...data }
@@ -69,6 +105,16 @@ export async function carregarSelecoes(sessao) {
 
 export async function salvarSelecoes(sessao, sel) {
   const body = { ...sel, atualizadoEm: new Date().toISOString() }
+  if (sessao.modo === 'supabase') {
+    const { error } = await sb.from('pcpa_selecoes').upsert({
+      email: sessao.email,
+      decisoes: body.decisoes,
+      sugestoes: body.sugestoes,
+      atualizado_em: body.atualizadoEm,
+    })
+    if (error) throw error
+    return body
+  }
   if (sessao.modo === 'nuvem') {
     return getJson('/api/selecoes', {
       method: 'PUT',
@@ -82,6 +128,24 @@ export async function salvarSelecoes(sessao, sel) {
 
 // Visão consolidada (só administradores). No modo demo, lê todos os e-mails deste navegador.
 export async function carregarConsolidado(sessao) {
+  if (sessao.modo === 'supabase') {
+    if (!sessao.admin) throw Object.assign(new Error('Acesso restrito'), { status: 403 })
+    const [{ data: sels, error: e1 }, { data: pessoas, error: e2 }] = await Promise.all([
+      sb.from('pcpa_selecoes').select('*'),
+      sb.from('pcpa_autorizados').select('email, nome'),
+    ])
+    if (e1 || e2) throw e1 || e2
+    const nomes = Object.fromEntries(pessoas.map((p) => [p.email, p.nome]))
+    return {
+      pessoas: sels.map((s) => ({
+        email: s.email,
+        nome: nomes[s.email] || s.email.split('@')[0],
+        decisoes: s.decisoes || {},
+        sugestoes: s.sugestoes || [],
+        atualizadoEm: s.atualizado_em,
+      })),
+    }
+  }
   if (sessao.modo === 'nuvem') return getJson('/api/consolidado')
   const pessoas = []
   for (let i = 0; i < localStorage.length; i++) {
@@ -119,4 +183,23 @@ export async function carregarPlanilha(forcar = false) {
     }
   }
   throw ultimoErro
+}
+
+// Gerenciar quem pode entrar (só administradores, modo supabase)
+export async function listarAutorizados() {
+  const { data, error } = await sb.from('pcpa_autorizados').select('email, nome, admin, criado_em').order('criado_em')
+  if (error) throw error
+  return data
+}
+export async function adicionarAutorizado({ email, nome, admin }) {
+  const { error } = await sb.from('pcpa_autorizados').insert({ email: email.trim().toLowerCase(), nome: nome.trim(), admin: Boolean(admin) })
+  if (error) throw error
+}
+export async function atualizarAutorizado(email, campos) {
+  const { error } = await sb.from('pcpa_autorizados').update(campos).eq('email', email)
+  if (error) throw error
+}
+export async function removerAutorizado(email) {
+  const { error } = await sb.from('pcpa_autorizados').delete().eq('email', email)
+  if (error) throw error
 }

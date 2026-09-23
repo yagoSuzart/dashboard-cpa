@@ -19,18 +19,35 @@ perguntas novas que devem entrar.
 
 Atalho: **Ctrl + K** (ou ⌘ + K) abre a busca rápida em todas as perguntas e telas.
 
-Cada pessoa entra só com o **e-mail** (sem senha) e vê e edita apenas as próprias escolhas.
+Cada pessoa entra com a **conta Google institucional** (sem senha nova) e vê e edita apenas as próprias escolhas.
 
 ## Como funciona por dentro
 
 - **Site**: React + Vite (pasta `src/`). A planilha é lida no navegador (`src/lib/xlsx.js`).
-- **Planilha ao vivo**: a função `functions/api/planilha.js` baixa o `.xlsx` do Google Drive
+- **Planilha ao vivo**: a função `functions/api/planilha.js` (Cloudflare Pages) baixa o `.xlsx` do Google Drive
   (cache de 2 minutos). Se não conseguir, o site usa a cópia `public/planilha.xlsx`.
-- **Login sem senha**: Cloudflare Access com *One-time PIN* — a pessoa digita o e-mail e recebe um código.
-  As funções conferem a assinatura do token do Access (`server/lib.js`) antes de ler ou gravar.
-- **Escolhas**: Cloudflare KV, uma chave por e-mail (`functions/api/selecoes.js`).
-- **Sem Cloudflare configurado** (local, Netlify ou antes de terminar os passos abaixo), o site abre em
-  **modo demonstração**: sem login real e com as escolhas salvas só no navegador.
+- **Login com Google + escolhas**: Supabase (projeto *hub-regulatorio-unifecaf*), configurado em `src/lib/config.js`.
+  - `pcpa_autorizados`: quem pode entrar (e quem é administrador). O administrador libera e remove acessos na tela
+    *Visão consolidada → Quem pode entrar*.
+  - `pcpa_selecoes`: as escolhas de cada pessoa (uma linha por e-mail).
+  - As regras de acesso ficam no banco (Row Level Security): cada pessoa só lê e grava a própria linha; só
+    administradores leem todas; contas que não estão na lista não veem nada.
+- **Modo demonstração**: se o Supabase não estiver configurado, as escolhas ficam só no navegador.
+- **Alternativa Cloudflare Access + KV**: as funções `functions/api/me|selecoes|consolidado.js` continuam no projeto
+  para quem preferir o login do Cloudflare (exige cartão cadastrado no Zero Trust). Não são usadas quando o Supabase
+  está configurado.
+
+### Ativar o "Entrar com Google" (uma vez só)
+
+1. **Google Cloud Console** (console.cloud.google.com), com a conta institucional:
+   - Crie um projeto (ex.: `Perguntas-CPA`).
+   - *Google Auth Platform → Branding*: nome do app `Perguntas-CPA`, e-mail de suporte.
+   - *Audience*: **Internal** (só contas @fecaf.com.br). Se não aparecer, use *External* e adicione os e-mails em *Test users*.
+   - *Clients → Create client → Web application*. Em **Authorized redirect URIs**, coloque
+     `https://ozqlgsolivftewmwksva.supabase.co/auth/v1/callback`. Copie o **Client ID** e o **Client secret**.
+2. **Supabase** (projeto hub-regulatorio-unifecaf):
+   - *Authentication → Sign In / Providers → Google*: ative, cole o Client ID e o Client secret e salve.
+   - *Authentication → URL Configuration*: em **Redirect URLs**, adicione `https://perguntas-cpa.pages.dev/**`.
 
 ## Rodar no computador
 
