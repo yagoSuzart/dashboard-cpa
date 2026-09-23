@@ -19,7 +19,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['functions/**/*.js', 'server/**/*.js'],
+    files: ['functions/**/*.js', 'server/**/*.js', 'worker/**/*.js'],
     extends: [js.configs.recommended],
     languageOptions: { globals: globals.serviceworker },
   },
