@@ -72,7 +72,7 @@ export function DecisionChip({ status }) {
 // Card de pergunta para decidir. Com "cego" ligado, eixo e dimensão só aparecem
 // depois que a pessoa decide — assim a escolha é pela clareza da pergunta.
 // "Editar redação" guarda a versão da pessoa SEM alterar o texto original da planilha.
-export function QuestionCard({ q, decisao, onDecide, cego, extra }) {
+export function QuestionCard({ q, decisao, onDecide, cego, extra, emUso, verEmUso }) {
   const [abrirNota, setAbrirNota] = useState(Boolean(decisao?.nota))
   const [editando, setEditando] = useState(false)
   const status = decisao?.status || null
@@ -134,6 +134,24 @@ export function QuestionCard({ q, decisao, onDecide, cego, extra }) {
               : null
           }
         />
+      )}
+      {revelar && q.dim && emUso != null && (
+        <div className={`contexto ${emUso === 0 ? 'lacuna' : ''}`}>
+          {emUso === 0 ? (
+            <>
+              <b>Lacuna:</b> hoje não usamos nenhuma pergunta da D{q.dim} — {DIMENSOES[q.dim]}.
+            </>
+          ) : (
+            <>
+              <b>Em uso hoje:</b> {emUso} pergunta{emUso > 1 ? 's' : ''} da D{q.dim} — {DIMENSOES[q.dim]}.
+            </>
+          )}
+          {verEmUso && (
+            <button type="button" className="link" onClick={verEmUso}>
+              {emUso === 0 ? 'Ver a dimensão' : 'Ver quais são'} →
+            </button>
+          )}
+        </div>
       )}
       {revelar && (q.jaExiste || q.obs || q.opcoes) && (
         <div className="hint">

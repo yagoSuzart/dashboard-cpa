@@ -36,8 +36,21 @@ export default function Curadoria({ model, sel, decidir, setSugestoes }) {
     return true
   })
 
+  const emUsoDa = (d) => model.atual.filter((q) => q.dim === d)
   const card = (q) => (
-    <QuestionCard key={q.id} q={q} decisao={sel.decisoes[q.id]} onDecide={decidir} cego={cego && !agrupar} />
+    <QuestionCard
+      key={q.id}
+      q={q}
+      decisao={sel.decisoes[q.id]}
+      onDecide={decidir}
+      cego={cego && !agrupar}
+      emUso={agrupar ? null : emUsoDa(q.dim).length}
+      verEmUso={() => {
+        setEixo('')
+        setAgrupar(true)
+        setTimeout(() => document.getElementById('dim-' + q.dim)?.scrollIntoView({ behavior: 'smooth' }), 80)
+      }}
+    />
   )
 
   return (
@@ -92,7 +105,7 @@ export default function Curadoria({ model, sel, decidir, setSugestoes }) {
         <div style={{ flex: 1 }} />
         <label className="toggle">
           <input type="checkbox" checked={agrupar} onChange={(e) => setAgrupar(e.target.checked)} />
-          <span className="sw" /> Agrupar por eixo
+          <span className="sw" /> Agrupar por eixo + ver as que já usamos
         </label>
         <label className="toggle" style={{ opacity: agrupar ? 0.4 : 1 }}>
           <input type="checkbox" checked={cego && !agrupar} disabled={agrupar} onChange={(e) => setCego(e.target.checked)} />
@@ -106,9 +119,9 @@ export default function Curadoria({ model, sel, decidir, setSugestoes }) {
         EIXOS.filter((e) => !eixo || String(e.n) === eixo).map((e) =>
           e.dims.map((d) => {
             const qs = lista.filter((q) => q.dim === d)
-            if (!qs.length) return null
+            const uso = emUsoDa(d)
             return (
-              <section key={d}>
+              <section key={d} id={'dim-' + d} className="dim-sec">
                 <div className="grp-h">
                   <span className="bullet" style={{ background: e.cor }} />
                   <h2>
@@ -116,10 +129,15 @@ export default function Curadoria({ model, sel, decidir, setSugestoes }) {
                   </h2>
                   <span className="line" />
                   <span className="muted" style={{ fontSize: 12 }}>
-                    {qs.length}
+                    {uso.length} em uso · {qs.length} proposta(s)
                   </span>
                 </div>
-                <div className="qlist">{qs.map(card)}</div>
+                <EmUso qs={uso} />
+                {qs.length ? (
+                  <div className="qlist">{qs.map(card)}</div>
+                ) : (
+                  <div className="muted sem-prop">Nenhuma pergunta proposta nesta dimensão{filtro !== 'todas' ? ' com esse filtro' : ''}.</div>
+                )}
               </section>
             )
           }),
@@ -130,6 +148,41 @@ export default function Curadoria({ model, sel, decidir, setSugestoes }) {
 
       <Sugestoes sugestoes={sel.sugestoes} setSugestoes={setSugestoes} abrir={criar} setAbrir={setCriar} />
     </>
+  )
+}
+
+// Perguntas que o instrumento 2026.1 já usa nesta dimensão (somente leitura)
+function EmUso({ qs }) {
+  if (!qs.length)
+    return (
+      <div className="emuso vazio">
+        <span className="st st-crit">
+          <span className="i">✕</span>Nenhuma pergunta em uso hoje
+        </span>
+        <span>Esta dimensão está descoberta: as propostas abaixo ajudam a fechar essa lacuna.</span>
+      </div>
+    )
+  return (
+    <details className="emuso" open={qs.length <= 5}>
+      <summary>
+        <span className="tag uso">Em uso · 2026.1</span>
+        <b>
+          {qs.length} pergunta{qs.length > 1 ? 's' : ''} que já usamos nesta dimensão
+        </b>
+        <span className="muted">— clique para {qs.length <= 5 ? 'recolher' : 'ver'}</span>
+      </summary>
+      <ul>
+        {qs.map((q) => (
+          <li key={q.id}>
+            <span className="emuso-t">{q.text}</span>
+            <span className="tag item">{q.item}</span>
+            <span className="muted" style={{ fontSize: 12 }}>
+              {q.modalidades.join(', ')}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }
 

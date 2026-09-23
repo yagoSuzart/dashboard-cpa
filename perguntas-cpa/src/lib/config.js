@@ -15,6 +15,7 @@ export const NOVIDADES = [
       'Editar a redação de qualquer pergunta proposta, mantendo o original da planilha',
       'Criar perguntas escolhendo eixo, dimensão e tipo de resposta',
       'Busca rápida (Ctrl + K) em todas as perguntas',
+      'Em “Montar a base”, as perguntas que já usamos aparecem em cada eixo e dimensão, e cada proposta mostra se cobre uma lacuna',
     ],
   },
   {
