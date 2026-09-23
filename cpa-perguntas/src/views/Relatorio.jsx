@@ -120,7 +120,8 @@ export default function Relatorio({ model, sessao, sel }) {
         <p>
           Olá! Este documento reúne as perguntas que a CPA já aplica hoje (instrumento 2026.1) e as perguntas novas que
           a Pró-Reitoria Acadêmica e a Coordenação da CPA entenderam que devem entrar, para atender os 5 eixos e as 10
-          dimensões do SINAES (Lei nº 10.861/2004). As perguntas atuais continuam como estão cadastradas.
+          dimensões do SINAES (Lei nº 10.861/2004). As perguntas atuais continuam como estão cadastradas. Quando houver
+          “Nova redação sugerida”, é esse o texto que deve ser cadastrado; o original fica ao lado para referência.
         </p>
         <table>
           <tbody>
@@ -155,7 +156,8 @@ export default function Relatorio({ model, sessao, sel }) {
                   <table>
                     <thead>
                       <tr>
-                        <th style={{ width: '48%' }}>Pergunta (texto literal)</th>
+                        <th style={{ width: '34%' }}>Pergunta (texto original, literal)</th>
+                        <th style={{ width: '26%' }}>Nova redação sugerida</th>
                         <th>Dimensão</th>
                         <th>Origem</th>
                         <th>Observações</th>
@@ -167,7 +169,18 @@ export default function Relatorio({ model, sessao, sel }) {
                           <tr key={q.id}>
                             <td>{q.text}</td>
                             <td>
+                              {q.versoes.length === 0
+                                ? '—'
+                                : q.versoes.map((v, i) => (
+                                    <div key={i}>
+                                      {q.versoes.length > 1 || base !== 'minhas' ? <b>{v.quem}: </b> : null}
+                                      {v.texto}
+                                    </div>
+                                  ))}
+                            </td>
+                            <td>
                               D{d} — {DIMENSOES[d]}
+                              {q.tipo ? <div style={{ color: '#667085' }}>{q.tipo}</div> : null}
                             </td>
                             <td>{origem(q)}</td>
                             <td>

@@ -11,6 +11,8 @@ import Cobertura from './views/Cobertura.jsx'
 import Setores from './views/Setores.jsx'
 import Relatorio from './views/Relatorio.jsx'
 import Consolidado from './views/Consolidado.jsx'
+import Sobre from './views/Sobre.jsx'
+import Palette from './components/Palette.jsx'
 
 const ROTAS = [
   { k: 'visao', rotulo: 'Visão geral', ico: '◎', sec: 'Painel' },
@@ -20,6 +22,7 @@ const ROTAS = [
   { k: 'setores', rotulo: 'Outras abas (setores)', ico: '⧉', sec: 'Curadoria' },
   { k: 'relatorio', rotulo: 'Relatório para o T.I', ico: '⎙', sec: 'Entrega' },
   { k: 'consolidado', rotulo: 'Visão consolidada', ico: '⚑', sec: 'Entrega', admin: true },
+  { k: 'sobre', rotulo: 'Sobre o sistema', ico: 'ⓘ', sec: 'Projeto' },
 ]
 
 const rotaAtual = () => {
@@ -34,6 +37,7 @@ export default function App() {
   const [sel, setSel] = useState(null)
   const [salvo, setSalvo] = useState('ok')
   const [rota, setRota] = useState(rotaAtual)
+  const [palette, setPalette] = useState(false)
   const timer = useRef(null)
 
   useEffect(() => {
@@ -45,8 +49,18 @@ export default function App() {
       setRota(rotaAtual())
       window.scrollTo(0, 0)
     }
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPalette((v) => !v)
+      }
+    }
     window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('hashchange', onHash)
+      window.removeEventListener('keydown', onKey)
+    }
   }, [])
 
   useEffect(() => {
@@ -75,13 +89,13 @@ export default function App() {
     selRef.current = sel
   }, [sel])
 
+  // patch: { status?, nota?, texto? } — só o que mudou
   const decidir = useCallback(
-    (id, status, nota, soNota) => {
+    (id, patch) => {
       const atual = selRef.current
       const decisoes = { ...atual.decisoes }
-      const antes = decisoes[id] || {}
-      const d = { status: soNota ? antes.status || null : status, nota: nota ?? antes.nota ?? '', em: new Date().toISOString() }
-      if (!d.status && !d.nota) delete decisoes[id]
+      const d = { status: null, nota: '', texto: '', ...decisoes[id], ...patch, em: new Date().toISOString() }
+      if (!d.status && !d.nota && !d.texto) delete decisoes[id]
       else decisoes[id] = d
       const novo = { ...atual, decisoes }
       selRef.current = novo
@@ -184,6 +198,9 @@ export default function App() {
             CPA 2026 / <b>{titulo}</b>
           </div>
           <div className="spacer" />
+          <button className="chip busca" onClick={() => setPalette(true)}>
+            ⌕ Buscar <kbd>Ctrl K</kbd>
+          </button>
           <span className="chip" title="Salvamento automático">
             <span className={`led ${salvo === 'ok' ? '' : salvo === 'salvando' ? 'warn' : 'off'}`} />
             {salvo === 'ok' ? 'Tudo salvo' : salvo === 'salvando' ? 'Salvando…' : 'Erro ao salvar'}
@@ -215,8 +232,10 @@ export default function App() {
           {rota === 'setores' && <Setores {...props} />}
           {rota === 'relatorio' && <Relatorio {...props} />}
           {rota === 'consolidado' && sessao.admin && <Consolidado {...props} />}
+          {rota === 'sobre' && <Sobre {...props} />}
         </div>
       </main>
+      <Palette aberto={palette} fechar={() => setPalette(false)} model={model} sel={sel} rotas={rotas} ir={ir} />
     </div>
   )
 }

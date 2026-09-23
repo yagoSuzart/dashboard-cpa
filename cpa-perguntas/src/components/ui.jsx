@@ -71,14 +71,26 @@ export function DecisionChip({ status }) {
 
 // Card de pergunta para decidir. Com "cego" ligado, eixo e dimensão só aparecem
 // depois que a pessoa decide — assim a escolha é pela clareza da pergunta.
+// "Editar redação" guarda a versão da pessoa SEM alterar o texto original da planilha.
 export function QuestionCard({ q, decisao, onDecide, cego, extra }) {
   const [abrirNota, setAbrirNota] = useState(Boolean(decisao?.nota))
+  const [editando, setEditando] = useState(false)
   const status = decisao?.status || null
   const revelar = !cego || status
+  const versao = decisao?.texto
   return (
     <article className={`card qcard ${status ? 'd-' + status : ''}`}>
       <div>
-        <div className="qt">{q.text}</div>
+        {versao ? (
+          <>
+            <div className="qt">{versao}</div>
+            <div className="orig">
+              <span className="tag edit">✎ Sua versão</span> Original da planilha: <span>{q.text}</span>
+            </div>
+          </>
+        ) : (
+          <div className="qt">{q.text}</div>
+        )}
         <div className="tags">
           {revelar ? (
             <>
@@ -94,13 +106,35 @@ export function QuestionCard({ q, decisao, onDecide, cego, extra }) {
         </div>
       </div>
       <div>
-        <DecisionButtons value={status} onChange={(s) => onDecide(q.id, s, decisao?.nota)} />
-        <div style={{ textAlign: 'right', marginTop: 6 }}>
+        <DecisionButtons value={status} onChange={(s) => onDecide(q.id, { status: s })} />
+        <div className="card-actions">
+          <button type="button" className="btn ghost sm" onClick={() => setEditando((v) => !v)}>
+            ✎ {versao ? 'Editar sua versão' : 'Editar redação'}
+          </button>
           <button type="button" className="btn ghost sm" onClick={() => setAbrirNota((v) => !v)}>
             {abrirNota ? 'Ocultar comentário' : decisao?.nota ? 'Ver comentário' : '+ Comentário'}
           </button>
         </div>
       </div>
+      {editando && (
+        <EditorTexto
+          original={q.text}
+          atual={versao || q.text}
+          onSalvar={(t) => {
+            onDecide(q.id, { texto: t.trim() === q.text.trim() ? '' : t.trim() })
+            setEditando(false)
+          }}
+          onCancelar={() => setEditando(false)}
+          onRestaurar={
+            versao
+              ? () => {
+                  onDecide(q.id, { texto: '' })
+                  setEditando(false)
+                }
+              : null
+          }
+        />
+      )}
       {revelar && (q.jaExiste || q.obs || q.opcoes) && (
         <div className="hint">
           {q.jaExiste && (
@@ -123,13 +157,46 @@ export function QuestionCard({ q, decisao, onDecide, cego, extra }) {
       {abrirNota && (
         <div className="note">
           <textarea
-            placeholder="Por que entra ou não? Sugestão de ajuste de texto, escala…"
+            placeholder="Por que entra ou não? Alguma observação sobre escala, público…"
             defaultValue={decisao?.nota || ''}
-            onBlur={(e) => onDecide(q.id, status, e.target.value, true)}
+            onBlur={(e) => onDecide(q.id, { nota: e.target.value })}
           />
         </div>
       )}
     </article>
+  )
+}
+
+function EditorTexto({ original, atual, onSalvar, onCancelar, onRestaurar }) {
+  const [t, setT] = useState(atual)
+  return (
+    <div className="editor">
+      <div className="editor-h">
+        <b>Nova redação</b>
+        <span className="muted">
+          O texto original continua guardado na planilha. A sua versão vai para o relatório ao lado do original.
+        </span>
+      </div>
+      <textarea value={t} onChange={(e) => setT(e.target.value)} autoFocus />
+      <div className="editor-f">
+        <span className="muted" style={{ fontSize: 12 }}>
+          {t.length} caracteres
+        </span>
+        <div style={{ flex: 1 }} />
+        {onRestaurar && (
+          <button type="button" className="btn sm" onClick={onRestaurar}>
+            Voltar ao original
+          </button>
+        )}
+        <button type="button" className="btn sm" onClick={onCancelar}>
+          Cancelar
+        </button>
+        <button type="button" className="btn sm primary" disabled={!t.trim()} onClick={() => onSalvar(t)}>
+          Salvar versão
+        </button>
+      </div>
+      {t.trim() === original.trim() && <div className="muted" style={{ fontSize: 12 }}>Igual ao original.</div>}
+    </div>
   )
 }
 

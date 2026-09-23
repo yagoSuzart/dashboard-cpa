@@ -26,13 +26,16 @@ export async function onRequestPut(context) {
     if (!/^[a-z0-9]{1,20}$/.test(id) || !d) continue
     const status = ['sim', 'talvez', 'nao'].includes(d.status) ? d.status : null
     const nota = String(d.nota || '').slice(0, 2000)
-    if (!status && !nota) continue
-    decisoes[id] = { status, nota, em: String(d.em || '').slice(0, 40) }
+    const texto = String(d.texto || '').slice(0, 1000)
+    if (!status && !nota && !texto) continue
+    decisoes[id] = { status, nota, texto, em: String(d.em || '').slice(0, 40) }
   }
   const sugestoes = (Array.isArray(body.sugestoes) ? body.sugestoes : []).slice(0, 200).map((s) => ({
     id: String(s.id || '').slice(0, 20),
     text: String(s.text || '').slice(0, 1000),
     dim: Number(s.dim) >= 1 && Number(s.dim) <= 10 ? Number(s.dim) : null,
+    tipo: String(s.tipo || '').slice(0, 80),
+    status: ['sim', 'talvez', 'nao'].includes(s.status) ? s.status : 'sim',
     nota: String(s.nota || '').slice(0, 2000),
   }))
   const registro = { email: u.email, nome: u.nome, decisoes, sugestoes, atualizadoEm: new Date().toISOString() }
