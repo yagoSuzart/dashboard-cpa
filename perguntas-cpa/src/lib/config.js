@@ -1,13 +1,29 @@
+// Conexão com o Supabase (login com Google e escolhas de cada pessoa).
+// A chave "publishable" é pública por natureza: a proteção dos dados é feita pelas regras (RLS) do banco.
+export const SUPABASE = {
+  url: import.meta.env.VITE_SUPABASE_URL || 'https://ozqlgsolivftewmwksva.supabase.co',
+  chave: import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_8mqFeW0LZ2PjKB5cDPD9rw_7-04XN7n',
+  // domínio sugerido na tela de escolha de conta do Google
+  dominio: 'fecaf.com.br',
+}
+
 // Informações do projeto exibidas na página "Sobre o sistema". Edite à vontade.
 export const PROJETO = {
   nome: 'Perguntas-CPA',
-  versao: '1.1',
+  versao: '1.2',
   autor: 'Yago Brito',
   cargo: 'Analista de Regulatório · CPA UniFECAF',
   nota: 'Idealizado e desenvolvido com apoio de IA (Claude Code).',
 }
 
 export const NOVIDADES = [
+  {
+    versao: '1.2',
+    itens: [
+      'Login com a conta Google institucional (Supabase), sem senha nova e sem cartão de crédito',
+      'Tela “Quem pode entrar” para o administrador liberar ou remover acessos pelo próprio painel',
+    ],
+  },
   {
     versao: '1.1',
     itens: [

@@ -336,10 +336,16 @@ kbd { font-family: var(--f-ui); font-size: 10.5px; background: var(--line-2); bo
 .contexto.lacuna { color: #9f1d35; background: var(--crit-bg); }
 button.link { background: none; border: 0; padding: 0; color: inherit; font-weight: 700; text-decoration: underline; font-size: 12.5px; }
 
+.acesso-form { display: grid; grid-template-columns: 1.2fr 1.4fr auto auto; gap: 10px; align-items: center; }
+@media (max-width: 860px) { .acesso-form { grid-template-columns: 1fr; } }
+
 /* ---------- login ---------- */
+.btn.google { width: 100%; padding: 13px; margin-top: 10px; font-size: 14.5px; color: var(--ink); border-color: #cfd6e2; gap: 12px; }
+.btn.google:hover { background: #f7f9fc; }
 .login { min-height: 100%; display: grid; grid-template-columns: 1.1fr 1fr; }
-.login .l { background: var(--navy); color: #fff; padding: 48px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.login .l { background: var(--navy); color: #fff; padding: 48px 48px 150px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .login .l img { width: 220px; }
+.login .l h1, .login .l p, .login .l img { position: relative; z-index: 1; }
 .login .l h1 { color: #fff; font-size: 34px; margin-top: auto; max-width: 480px; }
 .login .l p { color: #c7d4ec; font-family: var(--f-text); font-size: 17px; max-width: 460px; }
 .login .r { display: grid; place-items: center; padding: 40px 24px; }

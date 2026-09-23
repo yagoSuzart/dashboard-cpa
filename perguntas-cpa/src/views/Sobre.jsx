@@ -2,9 +2,9 @@ import { PROJETO, NOVIDADES } from '../lib/config.js'
 
 const FLUXO = [
   { t: 'Planilha no Google Drive', d: 'A CPA edita onde já trabalha' },
-  { t: 'Função segura na nuvem', d: 'Cloudflare lê a planilha a cada 2 min' },
+  { t: 'Leitura segura na nuvem', d: 'Cloudflare busca a planilha a cada 2 min' },
   { t: 'Painel de curadoria', d: 'Cada avaliadora decide, edita e cria' },
-  { t: 'Escolhas por e-mail', d: 'Guardadas separadas, sem misturar' },
+  { t: 'Login Google + banco seguro', d: 'Cada escolha gravada no Supabase, por pessoa' },
   { t: 'Relatório para o T.I', d: 'PDF ou Word, pronto para cadastrar' },
 ]
 
@@ -69,7 +69,7 @@ export default function Sobre({ model }) {
         <div className="card kpi">
           <div className="lbl">Senhas para decorar</div>
           <div className="val num">0</div>
-          <div className="sub">login só com o e-mail institucional</div>
+          <div className="sub">login com a conta Google institucional</div>
         </div>
       </div>
 
@@ -97,8 +97,8 @@ export default function Sobre({ model }) {
           </div>
           <div className="card-b">
             <ul className="lista-check">
-              <li>Só entra quem está na lista de e-mails autorizados, com código enviado na hora.</li>
-              <li>Cada acesso é conferido pela assinatura digital do login, não por um campo que o navegador informa.</li>
+              <li>Só entra quem está na lista de e-mails autorizados, usando a própria conta Google institucional.</li>
+              <li>As regras de acesso ficam no próprio banco de dados (Row Level Security): mesmo quem tentar acessar por fora não passa.</li>
               <li>Cada avaliadora vê e edita apenas as próprias escolhas; a visão conjunta é restrita à administração.</li>
               <li>Nenhum dado de aluno é armazenado: o painel trabalha só com as perguntas do instrumento.</li>
               <li>O texto original das perguntas nunca é alterado; redações novas ficam guardadas ao lado.</li>
@@ -111,7 +111,7 @@ export default function Sobre({ model }) {
           </div>
           <div className="card-b">
             <div className="stack">
-              {['React', 'Vite', 'Cloudflare Pages', 'Cloudflare Functions', 'Cloudflare KV', 'Cloudflare Access', 'Google Drive', 'GitHub'].map(
+              {['React', 'Vite', 'Supabase (Postgres + Auth)', 'Login com Google', 'Row Level Security', 'Cloudflare Pages', 'Cloudflare Functions', 'Google Drive', 'GitHub'].map(
                 (t) => (
                   <span key={t} className="tag">
                     {t}
@@ -120,7 +120,7 @@ export default function Sobre({ model }) {
               )}
             </div>
             <p className="muted" style={{ fontFamily: 'var(--f-text)', fontSize: 14.5 }}>
-              Custo de infraestrutura: zero, dentro do plano gratuito do Cloudflare. Código versionado no GitHub, com
+              Custo de infraestrutura: zero, dentro dos planos gratuitos do Cloudflare e do Supabase. Código versionado no GitHub, com
               publicação automática a cada atualização.
             </p>
           </div>

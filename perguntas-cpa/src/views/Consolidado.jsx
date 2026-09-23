@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { carregarConsolidado } from '../lib/api.js'
+import { carregarConsolidado, listarAutorizados, adicionarAutorizado, atualizarAutorizado, removerAutorizado } from '../lib/api.js'
 import { decidiveis, escolhidasDe, criadasPor } from '../lib/escolhas.js'
 import { EIXOS, DIMENSOES, cobertura } from '../lib/model.js'
 import { EixoTag, DimTag, DecisionChip, StatusPill } from '../components/ui.jsx'
@@ -151,6 +151,8 @@ export default function Consolidado({ model, sessao, ir }) {
         </div>
       </div>
 
+      {sessao.modo === 'supabase' && <Acessos sessao={sessao} />}
+
       {pessoas.length === 0 ? (
         <div className="card empty">Ninguém salvou escolhas ainda.</div>
       ) : (
@@ -295,6 +297,115 @@ function Criadas({ pessoas }) {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  )
+}
+
+// Quem pode entrar no painel (tabela pcpa_autorizados) — só administradores
+function Acessos({ sessao }) {
+  const [lista, setLista] = useState(null)
+  const [email, setEmail] = useState('')
+  const [nome, setNome] = useState('')
+  const [admin, setAdmin] = useState(false)
+  const [msg, setMsg] = useState('')
+  const recarregar = () =>
+    listarAutorizados()
+      .then(setLista)
+      .catch((e) => setMsg('Erro ao carregar: ' + e.message))
+  useEffect(() => {
+    recarregar()
+  }, [])
+  const valido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const acao = async (fn, ok) => {
+    setMsg('')
+    try {
+      await fn()
+      setMsg(ok)
+      await recarregar()
+    } catch (e) {
+      setMsg('Não foi possível: ' + (e.message || e))
+    }
+  }
+  return (
+    <div className="card" style={{ marginBottom: 20 }}>
+      <div className="card-h">
+        <div>
+          <h2>Quem pode entrar</h2>
+          <div className="muted" style={{ fontSize: 13 }}>
+            Só os e-mails desta lista conseguem usar o painel. A pessoa entra com a conta Google desse e-mail.
+          </div>
+        </div>
+      </div>
+      <div className="card-b">
+        <form
+          className="acesso-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!valido) return
+            acao(() => adicionarAutorizado({ email, nome, admin }), `${email.trim()} liberado.`).then(() => {
+              setEmail('')
+              setNome('')
+              setAdmin(false)
+            })
+          }}
+        >
+          <input className="select" type="email" placeholder="e-mail@fecaf.com.br" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input className="select" placeholder="Nome ou cargo (ex.: Pró-Reitora Acadêmica)" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <label className="toggle">
+            <input type="checkbox" checked={admin} onChange={(e) => setAdmin(e.target.checked)} />
+            <span className="sw" /> Administrador
+          </label>
+          <button className="btn primary sm" disabled={!valido}>
+            Liberar acesso
+          </button>
+        </form>
+        {msg && <div className="muted" style={{ fontSize: 13, margin: '10px 0' }}>{msg}</div>}
+        {lista && (
+          <table className="tbl" style={{ marginTop: 10 }}>
+            <thead>
+              <tr>
+                <th>E-mail</th>
+                <th>Nome</th>
+                <th>Perfil</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {lista.map((p) => (
+                <tr key={p.email}>
+                  <td className="mono">{p.email}</td>
+                  <td>{p.nome || '—'}</td>
+                  <td>
+                    {p.admin ? <span className="tag dim">Administrador</span> : <span className="tag">Avaliadora</span>}
+                  </td>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {p.email !== sessao.email && (
+                      <>
+                        <button
+                          className="btn ghost sm"
+                          onClick={() => acao(() => atualizarAutorizado(p.email, { admin: !p.admin }), 'Perfil atualizado.')}
+                        >
+                          {p.admin ? 'Tirar admin' : 'Tornar admin'}
+                        </button>
+                        <button
+                          className="btn ghost sm"
+                          onClick={() => {
+                            if (confirm(`Remover o acesso de ${p.email}? As escolhas dessa pessoa também serão apagadas.`))
+                              acao(() => removerAutorizado(p.email), 'Acesso removido.')
+                          }}
+                        >
+                          Remover
+                        </button>
+                      </>
+                    )}
+                    {p.email === sessao.email && <span className="muted" style={{ fontSize: 12 }}>você</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )
