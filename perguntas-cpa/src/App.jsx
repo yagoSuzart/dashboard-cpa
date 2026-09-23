@@ -156,7 +156,7 @@ export default function App() {
         <div className="side-logo">
           <img src="/logo-unifecaf-branco.png" alt="UniFECAF" />
           <div className="side-tag">
-            <span className="dot" /> CPA · Banco de Perguntas
+            <span className="dot" /> Perguntas-CPA
           </div>
         </div>
         <nav className="nav">

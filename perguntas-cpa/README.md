@@ -1,4 +1,4 @@
-# CPA UniFECAF · Banco de Perguntas
+# Perguntas-CPA · Banco de Perguntas da CPA UniFECAF
 
 Painel para a Pró-Reitoria Acadêmica, a Coordenação da CPA e o T.I analisarem as perguntas
 do instrumento de autoavaliação pelos **5 eixos e 10 dimensões do SINAES** e escolherem as
@@ -35,7 +35,7 @@ Cada pessoa entra só com o **e-mail** (sem senha) e vê e edita apenas as próp
 ## Rodar no computador
 
 ```bash
-cd cpa-perguntas
+cd perguntas-cpa
 npm install
 npm run dev
 ```
@@ -48,13 +48,13 @@ Tudo cabe no plano gratuito (Access é grátis até 50 pessoas).
    O ID é o trecho entre `/d/` e `/edit` do link. Mantenha os nomes das abas *CPA Atual (por eixo)*
    e *Perguntas Propostas por Eixo* e os títulos das colunas; o resto pode mudar à vontade.
 2. **Pages** — *Workers & Pages → Create → Pages → Connect to Git*, escolha este repositório e configure:
-   - Root directory: `cpa-perguntas`
+   - Root directory: `perguntas-cpa`
    - Build command: `npm run build`
    - Build output directory: `dist`
-3. **KV** — *Storage & Databases → KV → Create namespace* (ex.: `cpa-perguntas`). No projeto do Pages,
+3. **KV** — *Storage & Databases → KV → Create namespace* (ex.: `perguntas-cpa`). No projeto do Pages,
    *Settings → Bindings → Add → KV namespace*, com o nome da variável **`CPA_KV`**.
 4. **Login (Cloudflare Access)** — *Zero Trust → Access → Applications → Add an application → Self-hosted*:
-   - Domínio: o endereço do site (ex.: `cpa-perguntas.pages.dev`) e, se quiser, também `*.cpa-perguntas.pages.dev` (versões de teste).
+   - Domínio: o endereço do site (ex.: `perguntas-cpa.pages.dev`) e, se quiser, também `*.perguntas-cpa.pages.dev` (versões de teste).
    - Policy: *Allow*, *Include → Emails* com os e-mails autorizados.
    - *Authentication*: marque **One-time PIN**.
    - Depois de salvar, copie o **Application Audience (AUD) Tag**.

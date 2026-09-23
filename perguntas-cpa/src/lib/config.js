@@ -1,6 +1,6 @@
 // Informações do projeto exibidas na página "Sobre o sistema". Edite à vontade.
 export const PROJETO = {
-  nome: 'CPA · Banco de Perguntas',
+  nome: 'Perguntas-CPA',
   versao: '1.1',
   autor: 'Yago Brito',
   cargo: 'Analista de Regulatório · CPA UniFECAF',
