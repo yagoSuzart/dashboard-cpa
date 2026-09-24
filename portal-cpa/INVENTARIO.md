@@ -6,6 +6,12 @@ O sistema atual continua no ar até todos os itens estarem marcados.
 
 Legenda: ⬜ a fazer · 🟨 feito, aguardando conferência · ✅ conferido no Portal
 
+## Andamento
+
+- **Portal v0.1 (24/09/2026):** login, visão geral, cursos (com mapa de calor e professores), pergunta por pergunta,
+  comentários, planos (leitura, com trilho de aprovação), setores e importação da planilha da CPA com conferência.
+  Os itens 🟨 abaixo estão prontos e aguardam a conferência lado a lado com o sistema atual.
+
 ## Regras da migração
 
 1. **Os dados não mudam de lugar.** O Portal usa o mesmo banco (Supabase *Plano de Ação - CPA*): as mesmas
@@ -51,31 +57,31 @@ Legenda: ⬜ a fazer · 🟨 feito, aguardando conferência · ✅ conferido no 
 
 ## Acesso e conta
 
-- ⬜ Login com e-mail e senha (Supabase Auth) — sem login com Google
+- 🟨 Login com e-mail e senha (Supabase Auth) — sem login com Google
 - ⬜ Primeiro acesso: trocar a senha ou manter
-- ⬜ Mostrar/ocultar senha
-- ⬜ Esqueci a senha (e-mail com link) e tela de redefinição
+- 🟨 Mostrar/ocultar senha
+- 🟨 Esqueci a senha (e-mail com link) e tela de redefinição
 - ⬜ Solicitar acesso: nome, e-mail, senha, setor/cargo, perfil, cursos, setor de infraestrutura, núcleo de setores
-- ⬜ Sair
+- 🟨 Sair
 
 ## Resultados (coordenação, direção, CPA, Pró-Reitoria)
 
 - ⬜ Visão geral: filtros de modalidade e curso, anel de progresso, nota geral, indicadores
-- ⬜ Quadro (kanban) dos planos por situação
+- 🟨 Quadro (kanban) dos planos por situação
 - ⬜ Pontos fortes e oportunidades por dimensão, com as mensagens atuais
-- ⬜ Top cursos
+- 🟨 Top cursos
 - ⬜ Visão executiva: ranking de cursos críticos, professores críticos, comentários críticos (acordeões)
-- ⬜ Barras por dimensão
+- 🟨 Barras por dimensão
 - ⬜ Os 6 questionários como itens próprios do menu: Conteúdo das Disciplinas, Infraestrutura e Atendimento,
   Políticas Acadêmicas, Políticas de Gestão, Docência e Tutoria, Satisfação Geral
-- ⬜ Por turma (notas por turma e dimensão)
+- 🟨 Por turma (notas por turma e dimensão)
 - ⬜ Por professor: resumo, pontos a melhorar, busca, "ver todos", paginação de 8, comentários por professor
   (não aparece para professor auxiliar)
 - ⬜ Lives e tutoria (notas e respondentes)
 - ⬜ Alunos respondentes por curso
-- ⬜ Comentários: filtros de modalidade, curso e categoria; selos de sentimento (bom, atenção, ruim); marcação de
+- 🟨 Comentários: filtros de modalidade, curso e categoria; selos de sentimento (bom, atenção, ruim); marcação de
   comentários negativos por palavras-chave; paginação
-- ⬜ **Novo:** nota de cada pergunta do questionário, com a distribuição das respostas, a partir da planilha da CPA.
+- 🟨 **Novo:** nota de cada pergunta do questionário, com a distribuição das respostas, a partir da planilha da CPA.
   Escala de 1 a 5, mostrada só como número, sem nome para nenhuma nota ("X alunos deram 1 para a
   pergunta Y"). A resposta 6 (aluno que não usa aquele espaço ou serviço) aparece contada à parte e fica
   fora da média.
@@ -100,8 +106,8 @@ Legenda: ⬜ a fazer · 🟨 feito, aguardando conferência · ✅ conferido no 
 - ⬜ Revisão dos planos dos professores auxiliares pelo coordenador (puxar para revisão, enviar para validação)
 - ⬜ Aprovar, devolver com comentário, reenviar, editar, marcar como resolvido/concluído, excluir
 - ⬜ Conversa sobre cada plano (coordenador ou setor)
-- ⬜ Supervisão: planos de todos os cursos e de todos os setores
-- ⬜ Selo de situação, prazo e urgência (atrasado, vence em 7 dias, em dia, aprovado)
+- 🟨 Supervisão: planos de todos os cursos e de todos os setores
+- 🟨 Selo de situação, prazo e urgência (atrasado, vence em 7 dias, em dia, aprovado)
 - ⬜ Escrita pelas funções do servidor (`plano-acao-escrever`), como hoje
 - ⬜ **Mudança pedida:** sem rascunho. O plano é escrito dentro de cada questionário e, ao enviar, já vai para a
   análise. Quem enviou continua podendo editar até a aprovação. O coordenador aprova só os planos da equipe
