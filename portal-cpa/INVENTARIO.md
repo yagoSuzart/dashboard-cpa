@@ -75,7 +75,10 @@ Legenda: ⬜ a fazer · 🟨 feito, aguardando conferência · ✅ conferido no 
 - ⬜ Alunos respondentes por curso
 - ⬜ Comentários: filtros de modalidade, curso e categoria; selos de sentimento (bom, atenção, ruim); marcação de
   comentários negativos por palavras-chave; paginação
-- ⬜ **Novo:** nota de cada pergunta do questionário, com a distribuição das respostas, a partir da planilha da CPA
+- ⬜ **Novo:** nota de cada pergunta do questionário, com a distribuição das respostas, a partir da planilha da CPA.
+  Escala de 1 (muito ruim) a 5 (excelente), com 3 = regular; o Portal mostra os números como estão
+  ("X alunos deram 1 para a pergunta Y"), sem inventar nomes para 2 e 4. A resposta 6 = "não utilizo"
+  (aluno que não usa aquele espaço ou serviço) aparece contada à parte e fica fora da média.
 - ⬜ **Novo:** taxa de participação por curso (`respondentes-cpa-G.2026_1.csv`)
 
 ## Núcleos e setores
