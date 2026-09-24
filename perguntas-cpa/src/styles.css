@@ -69,7 +69,7 @@ h3 { font-size: 15px; font-weight: 700; }
   .side-logo { padding: 18px 24px 12px; }
   .side-foot { margin-top: auto; }
 }
-.side-logo { padding: 26px 24px 18px; }
+.side-logo { padding: 26px 24px 18px; flex-shrink: 0; }
 .side-logo img { width: 170px; display: block; }
 .side-tag {
   margin-top: 12px;
@@ -78,7 +78,7 @@ h3 { font-size: 15px; font-weight: 700; }
   color: #9fb4d8;
 }
 .side-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(23, 164, 96, 0.25); }
-.nav { padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+.nav { padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
 .nav-sec { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #7f93b8; padding: 14px 12px 6px; font-weight: 600; }
 .nav a {
   display: flex; align-items: center; gap: 10px;
@@ -89,12 +89,12 @@ h3 { font-size: 15px; font-weight: 700; }
 .nav a.on { background: rgba(14, 119, 204, 0.22); color: #fff; box-shadow: inset 3px 0 0 var(--green); }
 .nav .ico { width: 18px; text-align: center; opacity: 0.9; }
 .nav .count { margin-left: auto; font-size: 11px; background: rgba(255, 255, 255, 0.1); padding: 1px 8px; border-radius: 99px; }
-.side-deco { margin-top: auto; position: relative; height: 120px; pointer-events: none; }
+.side-deco { margin-top: auto; position: relative; height: 120px; flex-shrink: 0; overflow: hidden; pointer-events: none; }
 .side-deco i { position: absolute; display: block; }
 .side-deco .t1 { left: -10px; bottom: 30px; width: 120px; height: 70px; background: var(--blue); clip-path: polygon(0 0, 100% 0, 60% 100%, 0 100%); opacity: 0.9; }
 .side-deco .t2 { left: 70px; bottom: 0; width: 110px; height: 70px; background: #0b1a45; clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%); }
 .side-deco .t3 { left: 160px; bottom: 40px; width: 70px; height: 80px; background: var(--green); clip-path: polygon(0 0, 100% 0, 100% 100%); }
-.side-foot { padding: 14px 20px 18px; font-size: 11.5px; color: #8ea2c6; border-top: 1px solid rgba(255, 255, 255, 0.08); position: relative; background: var(--navy); }
+.side-foot { padding: 14px 20px 18px; font-size: 11.5px; color: #8ea2c6; border-top: 1px solid rgba(255, 255, 255, 0.08); position: relative; background: var(--navy); flex-shrink: 0; }
 
 .main { min-width: 0; display: flex; flex-direction: column; }
 .top {
