@@ -60,7 +60,14 @@ h3 { font-size: 15px; font-weight: 700; }
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto; /* com zoom ou tela baixa, o menu rola em vez de cortar os últimos itens */
+}
+/* tela baixa: tira os triângulos do menu para caber todos os itens */
+@media (max-height: 820px) {
+  .side-deco { display: none; }
+  .side-logo { padding: 18px 24px 12px; }
+  .side-foot { margin-top: auto; }
 }
 .side-logo { padding: 26px 24px 18px; }
 .side-logo img { width: 170px; display: block; }
