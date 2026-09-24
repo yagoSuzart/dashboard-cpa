@@ -153,6 +153,9 @@ export default function App() {
   const nDecididas = model.propostas.filter((q) => sel.decisoes[q.id]?.status).length
   const titulo = ROTAS.find((r) => r.k === rota)?.rotulo
   const sair = sairConta
+  const txtSalvo = salvo === 'ok' ? 'Tudo salvo' : salvo === 'salvando' ? 'Salvando…' : 'Erro ao salvar'
+  const aoVivo = dados.fonte.includes('Drive')
+  const txtFonte = aoVivo ? 'Planilha ao vivo' : 'Cópia local da planilha'
   const props = { model, sessao, sel, decidir, setSugestoes, cobHoje, cobSel, escolhidas, nDecididas, ir }
 
   return (
@@ -206,13 +209,13 @@ export default function App() {
           <button className="chip busca" onClick={() => setPalette(true)}>
             ⌕ Buscar <kbd>Ctrl K</kbd>
           </button>
-          <span className="chip" title="Salvamento automático">
+          <span className="chip salvo" title={txtSalvo}>
             <span className={`led ${salvo === 'ok' ? '' : salvo === 'salvando' ? 'warn' : 'off'}`} />
-            {salvo === 'ok' ? 'Tudo salvo' : salvo === 'salvando' ? 'Salvando…' : 'Erro ao salvar'}
+            <span className="txt">{txtSalvo}</span>
           </span>
-          <span className="chip" title={dados.fonte}>
-            <span className={`led ${dados.fonte.includes('Drive') ? '' : 'off'}`} />
-            {dados.fonte.includes('Drive') ? 'Planilha ao vivo' : 'Cópia local da planilha'}
+          <span className="chip fonte" title={`${txtFonte} · ${dados.fonte}`}>
+            <span className={`led ${aoVivo ? '' : 'off'}`} />
+            <span className="txt">{txtFonte}</span>
           </span>
           <span className="chip user-chip">
             <span className="avatar">{(sessao.nome || sessao.email)[0]}</span>
@@ -226,8 +229,8 @@ export default function App() {
         <div className="content">
           {sessao.modo === 'demo' && (
             <div className="banner no-print">
-              <b>Modo demonstração.</b> As escolhas ficam salvas só neste navegador. Com o Cloudflare Access
-              configurado, cada pessoa entra com o próprio e-mail e as escolhas ficam na nuvem.
+              <b>Modo demonstração.</b> As escolhas ficam salvas só neste navegador. Com o login Google (Supabase)
+              configurado, cada pessoa entra com a própria conta e as escolhas ficam na nuvem.
             </div>
           )}
           {rota === 'visao' && <Overview {...props} />}
