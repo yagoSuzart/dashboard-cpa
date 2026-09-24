@@ -11,7 +11,7 @@ const FILTROS = [
 ]
 
 export default function Curadoria({ model, sel, decidir, setSugestoes }) {
-  const [cego, setCego] = useState(true)
+  const [cego, setCego] = useState(false)
   const [agrupar, setAgrupar] = useState(false)
   const [filtro, setFiltro] = useState('todas')
   const [eixo, setEixo] = useState('')
@@ -60,8 +60,8 @@ export default function Curadoria({ model, sel, decidir, setSugestoes }) {
           <div className="eyebrow">Curadoria</div>
           <h1>Montar a base de perguntas</h1>
           <p>
-            Leia cada pergunta proposta e marque se ela entra. No modo leitura às cegas, o eixo e a dimensão aparecem
-            só depois da sua decisão — a escolha fica pela clareza da pergunta, e depois você vê o que ela cobre.
+            Leia cada pergunta proposta, veja o eixo e a dimensão que ela cobre e marque se ela entra. Se preferir decidir
+            só pela clareza da pergunta, ligue a leitura às cegas: o eixo e a dimensão aparecem depois da decisão.
           </p>
         </div>
         <div className="spacer" />

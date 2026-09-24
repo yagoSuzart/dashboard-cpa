@@ -10,7 +10,7 @@ perguntas novas que devem entrar.
 | --- | --- |
 | **Visão geral** | Números do instrumento 2026.1 e o Mapa SINAES: quantas perguntas caem em cada dimensão e quais estão pendentes. |
 | **Perguntas de hoje** | As perguntas em uso (aba *CPA Atual*), por eixo/dimensão ou por item da pesquisa. |
-| **Montar a base** | Cada pessoa marca as propostas (aba *Perguntas Propostas por Eixo*) como **Entra**, **Dúvida** ou **Não entra**, com comentário. No modo *leitura às cegas* o eixo e a dimensão só aparecem depois da decisão. Dá para **editar a redação** (o original da planilha fica guardado ao lado) e **criar perguntas** escolhendo eixo, dimensão e tipo de resposta. |
+| **Montar a base** | Cada pessoa marca as propostas (aba *Perguntas Propostas por Eixo*) como **Entra**, **Dúvida** ou **Não entra**, com comentário. O eixo e a dimensão aparecem em cada proposta; quem preferir pode ligar a *leitura às cegas*, que só mostra os dois depois da decisão. Dá para **editar a redação** (o original da planilha fica guardado ao lado) e **criar perguntas** escolhendo eixo, dimensão e tipo de resposta. |
 | **Cobertura e pendências** | Perguntas em uso + escolhidas: mostra se algum eixo ou dimensão ficou de fora. |
 | **Outras abas (setores)** | NEAD, Onboarding, Empregabilidade etc., para não repetir perguntas. Também dá para marcar “Entra”. |
 | **Relatório para o T.I** | Documento pronto (imprimir/PDF, Word ou copiar): perguntas novas, cobertura e perguntas mantidas. Textos sempre literais, como estão na planilha. |

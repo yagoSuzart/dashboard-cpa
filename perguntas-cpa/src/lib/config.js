@@ -10,7 +10,7 @@ export const SUPABASE = {
 // Informações do projeto exibidas na página "Sobre o sistema". Edite à vontade.
 export const PROJETO = {
   nome: 'Perguntas-CPA',
-  versao: '1.2',
+  versao: '1.3',
   autor: 'Yago Brito',
   cargo: 'Analista de Regulatório · CPA UniFECAF',
   nota: 'Idealizado e desenvolvido com apoio de IA (Claude Code).',
@@ -18,7 +18,15 @@ export const PROJETO = {
 
 export const NOVIDADES = [
   {
-    versao: '1.2',
+    versao: '1.3',
+    itens: [
+      'Planilha ao vivo direto do Google Drive',
+      'Em “Montar a base”, o eixo e a dimensão de cada proposta já aparecem de início (a leitura às cegas virou opcional)',
+      'Ajustes de layout: título do topo, barra superior e relatório no celular',
+    ],
+  },
+  {
+    versao: '1.3',
     itens: [
       'Login com a conta Google institucional (Supabase), sem senha nova e sem cartão de crédito',
       'Tela “Quem pode entrar” para o administrador liberar ou remover acessos pelo próprio painel',
