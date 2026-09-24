@@ -10,7 +10,7 @@ export async function onRequestGet(context) {
     const { erro } = await exigirUsuario(context)
     if (erro) return erro
   }
-  const id = context.env.DRIVE_FILE_ID
+  const id = extrairId(context.env.DRIVE_FILE_ID)
   if (!id) return new Response('DRIVE_FILE_ID não configurado', { status: 404 })
 
   const cache = caches.default
@@ -20,16 +20,33 @@ export async function onRequestGet(context) {
     return new Response(hit.body, { headers: { ...Object.fromEntries(hit.headers), 'cache-control': 'private, no-store' } })
   }
 
+  // .xlsx enviado ao Drive → drive.usercontent (confirm=t pula o aviso de antivírus);
+  // planilha nativa do Google Sheets → docs.google.com/export.
   const urls = [
-    `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`,
+    `https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`,
     `https://drive.google.com/uc?export=download&id=${id}`,
+    `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`,
   ]
+  const tentativas = []
   for (const url of urls) {
-    const res = await fetch(url, { redirect: 'follow' })
-    if (!res.ok) continue
+    let res
+    try {
+      res = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'Mozilla/5.0 (Perguntas-CPA)' } })
+    } catch (e) {
+      tentativas.push(`${new URL(url).host}: ${e.message}`)
+      continue
+    }
+    if (!res.ok) {
+      tentativas.push(`${new URL(url).host}: HTTP ${res.status}`)
+      continue
+    }
     const buf = await res.arrayBuffer()
-    const b = new Uint8Array(buf, 0, 2)
-    if (b[0] !== 0x50 || b[1] !== 0x4b) continue // não é .xlsx (ex.: página de login do Google)
+    const b = new Uint8Array(buf, 0, Math.min(2, buf.byteLength))
+    if (b[0] !== 0x50 || b[1] !== 0x4b) {
+      // não é .xlsx (ex.: página de login ou de aviso do Google)
+      tentativas.push(`${new URL(url).host}: resposta não é .xlsx (${res.headers.get('content-type') || 'sem tipo'})`)
+      continue
+    }
     const headers = {
       'content-type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'x-planilha-data': new Date().toISOString(),
@@ -40,7 +57,15 @@ export async function onRequestGet(context) {
     )
     return new Response(buf, { headers: { ...headers, 'cache-control': 'private, no-store' } })
   }
-  return new Response('Não foi possível baixar a planilha do Drive. Confira o compartilhamento do arquivo.', {
-    status: 502,
-  })
+  return new Response(
+    `Não foi possível baixar a planilha do Drive. Confira o compartilhamento do arquivo.\n\nID usado: ${id}\n${tentativas.join('\n')}`,
+    { status: 502, headers: { 'content-type': 'text/plain; charset=utf-8' } },
+  )
+}
+
+// Aceita o ID puro ou o link inteiro do Drive/Sheets colado na variável.
+function extrairId(valor) {
+  const v = (valor || '').trim()
+  const m = v.match(/\/d\/([\w-]{20,})/) || v.match(/[?&]id=([\w-]{20,})/)
+  return m ? m[1] : v
 }
