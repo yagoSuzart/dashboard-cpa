@@ -11,6 +11,8 @@ import Comentarios from './views/Comentarios.jsx'
 import Planos from './views/Planos.jsx'
 import Setores from './views/Setores.jsx'
 import Importar from './views/Importar.jsx'
+import ProximaCPA from './views/ProximaCPA.jsx'
+import { LE_PROPOSTA } from './lib/proxima.js'
 
 function lerRota() {
   const [rota = 'inicio', ...resto] = location.hash.replace(/^#\/?/, '').split('/')
@@ -95,6 +97,7 @@ export default function App() {
         { k: 'questionarios', t: 'Pergunta por pergunta' },
         { k: 'comentarios', t: 'Comentários' },
         { k: 'planos', t: 'Planos de ação' },
+        ...(LE_PROPOSTA.includes(perfil.role) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
         ...(perfil.global ? [{ k: 'setores', t: 'Setores' }] : []),
         ...(podeImportar ? [{ k: 'importar', t: 'Importar CPA' }] : []),
       ]
@@ -130,6 +133,7 @@ export default function App() {
         {atual === 'planos' && <Planos {...props} />}
         {atual === 'setores' && <Setores {...props} />}
         {atual === 'importar' && <Importar {...props} />}
+        {atual === 'proxima' && <ProximaCPA {...props} />}
       </main>
     </>
   )
