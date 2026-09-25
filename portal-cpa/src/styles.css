@@ -367,3 +367,5 @@ h1 { font-weight: 600; letter-spacing: -0.02em; }
 .h1-grande { font-size: 46px; }
 .cab h1 { font-size: clamp(28px, 3.2vw, 42px); line-height: 1.15; }
 .eyebrow { letter-spacing: 0.1em; }
+/* Selos com texto longo quebram linha em vez de estourar a tela no celular */
+.selo { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
