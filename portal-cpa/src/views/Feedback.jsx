@@ -131,6 +131,13 @@ export default function Feedback({ perfil, base }) {
             {aviso && <div className={'aviso' + (aviso.tipo ? ' ' + aviso.tipo : '')} role={aviso.tipo === 'erro' ? 'alert' : 'status'}>{aviso.texto}</div>}
 
             {telas.length > 0 && (
+              <div className="filtros">
+                <button type="button" className="btn escuro" onClick={() => compartilhar(telas, cursoId).catch(() => {})}>Enviar no WhatsApp</button>
+                <button type="button" className="btn" onClick={() => telas.forEach((t, i) => setTimeout(() => baixarUrl(t.url, 'CPA_' + cursoId + '_' + t.nome + '.png'), i * 400))}>Baixar todas as telas</button>
+                <span className="small muted">No celular, "Enviar no WhatsApp" abre o compartilhamento com as {telas.length} telas juntas. No computador, as telas são baixadas para você anexar.</span>
+              </div>
+            )}
+            {telas.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
                 {telas.map((t, i) => (
                   <div key={t.nome} style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 180, maxWidth: '100%' }}>
@@ -147,4 +154,25 @@ export default function Feedback({ perfil, base }) {
       </div>
     </>
   )
+}
+
+function baixarUrl(url, nome) {
+  const a = document.createElement('a')
+  a.href = url
+  a.download = nome
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
+// Compartilha as telas pelo menu do celular (WhatsApp, Instagram...). Onde não dá, baixa as imagens.
+async function compartilhar(telas, cursoId) {
+  const arquivos = await Promise.all(
+    telas.map(async (t) => new File([await (await fetch(t.url)).blob()], 'CPA_' + cursoId + '_' + t.nome + '.png', { type: 'image/png' })),
+  )
+  if (navigator.canShare?.({ files: arquivos })) {
+    await navigator.share({ files: arquivos, title: 'Resultado da CPA', text: 'O que fizemos com a sua resposta na CPA' })
+    return
+  }
+  telas.forEach((t, i) => setTimeout(() => baixarUrl(t.url, arquivos[i].name), i * 400))
 }

@@ -36,6 +36,8 @@ export function lerPlanilha(arquivo, { idsCursos, onProgresso }) {
     Papa.parse(arquivo, {
       header: true,
       skipEmptyLines: 'greedy',
+      // Planilhas salvas pelo Excel/PowerShell começam com um caractere invisível (BOM) grudado na 1ª coluna
+      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim().replace(/^"(.*)"$/, '$1'),
       chunkSize: 1024 * 1024 * 4,
       chunk: (res, parser) => {
         if (!cabecalhoConferido) {

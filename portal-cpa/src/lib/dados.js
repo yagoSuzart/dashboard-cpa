@@ -146,6 +146,11 @@ export async function resultadosGerais(ciclo) {
   return todas(() => sb.from('cpa_resultado_geral').select('*').eq('ciclo', ciclo).order('survey_id').order('pergunta_posicao'))
 }
 
+// Nota de cada professor por curso e disciplina (questionário Docente da planilha importada)
+export async function resultadosProfessores(ciclo) {
+  return todas(() => sb.from('cpa_resultado_professor').select('curso_id, disciplina, professor, n, soma').eq('ciclo', ciclo).order('curso_id').order('professor'))
+}
+
 export async function resultadosCursos(ciclo, cursos) {
   return todas(() => {
     let q = sb.from('cpa_resultado_curso').select('*').eq('ciclo', ciclo)

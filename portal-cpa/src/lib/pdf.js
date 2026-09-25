@@ -480,6 +480,6 @@ export async function baixarPdfMeuPlano({ base, perfil } = {}) {
   })
 
   pdfRodapeTodasPaginas(doc)
-  doc.save('CPA_meu_plano_' + String(perfil.nome || '').replace(/\s+/g, '_') + '.pdf')
+  doc.save('CPA_meu_plano_' + String(perfil.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.pdf')
   return 'PDF do seu plano gerado com sucesso!'
 }

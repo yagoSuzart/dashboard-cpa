@@ -4,6 +4,7 @@ import { fmtNota, fmtInt, textoComentario } from '../lib/cpa.js'
 import { cursosOrdenados, comentariosDosProfessores } from '../lib/criticos.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import { Carregando, Erro, Vazio, Paginacao } from '../components/ui.jsx'
+import { ciclosImportados, resultadosProfessores } from '../lib/dados.js'
 import { FiltroCursos } from './Executiva.jsx'
 import './resultados.css'
 
@@ -11,7 +12,28 @@ const POR_PAGINA = 8
 const DOCENCIA = 'Docência e Tutoria'
 
 // "Por professor" — como no sistema anterior, não aparece para Professor(a) Auxiliar.
-export default function Professores({ perfil, base, escopo, param }) {
+export default function Professores({ perfil, base: base0, escopo, param }) {
+  // Com a planilha da CPA importada, usa a nota de cada professor calculada dela (todos os professores
+  // identificados na pesquisa); sem importação, usa as notas por professor que já estavam no banco.
+  const [importado, setImportado] = useState(undefined)
+  useEffect(() => {
+    let vivo = true
+    ciclosImportados()
+      .then(async (cs) => {
+        if (!cs.length) return vivo && setImportado(null)
+        const linhas = await resultadosProfessores(cs[0].ciclo)
+        if (vivo) setImportado({ ciclo: cs[0].ciclo, linhas })
+      })
+      .catch(() => vivo && setImportado(null))
+    return () => {
+      vivo = false
+    }
+  }, [])
+  const base = useMemo(() => {
+    if (!importado?.linhas?.length) return { ...base0, unidadeProf: 'respondentes' }
+    const professores = importado.linhas.filter((l) => l.n > 0).map((l) => ({ curso_id: l.curso_id, nome: l.professor, disciplina: l.disciplina, nota: Number(l.soma) / l.n, respondentes: l.n }))
+    return { ...base0, professores, unidadeProf: 'respostas', cicloProf: importado.ciclo }
+  }, [base0, importado])
   const doEscopo = useMemo(() => cursosOrdenados(base, escopo), [base, escopo])
   // Abre com todos os professores; o filtro de modalidade e curso vai estreitando
   const inicial = param && escopo.includes(param) ? param : ''
@@ -151,7 +173,7 @@ function UmCurso({ curso, base }) {
             {!lista.length && <Vazio>Nenhum professor encontrado com esse nome neste curso.</Vazio>}
             {!verTodos && <Paginacao pagina={pag} total={lista.length} porPagina={POR_PAGINA} onPagina={setPagina} />}
             {visiveis.map((p, i) => (
-              <CartaoProfessor key={p.nome + p.disciplina + i} p={p} comentarios={coment ? porProf[p.nome] || [] : null} />
+              <CartaoProfessor key={p.nome + p.disciplina + i} p={p} unidade={base.unidadeProf} comentarios={coment ? porProf[p.nome] || [] : null} />
             ))}
             {!verTodos && <Paginacao pagina={pag} total={lista.length} porPagina={POR_PAGINA} onPagina={setPagina} />}
           </section>
@@ -161,7 +183,7 @@ function UmCurso({ curso, base }) {
   )
 }
 
-function CartaoProfessor({ p, comentarios }) {
+function CartaoProfessor({ p, comentarios, unidade }) {
   const [aberto, setAberto] = useState(false)
   const [pagina, setPagina] = useState(0)
   const meta = (c) => (c.turma ? 'Turma ' + c.turma : '')
@@ -171,7 +193,7 @@ function CartaoProfessor({ p, comentarios }) {
       <div className="cabeca">
         <div>
           <h3>{p.nome}</h3>
-          <div className="small muted">{p.disciplina || '—'} · {fmtInt(p.respondentes)} respondentes</div>
+          <div className="small muted">{p.disciplina || '—'} · {fmtInt(p.respondentes)} {unidade}</div>
         </div>
         <span className="num">{fmtNota(p.nota)}</span>
       </div>
@@ -244,6 +266,7 @@ function TodosProfessores({ base, cursos, onCurso }) {
         <div className="card res-kpi"><span className="l">Professores avaliados</span><span className="v grande">{fmtInt(lista.length)}</span></div>
         <div className="card res-kpi"><span className="l">Cursos com avaliação por professor</span><span className="v grande">{fmtInt(cursos.length - semProfessor)}</span></div>
       </section>
+      {base.cicloProf && <p className="small muted">Notas por professor calculadas da planilha da CPA importada (ciclo {base.cicloProf}), no questionário Docente.</p>}
       {semProfessor > 0 && (
         <p className="small muted">
           {fmtInt(semProfessor)} curso(s) deste recorte não identificam o professor na pesquisa (EAD e Semipresencial avaliam Docência e Tutoria de forma geral).
@@ -264,7 +287,7 @@ function TodosProfessores({ base, cursos, onCurso }) {
                 style={{ display: 'flex', gap: 12, alignItems: 'center', border: 0, background: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', width: '100%' }}>
                 <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <b>{p.nome}</b>
-                  <span className="small muted">{p.avaliacoes.length} avaliação(ões) · {fmtInt(p.respondentes)} respondentes</span>
+                  <span className="small muted">{p.avaliacoes.length} avaliação(ões) · {fmtInt(p.respondentes)} {base.unidadeProf}</span>
                 </span>
                 <span className="num" style={{ fontSize: 26 }}>{fmtNota(p.media)}</span>
               </button>
@@ -272,7 +295,7 @@ function TodosProfessores({ base, cursos, onCurso }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--line)', paddingTop: 8 }}>
                   {p.avaliacoes.map((a, i) => (
                     <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span className="small" style={{ flex: 1, minWidth: 200 }}>{rotuloCurso(porId[a.curso_id])} · {a.disciplina || '—'} · {fmtInt(a.respondentes)} respondentes</span>
+                      <span className="small" style={{ flex: 1, minWidth: 200 }}>{rotuloCurso(porId[a.curso_id])} · {a.disciplina || '—'} · {fmtInt(a.respondentes)} {base.unidadeProf}</span>
                       <b className="num">{fmtNota(a.nota)}</b>
                       <button type="button" className="btn sm" onClick={() => onCurso(a.curso_id)}>Ver no curso</button>
                     </div>
