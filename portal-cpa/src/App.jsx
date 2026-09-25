@@ -28,6 +28,19 @@ import { LE_PROPOSTA } from './lib/proxima.js'
 import { podeVerAgenda, verificarCumprimentoEntrega } from './lib/agenda.js'
 import { ESCREVE_PLANO } from './lib/planos.js'
 
+// Logo depois do login, o banco às vezes recusa a chave por um ou dois segundos de diferença
+// entre os relógios dos servidores ("JWT issued at future"). Espera e tenta de novo.
+async function comNovaTentativa(fn, tentativas = 4) {
+  for (let i = 0; ; i++) {
+    try {
+      return await fn()
+    } catch (e) {
+      if (i >= tentativas || !/issued at future|JWT/i.test(String(e?.message || e))) throw e
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)))
+    }
+  }
+}
+
 function lerRota() {
   const [rota = 'inicio', ...resto] = location.hash.replace(/^#\/?/, '').split('/')
   return { rota: rota || 'inicio', param: resto.join('/') ? decodeURIComponent(resto.join('/')) : '' }
@@ -61,7 +74,7 @@ export default function App() {
   useEffect(() => {
     if (!userId) return
     let vivo = true
-    Promise.all([carregarPerfil(), carregarBase()])
+    comNovaTentativa(() => Promise.all([carregarPerfil(), carregarBase()]))
       .then(([p, b]) => {
         if (!vivo) return
         setPerfil(p)
@@ -87,7 +100,10 @@ export default function App() {
     return (
       <div className="conteudo">
         <Erro erro={erro} />
-        <button className="btn" onClick={() => sair()}>Sair</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn escuro" onClick={() => location.reload()}>Tentar de novo</button>
+          <button className="btn" onClick={() => sair()}>Sair</button>
+        </div>
       </div>
     )
   if (!perfil || !base) return <Carregando texto="Carregando os resultados da CPA…" />
