@@ -33,9 +33,9 @@ Legenda: ⬜ a fazer · 🟨 feito, aguardando conferência · ✅ conferido no 
 
 ## Pendências encontradas na análise (resolver antes da troca)
 
-- ⬜ **Comentários: 23.184 no `index.html` × 22.309 no banco.** Causa encontrada: os 875 que faltam são todos de
-  *Docência e Tutoria*, com professor, e têm menos de 10 caracteres ("." sozinho em 420 deles, "ok", "bom"...). Eles
-  ficaram de fora quando o banco foi carregado. Falta a decisão de inserir esses 875 no banco, como os alunos escreveram.
+- ✅ **Comentários: 23.184 no `index.html` × 22.309 no banco.** Os 875 que faltam são todos de *Docência e Tutoria* e
+  têm no máximo 3 caracteres ("." sozinho em 420 deles, "Bom", "ok", "top", "..." e letras soltas). Decisão da CPA
+  (25/09/2026): ficam de fora, por não terem conteúdo.
 - 🟨 **"Ações da direção" do(a) diretor(a) de núcleo não estavam sendo salvas** (o sistema anterior gravava numa tabela
   `app_storage` que não existe). Agora têm tabela própria, `acoes_direcao`, com regras de acesso.
 - ⬜ **Alunos respondentes por curso e notas de Lives e Tutoria** só existem dentro do `index.html` antigo (números por
