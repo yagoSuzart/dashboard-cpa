@@ -38,7 +38,7 @@ export default function Login({ onSolicitar }) {
           <img src="/logo-unifecaf-branco.png" alt="UniFECAF" style={{ width: 168 }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
             <div className="eyebrow" style={{ color: '#9FE0B8' }}>Comissão Própria de Avaliação</div>
-            <h1>A voz dos alunos, transformada em ação.</h1>
+            <h1>A voz da comunidade acadêmica.</h1>
             <div className="stats">
               <div><b>Resultados</b><span>por curso, turma e pergunta</span></div>
               <div><b>Comentários</b><span>como os alunos escreveram</span></div>
