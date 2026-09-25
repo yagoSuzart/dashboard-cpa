@@ -1,0 +1,909 @@
+{
+ "ciclo": "2026.1",
+ "fonte": "Planilha de respostas da CPA 2026.1 (CPA.csv) + eixo e dimensão da planilha \"CPA Atual (por eixo)\"",
+ "perguntas": [
+  {
+   "id": "18:1",
+   "questionario_id": "satisfacao_geral",
+   "posicao": 1,
+   "texto": "Recomenda a UniFECAF para um amigo ou familiar",
+   "tipo": "nota_0a10",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 1,
+   "dimensao": 8
+  },
+  {
+   "id": "18:2",
+   "questionario_id": "satisfacao_geral",
+   "posicao": 2,
+   "texto": "Avalia o suporte e a gestão da coordenação do seu curso",
+   "tipo": "nota_0a10",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 4,
+   "dimensao": 6
+  },
+  {
+   "id": "18:3",
+   "questionario_id": "satisfacao_geral",
+   "posicao": 3,
+   "texto": "Avalia a qualidade e didática dos professores",
+   "tipo": "nota_0a10",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {
+    "SEMIPRESENCIAL": "Professores da UniFECAF"
+   },
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "20:1",
+   "questionario_id": "politicas_academicas",
+   "posicao": 1,
+   "texto": "Acolhimento da UniFECAF em relação às suas necessidades como estudante",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 9
+  },
+  {
+   "id": "20:2",
+   "questionario_id": "politicas_academicas",
+   "posicao": 2,
+   "texto": "Atividades extracurriculares relativos ao seu curso (cursos de extensão, visitas técnicas, eventos, etc..)",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "20:3",
+   "questionario_id": "politicas_academicas",
+   "posicao": 3,
+   "texto": "Comunicação entre alunos e coordenador",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 4
+  },
+  {
+   "id": "20:4",
+   "questionario_id": "politicas_academicas",
+   "posicao": 4,
+   "texto": "Publicações e conteúdos nas redes sociais da UniFECAF (Insta, Face, LinkedIn e TikTok)",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 4
+  },
+  {
+   "id": "20:5",
+   "questionario_id": "politicas_academicas",
+   "posicao": 5,
+   "texto": "Atuação da UniFECAF em projetos sociais e ajuda à comunidade",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 2,
+   "dimensao": 3
+  },
+  {
+   "id": "20:6",
+   "questionario_id": "politicas_academicas",
+   "posicao": 6,
+   "texto": "Inovação e novas tecnologias usadas para facilitar seu aprendizado",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "20:7",
+   "questionario_id": "politicas_academicas",
+   "posicao": 7,
+   "texto": "Deixe aqui seu comentário sobre as políticas acadêmicas da UniFECAF",
+   "tipo": "aberta",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {
+    "SEMIPRESENCIAL": "Comentarios"
+   },
+   "eixo": 3,
+   "dimensao": null
+  },
+  {
+   "id": "21:1",
+   "questionario_id": "politicas_de_gestao",
+   "posicao": 1,
+   "texto": "Abertura e canais de participação dos alunos junto a coordenação do curso",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 4,
+   "dimensao": 6
+  },
+  {
+   "id": "21:2",
+   "questionario_id": "politicas_de_gestao",
+   "posicao": 2,
+   "texto": "Atendimento e suporte oferecido pela coordenação do seu curso",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 4,
+   "dimensao": 6
+  },
+  {
+   "id": "21:3",
+   "questionario_id": "politicas_de_gestao",
+   "posicao": 3,
+   "texto": "Facilidade de encontrar ou agendar um horário com a coordenação do seu curso",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 4,
+   "dimensao": 6
+  },
+  {
+   "id": "21:4",
+   "questionario_id": "politicas_de_gestao",
+   "posicao": 4,
+   "texto": "Frequência e transparência das reuniões entre a coordenação e os representantes de turma",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 4,
+   "dimensao": 6
+  },
+  {
+   "id": "21:5",
+   "questionario_id": "politicas_de_gestao",
+   "posicao": 5,
+   "texto": "Vínculo e facilidade de diálogo entre você e o(a) coordenador(a) do curso",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 4,
+   "dimensao": 6
+  },
+  {
+   "id": "21:6",
+   "questionario_id": "politicas_de_gestao",
+   "posicao": 6,
+   "texto": "Deixe aqui seus comentários sobre a gestão e a coordenação do seu curso",
+   "tipo": "aberta",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {
+    "SEMIPRESENCIAL": "Comentarios"
+   },
+   "eixo": 4,
+   "dimensao": 6
+  },
+  {
+   "id": "22:1",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 1,
+   "texto": "Serviço de portaria",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:2",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 2,
+   "texto": "Acessibilidade das instalações",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:3",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 3,
+   "texto": "Atendimento da biblioteca",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:4",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 4,
+   "texto": "Espaço físico da biblioteca",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:5",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 5,
+   "texto": "Acervo físico e virtual da biblioteca",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:6",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 6,
+   "texto": "Atendimento das cantinas",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:7",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 7,
+   "texto": "Higiene e limpeza das cantinas",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:8",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 8,
+   "texto": "Preço dos produtos das cantinas",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:9",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 9,
+   "texto": "Qualidade e variedade dos produtos das cantinas",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:10",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 10,
+   "texto": "Atendimento do Departamento de Tecnologia da Informação (TI)",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:11",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 11,
+   "texto": "Qualidade dos Laboratórios de Informática",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:12",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 12,
+   "texto": "Quantidade de computadores",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:13",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 13,
+   "texto": "Qualidade da conexão à internet sem fio (Wi‑Fi)",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:14",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 14,
+   "texto": "Qualidade dos Laboratórios Específicos",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:15",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 15,
+   "texto": "Qualidade das salas de aula",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:16",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 16,
+   "texto": "Limpeza das salas de aula",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:17",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 17,
+   "texto": "Higiene e limpeza dos banheiros",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:18",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 18,
+   "texto": "Portal do aluno UniFECAF ONE",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "22:19",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 19,
+   "texto": "Atendimento do setor Agiliza",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 9
+  },
+  {
+   "id": "22:20",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 20,
+   "texto": "Atendimento do setor de Carreiras",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 9
+  },
+  {
+   "id": "22:21",
+   "questionario_id": "infraestrutura_e_atendimento",
+   "posicao": 21,
+   "texto": "Deixe aqui seus comentários sobre a infraestrutura física e os serviços da UniFECAF",
+   "tipo": "aberta",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 5,
+   "dimensao": 7
+  },
+  {
+   "id": "23:1",
+   "questionario_id": "conteudo_das_disciplinas",
+   "posicao": 1,
+   "texto": "Materiais escritos (textos, infográficos, mapas etc.)",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "23:2",
+   "questionario_id": "conteudo_das_disciplinas",
+   "posicao": 2,
+   "texto": "Conteúdo das videoaulas",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "23:3",
+   "questionario_id": "conteudo_das_disciplinas",
+   "posicao": 3,
+   "texto": "Avaliações e conteúdos apresentados",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "23:4",
+   "questionario_id": "conteudo_das_disciplinas",
+   "posicao": 4,
+   "texto": "Estudos de caso",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "23:5",
+   "questionario_id": "conteudo_das_disciplinas",
+   "posicao": 5,
+   "texto": "Deixe aqui seu comentário sobre os Conteúdos",
+   "tipo": "aberta",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:1",
+   "questionario_id": "docente",
+   "posicao": 1,
+   "texto": "Apresentação do Plano de Aprendizagem da disciplina (ementa, conteúdos, objetivos, cronograma etc)",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:2",
+   "questionario_id": "docente",
+   "posicao": 2,
+   "texto": "Aderência das atividades avaliativas aos conteúdos trabalhados em aula",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:3",
+   "questionario_id": "docente",
+   "posicao": 3,
+   "texto": "Explicação dos critérios avaliativos",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:4",
+   "questionario_id": "docente",
+   "posicao": 4,
+   "texto": "Exemplos práticos e reais utilizados para facilitar a compreensão dos conteúdos",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:5",
+   "questionario_id": "docente",
+   "posicao": 5,
+   "texto": "Dinamismo das aulas",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:6",
+   "questionario_id": "docente",
+   "posicao": 6,
+   "texto": "Utilização do AVA (Ambiente Virtual de Aprendizagem) para disponibilização de conteúdos e comunicados",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:7",
+   "questionario_id": "docente",
+   "posicao": 7,
+   "texto": "Feedbacks realizados pelo(a) professor(a) sobre as atividades e as avaliações",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:8",
+   "questionario_id": "docente",
+   "posicao": 8,
+   "texto": "Abertura do(a) professor(a) para discussões e questionamentos realizados pelos alunos",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:9",
+   "questionario_id": "docente",
+   "posicao": 9,
+   "texto": "Promoção de um ambiente respeitoso e acolhedor em sala de aula",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "24:10",
+   "questionario_id": "docente",
+   "posicao": 10,
+   "texto": "Deixe aqui seu comentário sobre o(a) professor(a)",
+   "tipo": "aberta",
+   "modalidades": [
+    "PRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "25:1",
+   "questionario_id": "professores_lives",
+   "posicao": 1,
+   "texto": "Tempo de duração das lives",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "25:2",
+   "questionario_id": "professores_lives",
+   "posicao": 2,
+   "texto": "Domínio do Conteúdo pelos professores das lives",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "25:3",
+   "questionario_id": "professores_lives",
+   "posicao": 3,
+   "texto": "Organização e preparo das lives",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "25:4",
+   "questionario_id": "professores_lives",
+   "posicao": 4,
+   "texto": "Metodologias utilizadas nas lives",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "25:5",
+   "questionario_id": "professores_lives",
+   "posicao": 5,
+   "texto": "Deixe aqui seu comentário sobre as aulas ao vivo",
+   "tipo": "aberta",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "26:1",
+   "questionario_id": "tutores",
+   "posicao": 1,
+   "texto": "Tempo de resposta do tutor",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "26:2",
+   "questionario_id": "tutores",
+   "posicao": 2,
+   "texto": "Atenção e prestatividade do tutor",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "26:3",
+   "questionario_id": "tutores",
+   "posicao": 3,
+   "texto": "Conhecimento do tutor",
+   "tipo": "nota_1a5",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {
+    "EAD": "Conhecimento do tutor sobre os conteúdos"
+   },
+   "eixo": 3,
+   "dimensao": 2
+  },
+  {
+   "id": "26:4",
+   "questionario_id": "tutores",
+   "posicao": 4,
+   "texto": "Deixe aqui seu comentário sobre seu tutor",
+   "tipo": "aberta",
+   "modalidades": [
+    "EAD",
+    "PRESENCIAL",
+    "SEMIPRESENCIAL"
+   ],
+   "variantes": {},
+   "eixo": 3,
+   "dimensao": 2
+  }
+ ]
+}
