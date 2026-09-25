@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fmtNota, fmtInt, textoComentario, SENTIMENTO } from '../lib/cpa.js'
+import { fmtNota, fmtInt, textoComentario } from '../lib/cpa.js'
 import { buscarComentarios } from '../lib/dados.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import { PRIORIDADES, fmtData } from '../lib/planos.js'
@@ -203,7 +203,7 @@ export function Fluxo({ planos, titulo }) {
 function ComentariosInfra({ setorId, selecionados, onAlternar }) {
   const [busca, setBusca] = useState('')
   const [ativa, setAtiva] = useState('')
-  const [sentimento, setSentimento] = useState('')
+  const sentimento = ''
   const [pagina, setPagina] = useState(0)
   const [estado, setEstado] = useState({ chave: null })
   const chave = JSON.stringify([ativa, sentimento, pagina])
@@ -242,11 +242,6 @@ function ComentariosInfra({ setorId, selecionados, onAlternar }) {
         </div>
       </div>
       <div className="filtros">
-        <div className="seg" role="group" aria-label="Tipo de comentário">
-          {[['', 'Todos'], ['warn', 'Pedem atenção'], ['bad', 'Negativos'], ['good', 'Positivos']].map(([k, t]) => (
-            <button key={k} aria-pressed={sentimento === k} onClick={() => { setSentimento(k); setPagina(0) }}>{t}</button>
-          ))}
-        </div>
         <label className="sr-only" htmlFor="ms-busca">Buscar nos comentários</label>
         <input
           id="ms-busca"
@@ -275,7 +270,6 @@ function ComentariosInfra({ setorId, selecionados, onAlternar }) {
           <button key={c.id} type="button" className="coment nu-coment" aria-pressed={sel} onClick={() => onAlternar(txt)}>
             <p>{txt}</p>
             <span className="meta">
-              <span className={'selo ' + (SENTIMENTO[c.sentimento]?.selo || 'cinza')}>{SENTIMENTO[c.sentimento]?.rotulo || 'Comentário'}</span>
               <span>{sel ? 'Selecionado para o plano · clique para tirar' : 'Clique para anexar ao plano'}</span>
             </span>
           </button>

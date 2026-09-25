@@ -42,7 +42,7 @@
 .rank .cit.vazio { color: var(--muted); font-style: italic; }
 
 .coment.selecionavel { border: 2px solid transparent; text-align: left; width: 100%; cursor: pointer; flex-direction: row; gap: 12px; align-items: flex-start; }
-.coment.selecionavel .marca { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cfc6b3; flex-shrink: 0; display: grid; place-items: center; font-size: 13px; font-weight: 800; background: #fff; margin-top: 2px; }
+.coment.selecionavel .marca { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #c9d6e3; flex-shrink: 0; display: grid; place-items: center; font-size: 13px; font-weight: 800; background: #fff; margin-top: 2px; }
 .coment.selecionavel[aria-pressed='true'] { border-color: var(--green); background: var(--green-soft); }
 .coment.selecionavel[aria-pressed='true'] .marca { background: var(--green); border-color: var(--green); color: #fff; }
 .coment .txt-c { display: block; font-size: 15px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }

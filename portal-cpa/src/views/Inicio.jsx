@@ -46,7 +46,6 @@ export default function Inicio({ perfil, base, escopo, planos }) {
     .sort((a, b) => a.v - b.v)
     .slice(0, perfil.global ? 8 : 12)
   const totalVoz = voz ? voz.good + voz.warn + voz.bad : 0
-  const pct = (x) => (totalVoz ? Math.round((x / totalVoz) * 100) : 0)
 
   const frase = perfil.global
     ? `${fmtInt(trilho.aguardando_coordenador)} planos estão com os coordenadores e ${fmtInt(trilho.enviado)} esperam a primeira leitura.`
@@ -129,25 +128,17 @@ export default function Inicio({ perfil, base, escopo, planos }) {
           <div className="card-h">
             <div className="t">
               <h2>Voz dos alunos</h2>
-              <p className="muted small">{voz ? `${fmtInt(totalVoz)} comentários classificados.` : 'Contando os comentários…'}</p>
+              <p className="muted small">{voz ? 'O que os alunos escreveram na pesquisa.' : 'Contando os comentários…'}</p>
             </div>
             <div className="spacer" />
             <a className="btn sm" href="#/comentarios">Ler os comentários</a>
           </div>
           <Erro erro={erro} />
           {voz && (
-            <>
-              <div style={{ display: 'flex', height: 44, borderRadius: 12, overflow: 'hidden' }} aria-hidden="true">
-                <div style={{ width: pct(voz.good) + '%', background: '#1C6DB3', color: '#fff', display: 'flex', alignItems: 'center', paddingLeft: 14, fontWeight: 700 }}>{pct(voz.good)}%</div>
-                <div style={{ width: pct(voz.warn) + '%', background: '#E7B75A', color: '#3A2A06', display: 'flex', alignItems: 'center', paddingLeft: 14, fontWeight: 700 }}>{pct(voz.warn)}%</div>
-                <div style={{ width: pct(voz.bad) + '%', background: '#8E3413' }} />
-              </div>
-              <div className="grid3">
-                <div className="kpi"><span className="v">{fmtInt(voz.good)}</span><span className="l">positivos</span></div>
-                <div className="kpi"><span className="v">{fmtInt(voz.warn)}</span><span className="l">pedem atenção</span></div>
-                <div className="kpi"><span className="v">{fmtInt(voz.bad)}</span><span className="l">negativos</span></div>
-              </div>
-            </>
+            <div className="kpi">
+              <span className="v">{fmtInt(totalVoz)}</span>
+              <span className="l">comentários escritos pelos alunos, exatamente como foram escritos. Use a busca por palavras-chave para encontrar os temas.</span>
+            </div>
           )}
         </div>
 

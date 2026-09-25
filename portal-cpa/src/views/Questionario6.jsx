@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SATISFACAO } from '../lib/config.js'
 import { carregarTurmas } from '../lib/dados.js'
-import { fmtInt, textoComentario, SENTIMENTO } from '../lib/cpa.js'
+import { fmtInt, textoComentario } from '../lib/cpa.js'
 import { cursosOrdenados, comentariosQuestionario, QUESTIONARIOS } from '../lib/criticos.js'
 import { Anel, Carregando, Erro, Vazio, Paginacao } from '../components/ui.jsx'
 import { FiltroCursos } from './Executiva.jsx'
@@ -163,7 +163,6 @@ function ComentariosSelecionaveis({ cursoId, categoria, turma, selecionados, onA
             <span className="corpo-c">
               <span className="txt-c">{textoComentario(c.texto)}</span>
               <span className="meta">
-                <span className={'selo ' + (SENTIMENTO[c.sentimento]?.selo || 'cinza')}>{SENTIMENTO[c.sentimento]?.rotulo || c.sentimento}</span>
                 {c.turma && <span>Turma {c.turma}</span>}
                 {c.professor && <span>· {c.professor}</span>}
               </span>

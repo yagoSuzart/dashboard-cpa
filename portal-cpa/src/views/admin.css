@@ -3,7 +3,7 @@
 .adm-link { border: 0; background: none; color: var(--navy); font-weight: 600; font-size: 13px; padding: 0; cursor: pointer; }
 .adm-checks {
   display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto;
-  border: 1px solid #d6cebd; border-radius: 12px; padding: 10px 12px; background: var(--paper-2);
+  border: 1px solid #c9d6e3; border-radius: 12px; padding: 10px 12px; background: var(--paper-2);
 }
 .adm-checks label { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; font-weight: 400; color: var(--ink); padding: 3px 0; cursor: pointer; }
 .adm-checks input { width: 16px; height: 16px; margin-top: 2px; flex: none; }

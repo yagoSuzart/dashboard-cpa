@@ -1,21 +1,24 @@
 :root {
-  --paper: #f3efe6;
-  --paper-2: #f7f4ec;
-  --sand: #e9e3d6;
-  --line: #e2dbcc;
-  --line-2: #efe9dd;
-  --track: #f1ece1;
+  /* Cores da UniFECAF (tiradas da logo): azul-escuro #004A7C, azul #0062AB, verde #2AA862 */
+  --brand-blue: #0062ab;
+  --brand-green: #2aa862;
+  --paper: #ffffff;
+  --paper-2: #f4f8fc;
+  --sand: #e8f1fa;
+  --line: #d9e4ef;
+  --line-2: #edf3f9;
+  --track: #edf2f7;
   --card: #ffffff;
-  --ink: #0f1e33;
-  --ink-2: #3b475a;
-  --muted: #5b6474;
-  --navy: #12395e;
-  --blue: #1c6db3;
-  --blue-soft: #d3e5f6;
-  --blue-ink: #0b3a63;
-  --green: #17804a;
-  --green-soft: #ddf1e4;
-  --green-ink: #0e5530;
+  --ink: #0b2540;
+  --ink-2: #34475c;
+  --muted: #5a6a7c;
+  --navy: #004a7c;
+  --blue: #0062ab;
+  --blue-soft: #dcebf8;
+  --blue-ink: #003a63;
+  --green: #1f8f50;
+  --green-soft: #dff3e7;
+  --green-ink: #0f5a31;
   --mint: #9fe0b8;
   --ember: #c2571f;
   --ember-soft: #fbe7da;
@@ -52,7 +55,7 @@ p { margin: 0; }
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 22px;
   padding: 0 40px; height: 72px;
-  background: rgba(243, 239, 230, 0.92); backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
 .top .logo { width: 112px; display: block; }
@@ -94,19 +97,19 @@ p { margin: 0; }
 /* ---------- botões e campos ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #cfc6b3;
+  height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #c9d6e3;
   background: #fff; color: var(--ink); font-weight: 600; font-size: 14px; text-decoration: none; white-space: nowrap;
 }
 .btn:hover { background: var(--paper-2); }
 .btn.escuro { background: var(--ink); border-color: var(--ink); color: #fff; }
-.btn.escuro:hover { background: #1b2c45; }
+.btn.escuro:hover { background: #0a3a63; }
 .btn.claro { background: #fff; border-color: #fff; color: var(--ink); font-weight: 700; }
 .btn.menta { background: var(--mint); border-color: var(--mint); color: var(--ink); font-weight: 800; }
 .btn.sm { height: 36px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip-btn {
-  height: 38px; padding: 0 15px; border-radius: 999px; border: 1px solid #cfc6b3;
+  height: 38px; padding: 0 15px; border-radius: 999px; border: 1px solid #c9d6e3;
   background: transparent; color: var(--ink); font-size: 13px; font-weight: 600; white-space: nowrap;
 }
 .chip-btn[aria-pressed='true'], .chip-btn[aria-selected='true'] { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 700; }
@@ -114,9 +117,9 @@ p { margin: 0; }
 .seg button { height: 34px; padding: 0 12px; border-radius: 9px; border: 0; background: transparent; color: var(--ink-2); font-size: 13px; font-weight: 600; }
 .seg button[aria-pressed='true'] { background: #fff; color: var(--ink); font-weight: 700; }
 .campo { display: flex; flex-direction: column; gap: 6px; }
-.campo label { font-size: 13px; font-weight: 600; color: #2b3647; }
+.campo label { font-size: 13px; font-weight: 600; color: #26384d; }
 .campo input, .campo select, .input {
-  height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #d6cebd; background: #fff; font-size: 15px; color: var(--ink);
+  height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #c9d6e3; background: #fff; font-size: 15px; color: var(--ink);
 }
 select.input { padding: 0 10px; }
 .filtros { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -151,7 +154,7 @@ select.input { padding: 0 10px; }
 
 /* distribuição das respostas de uma pergunta */
 .pergunta { display: grid; grid-template-columns: 36px minmax(0, 1fr) 100px; gap: 16px; padding: 18px 0; border-top: 1px solid var(--line-2); }
-.pergunta.pior { background: linear-gradient(90deg, #fff8f3, #fff); margin: 0 -14px; padding: 18px 14px; border-radius: 14px; }
+.pergunta.pior { background: linear-gradient(90deg, #f3f8fd, #fff); margin: 0 -14px; padding: 18px 14px; border-radius: 14px; }
 .pergunta .pos { width: 32px; height: 32px; border-radius: 10px; background: var(--track); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .pergunta .txt { font-size: 15px; line-height: 1.5; font-weight: 600; }
 .pergunta .dir { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
@@ -159,7 +162,7 @@ select.input { padding: 0 10px; }
 .dist { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--track); margin-top: 10px; }
 .dist span { display: block; height: 100%; }
 .contagens { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--ink-2); }
-.contagens span { padding: 3px 9px; border-radius: 999px; background: var(--paper-2); border: 1px solid #e8e1d2; }
+.contagens span { padding: 3px 9px; border-radius: 999px; background: var(--paper-2); border: 1px solid #dde7f0; }
 .contagens span.baixo { color: var(--ember-ink); font-weight: 700; }
 .contagens span.alto { color: var(--blue-ink); font-weight: 700; }
 
@@ -200,7 +203,7 @@ button.etapa[aria-pressed='true'] { border-color: var(--ink); }
 .coment p { font-size: 15px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
 .coment .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .plano-item { padding: 16px 18px; border-radius: 16px; border: 1px solid var(--line); background: #fff; display: flex; flex-direction: column; gap: 8px; text-align: left; width: 100%; }
-button.plano-item:hover { border-color: #cfc6b3; background: var(--paper-2); }
+button.plano-item:hover { border-color: #c9d6e3; background: var(--paper-2); }
 .plano-item b { font-size: 15px; }
 .paginacao { display: flex; gap: 10px; align-items: center; justify-content: flex-end; font-size: 13px; color: var(--muted); }
 
@@ -275,7 +278,7 @@ button.plano-item:hover { border-color: #cfc6b3; background: var(--paper-2); }
 .links-top { display: flex; gap: 14px; }
 .links-top a { font-size: 13px; font-weight: 600; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
 .links-top a:hover { color: var(--ink); text-decoration: underline; }
-.menu { position: sticky; top: 72px; z-index: 9; display: flex; gap: 10px 22px; flex-wrap: wrap; padding: 10px 40px; background: rgba(243, 239, 230, 0.96); border-bottom: 1px solid var(--line); }
+.menu { position: sticky; top: 72px; z-index: 9; display: flex; gap: 10px 22px; flex-wrap: wrap; padding: 10px 40px; background: rgba(255, 255, 255, 0.97); border-bottom: 1px solid var(--line); }
 .menu-grupo { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; padding: 4px; border-radius: 999px; background: var(--sand); }
 .menu-g { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 8px 0 10px; }
 .menu a { padding: 7px 13px; border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
@@ -288,3 +291,15 @@ button.plano-item:hover { border-color: #cfc6b3; background: var(--paper-2); }
 }
 .btn { max-width: 100%; }
 @media (max-width: 860px) { .btn, .btn.sm { white-space: normal; height: auto; min-height: 36px; padding-top: 6px; padding-bottom: 6px; text-align: center; } }
+
+/* Faixa com as cores da marca no topo e o nome da Comissão ao lado da logo */
+.top { border-top: 4px solid transparent; border-image: linear-gradient(90deg, var(--navy) 0 55%, var(--brand-blue) 55% 80%, var(--brand-green) 80% 100%) 1; }
+.marca { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; min-width: 0; }
+.marca .sep { width: 1px; height: 34px; background: var(--line); }
+.marca .nome { display: flex; flex-direction: column; line-height: 1.15; }
+.marca .nome b { font-size: 14px; color: var(--navy); font-weight: 800; letter-spacing: 0.01em; }
+.marca .nome span { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--green); }
+.menu-grupo { background: var(--sand); }
+.menu a[aria-current='page'] { background: var(--navy); }
+.card.escuro { background: var(--navy); border-color: var(--navy); }
+@media (max-width: 860px) { .marca .sep, .marca .nome span { display: none; } .marca .nome b { font-size: 12px; } }

@@ -41,7 +41,9 @@ export default function Questionarios({ perfil, base, escopo, planos, param, rec
       <div className="card" style={{ alignItems: 'flex-start' }}>
         <div className="eyebrow">Pergunta por pergunta</div>
         <h2>Os resultados por pergunta ainda não foram importados.</h2>
-        <p className="muted">Assim que a planilha de respostas da CPA for importada, cada pergunta aparece aqui com as notas dos alunos.</p>
+        <p className="muted">Esta tela mostra a nota de cada pergunta, com quantos alunos deram cada nota. Ela é alimentada pela planilha completa de
+          respostas da pesquisa (o CPA.csv), que precisa ser importada uma vez por ciclo em <b>Importar respostas</b>.</p>
+        {!IMPORTA_ROLES.includes(perfil.role) && <p className="muted small">A Coordenação da CPA faz a importação.</p>}
         {IMPORTA_ROLES.includes(perfil.role) && <a className="btn escuro" href="#/importar">Importar a planilha</a>}
       </div>
     )

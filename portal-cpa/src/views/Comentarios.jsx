@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DIMENSOES, MODALIDADE_LABEL } from '../lib/config.js'
 import { buscarComentarios } from '../lib/dados.js'
-import { textoComentario, fmtInt, SENTIMENTO } from '../lib/cpa.js'
+import { textoComentario, fmtInt } from '../lib/cpa.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import { Erro, Vazio, Paginacao, Carregando } from '../components/ui.jsx'
 
@@ -48,7 +48,8 @@ export default function Comentarios({ base, escopo, perfil }) {
 }
 
 export function ListaComentarios({ cursos, categoria = null, professor = null, base, porPagina = 20, selecionados, onAlternar }) {
-  const [sentimento, setSentimento] = useState('warn')
+  // Sem classificação automática (marcava elogios como "pedem atenção"): mostra todos, e a busca filtra
+  const sentimento = ''
   const [busca, setBusca] = useState('')
   const [buscaAtiva, setBuscaAtiva] = useState('')
   const [pagina, setPagina] = useState(0)
@@ -81,11 +82,6 @@ export function ListaComentarios({ cursos, categoria = null, professor = null, b
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div className="filtros">
-        <div className="seg" role="group" aria-label="Tipo de comentário">
-          {[['warn', 'Pedem atenção'], ['bad', 'Negativos'], ['good', 'Positivos'], ['', 'Todos']].map(([k, t]) => (
-            <button key={k} aria-pressed={sentimento === k} onClick={() => { setSentimento(k); setPagina(0) }}>{t}</button>
-          ))}
-        </div>
         <form
           onSubmit={(e) => { e.preventDefault(); setBuscaAtiva(busca); setPagina(0) }}
           style={{ display: 'flex', gap: 8, flex: 1, minWidth: 240 }}
@@ -103,7 +99,7 @@ export function ListaComentarios({ cursos, categoria = null, professor = null, b
         <div key={c.id} className="coment">
           <p>{textoComentario(c.texto)}</p>
           <div className="meta">
-            <span className={'selo ' + (SENTIMENTO[c.sentimento]?.selo || 'cinza')}>{c.categoria}</span>
+            <span className="selo cinza">{c.categoria}</span>
             {rotuloCurso(porId[c.curso_id])}
             {c.turma && <span>· {c.turma}</span>}
             {c.professor && <span>· {c.professor}</span>}

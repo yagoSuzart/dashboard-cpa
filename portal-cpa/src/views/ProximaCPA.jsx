@@ -37,6 +37,11 @@ export default function ProximaCPA({ perfil, base }) {
         ) : (
           <p className="muted small">A Coordenação da CPA começa a proposta.</p>
         )}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+          <h3 style={{ fontSize: 20 }}>Perguntas propostas que já esperam por vocês ({BANCO.length})</h3>
+          <p className="muted small">Vieram do Perguntas-CPA. Depois de começar a proposta, cada uma pode ser acrescentada com um clique, em qualquer questionário.</p>
+          <ListaPropostas />
+        </div>
       </div>
     )
 
@@ -244,7 +249,7 @@ function Montar({ ctx }) {
             <h2>Acrescentar pergunta</h2>
             <p className="muted small">Entra no questionário selecionado ({questionarios.find((x) => x.id === q)?.nome || 'a definir'}).</p>
             <div className="filtros">
-              <button className="btn escuro" onClick={() => setModal('banco')}>Das perguntas propostas</button>
+              <button className="btn escuro" onClick={() => setModal('banco')}>Das perguntas propostas ({itens.filter((i) => i.banco_id).length} de {BANCO.length} já na proposta)</button>
               <button className="btn" onClick={() => setModal('nova')}>Escrever uma nova</button>
             </div>
             <NovoQuestionario ctx={ctx} onCriado={(id) => setQ(id)} />
@@ -452,10 +457,7 @@ function proximaPosicao(itens, qid) {
 
 function ModalBanco({ ctx, questionarioId, onFechar }) {
   const { perfil, dados, modo, setDados, setAviso } = ctx
-  const [busca, setBusca] = useState('')
-  const [dim, setDim] = useState('')
   const usados = new Set(dados.itens.map((i) => i.banco_id).filter(Boolean))
-  const lista = BANCO.filter((b) => (!dim || String(b.dimensao) === dim) && (!busca || b.texto.toLowerCase().includes(busca.toLowerCase())))
   const adicionar = async (b) => {
     try {
       const novo = await criarItem({
@@ -478,32 +480,7 @@ function ModalBanco({ ctx, questionarioId, onFechar }) {
           <h2 id="banco-t" style={{ flex: 1 }}>Perguntas propostas ({BANCO.length})</h2>
           <button className="btn sm" onClick={onFechar}>Fechar</button>
         </div>
-        <div className="filtros">
-          <label className="sr-only" htmlFor="bd">Dimensão</label>
-          <select id="bd" className="input" value={dim} onChange={(e) => setDim(e.target.value)}>
-            <option value="">Todas as dimensões</option>
-            {Object.entries(DIMS).map(([d, n]) => <option key={d} value={d}>D{d} · {n}</option>)}
-          </select>
-          <label className="sr-only" htmlFor="bb">Buscar</label>
-          <input id="bb" type="search" className="input" placeholder="Buscar no texto" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ flex: 1 }} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {lista.map((b) => (
-            <div key={b.id} className="coment" style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <p style={{ fontWeight: 600 }}>{b.texto}</p>
-                <div className="meta">
-                  <span className="selo cinza">{TIPOS[b.tipo] || b.tipo}</span>
-                  {b.dimensao && <span className="selo escuro">D{b.dimensao} · {DIMS[b.dimensao]}</span>}
-                  {b.ja_existe && <span>Já existe hoje? {b.ja_existe}</span>}
-                </div>
-                {b.observacao && <span className="small muted">{b.observacao}</span>}
-              </div>
-              {usados.has(b.id) ? <span className="selo verde">já na proposta</span> : <button className="btn sm escuro" onClick={() => adicionar(b)}>Acrescentar</button>}
-            </div>
-          ))}
-          {!lista.length && <Vazio>Nada encontrado.</Vazio>}
-        </div>
+        <ListaPropostas usados={usados} onAcrescentar={adicionar} />
       </div>
     </div>
   )
@@ -624,7 +601,7 @@ function Previa({ ctx }) {
 }
 
 function Resposta({ item }) {
-  if (item.tipo === 'aberta') return <div style={{ height: 56, borderRadius: 10, border: '1px solid #d6cebd', background: 'var(--paper-2)' }} aria-hidden="true" />
+  if (item.tipo === 'aberta') return <div style={{ height: 56, borderRadius: 10, border: '1px solid #c9d6e3', background: 'var(--paper-2)' }} aria-hidden="true" />
   if (item.tipo === 'multipla' || item.tipo === 'outro')
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }} aria-hidden="true">
@@ -637,7 +614,7 @@ function Resposta({ item }) {
   return (
     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }} aria-hidden="true">
       {valores.map((v) => (
-        <span key={v} style={{ minWidth: 28, height: 28, borderRadius: 8, border: '1px solid #d6cebd', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700 }}>{v}</span>
+        <span key={v} style={{ minWidth: 28, height: 28, borderRadius: 8, border: '1px solid #c9d6e3', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700 }}>{v}</span>
       ))}
     </div>
   )
@@ -722,5 +699,42 @@ function Historico({ ctx }) {
         ))}
       </div>
     </div>
+  )
+}
+
+// As perguntas propostas (do Perguntas-CPA), com filtro por dimensão e busca
+function ListaPropostas({ usados, onAcrescentar }) {
+  const [busca, setBusca] = useState('')
+  const [dim, setDim] = useState('')
+  const lista = BANCO.filter((b) => (!dim || String(b.dimensao) === dim) && (!busca || b.texto.toLowerCase().includes(busca.toLowerCase())))
+  return (
+    <>
+      <div className="filtros">
+        <label className="sr-only" htmlFor="bd">Dimensão</label>
+        <select id="bd" className="input" value={dim} onChange={(e) => setDim(e.target.value)}>
+          <option value="">Todas as dimensões</option>
+          {Object.entries(DIMS).map(([d, n]) => <option key={d} value={d}>D{d} · {n}</option>)}
+        </select>
+        <label className="sr-only" htmlFor="bb">Buscar</label>
+        <input id="bb" type="search" className="input" placeholder="Buscar no texto" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ flex: 1 }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {lista.map((b) => (
+          <div key={b.id} className="coment" style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p style={{ fontWeight: 600 }}>{b.texto}</p>
+              <div className="meta">
+                <span className="selo cinza">{TIPOS[b.tipo] || b.tipo}</span>
+                {b.dimensao && <span className="selo escuro">D{b.dimensao} · {DIMS[b.dimensao]}</span>}
+                {b.ja_existe && <span>Já existe hoje? {b.ja_existe}</span>}
+              </div>
+              {b.observacao && <span className="small muted">{b.observacao}</span>}
+            </div>
+            {onAcrescentar && (usados?.has(b.id) ? <span className="selo verde">já na proposta</span> : <button className="btn sm escuro" onClick={() => onAcrescentar(b)}>Acrescentar</button>)}
+          </div>
+        ))}
+        {!lista.length && <Vazio>Nada encontrado.</Vazio>}
+      </div>
+    </>
   )
 }

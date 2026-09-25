@@ -144,7 +144,7 @@ export default function App() {
           g: 'CPA',
           itens: [
             ...(LE_PROPOSTA.includes(r) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
-            ...(podeImportar ? [{ k: 'importar', t: 'Importar CPA' }] : []),
+            ...(podeImportar ? [{ k: 'importar', t: 'Importar respostas' }] : []),
             ...(r === 'admin' ? [{ k: 'admin', t: 'Administração' }] : []),
           ],
         },
@@ -168,7 +168,11 @@ export default function App() {
   return (
     <>
       <header className="top">
-        <a href="#/"><img className="logo" src="/logo-unifecaf.png" alt="UniFECAF · Portal CPA" /></a>
+        <a href="#/" className="marca" aria-label="UniFECAF · Comissão Própria de Avaliação · início">
+          <img className="logo" src="/logo-unifecaf.png" alt="UniFECAF" />
+          <span className="sep" aria-hidden="true" />
+          <span className="nome"><b>Comissão Própria de Avaliação</b><span>Portal CPA</span></span>
+        </a>
         <div className="spacer" />
         <div className="links-top">
           <a href={LINKS.bancoPerguntas} target="_blank" rel="noreferrer">Banco de perguntas ↗</a>

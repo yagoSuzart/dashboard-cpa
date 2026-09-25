@@ -1,5 +1,5 @@
 .ag-textarea {
-  min-height: 110px; padding: 12px 14px; border-radius: 12px; border: 1px solid #d6cebd; background: #fff;
+  min-height: 110px; padding: 12px 14px; border-radius: 12px; border: 1px solid #c9d6e3; background: #fff;
   font: inherit; font-size: 15px; color: var(--ink); resize: vertical; width: 100%; box-sizing: border-box;
 }
 .ag-form { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; }

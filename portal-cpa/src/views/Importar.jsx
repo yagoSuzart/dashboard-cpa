@@ -62,8 +62,14 @@ export default function Importar({ perfil, base }) {
     <>
       <div className="cab">
         <div className="txt">
-          <div className="eyebrow">Importar resultados da CPA</div>
+          <div className="eyebrow">Importar respostas da CPA</div>
           <h1>Planilha de respostas → nota de cada pergunta.</h1>
+          <div className="aviso" style={{ flexDirection: 'column', gap: 6 }}>
+            <b>Para que serve</b>
+            <span>Aqui entra a planilha completa de respostas da pesquisa CPA (o arquivo CSV exportado da pesquisa, o CPA.csv). É ela que
+              alimenta a tela <b>Pergunta por pergunta</b>: a nota de cada pergunta de cada questionário, quantos alunos deram cada nota,
+              por curso, turma, disciplina e professor. Faça isso uma vez a cada ciclo da CPA; importar de novo o mesmo ciclo substitui o anterior.</span>
+          </div>
           <p className="muted" style={{ fontSize: 15, lineHeight: 1.6 }}>
             O arquivo é lido e somado aqui no seu computador. CPF, RA e identificação de alunos não saem do arquivo: só vão para o
             banco os totais por pergunta, curso, turma, disciplina e professor. Antes de gravar, você confere se todas as linhas bateram.
