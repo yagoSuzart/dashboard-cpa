@@ -38,8 +38,8 @@ Legenda: ⬜ a fazer · 🟨 feito, aguardando conferência · ✅ conferido no 
   (25/09/2026): ficam de fora, por não terem conteúdo.
 - 🟨 **"Ações da direção" do(a) diretor(a) de núcleo não estavam sendo salvas** (o sistema anterior gravava numa tabela
   `app_storage` que não existe). Agora têm tabela própria, `acoes_direcao`, com regras de acesso.
-- ⬜ **Alunos respondentes por curso e notas de Lives e Tutoria** só existem dentro do `index.html` antigo (números por
-  curso, sem dado pessoal). Falta a decisão de levar esses números para o banco; até lá, esses cartões não aparecem.
+- 🟨 **Alunos respondentes por curso e notas de Lives e Tutoria** foram levados do `index.html` antigo para o banco
+  (`curso_respondentes`: 89 cursos, 9.844 alunos; `curso_lives_tutoria`: 176 notas).
 - ⬜ **Comentários por setor no PDF do setor:** o `index.html` antigo tinha só 9 frases de exemplo fixas no código. O Portal
   usa a busca por palavras-chave nos comentários de Infraestrutura.
 - 🟨 **Dados embutidos no `index.html`:** no Portal, notas e comentários vêm do banco, carregados depois do login.
@@ -85,8 +85,8 @@ Legenda: ⬜ a fazer · 🟨 feito, aguardando conferência · ✅ conferido no 
 - 🟨 Por turma (notas por turma e dimensão)
 - 🟨 Por professor: resumo, pontos a melhorar, busca, "ver todos", paginação de 8, comentários por professor
   (não aparece para professor auxiliar)
-- ⬜ Lives e tutoria (notas e respondentes)
-- ⬜ Alunos respondentes por curso
+- 🟨 Lives e tutoria (notas e respondentes)
+- 🟨 Alunos respondentes por curso
 - 🟨 Comentários: filtros de modalidade, curso e categoria; selos de sentimento (bom, atenção, ruim); marcação de
   comentários negativos por palavras-chave; paginação
 - 🟨 **Novo:** nota de cada pergunta do questionário, com a distribuição das respostas, a partir da planilha da CPA.

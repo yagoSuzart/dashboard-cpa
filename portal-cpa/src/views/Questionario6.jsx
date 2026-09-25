@@ -100,6 +100,11 @@ function UmCurso({ q, curso, base, renderPlano }) {
           <div className="eyebrow" style={{ color: '#9FE0B8' }}>{categoria}</div>
           <div className="small muted" style={{ lineHeight: 1.5 }}>{sub}</div>
         </div>
+        {base.respondentes?.[curso.id] != null && (
+          <div className="minis">
+            <div className="res-mini"><span className="n">{fmtInt(base.respondentes[curso.id])}</span><span className="l">aluno(s) responderam (contagem real)</span></div>
+          </div>
+        )}
       </section>
 
       <section className="card">

@@ -237,7 +237,7 @@ export async function baixarPdfCurso({ base, cursoId, respondentes } = {}) {
   if (!cursoId || !base.cursos.some((c) => c.id === cursoId))
     throw new Error('Selecione um curso específico (não "todos os cursos") antes de baixar o PDF.')
   const [doc, coments] = await Promise.all([novoDocumento(), amostraComentarios(cursoId)])
-  escreverCursoNoPDF(doc, base, cursoId, coments, respondentes?.[cursoId])
+  escreverCursoNoPDF(doc, base, cursoId, coments, (respondentes || base.respondentes)?.[cursoId])
   pdfRodapeTodasPaginas(doc)
   doc.save('CPA_' + cursoId + '.pdf')
   return 'PDF gerado com sucesso!'
@@ -250,7 +250,7 @@ export async function baixarPdfGeral({ base, escopo, respondentes } = {}) {
   const coments = await Promise.all(ids.map((id) => amostraComentarios(id)))
   ids.forEach((cid, idx) => {
     if (idx > 0) doc.addPage()
-    escreverCursoNoPDF(doc, base, cid, coments[idx], respondentes?.[cid])
+    escreverCursoNoPDF(doc, base, cid, coments[idx], (respondentes || base.respondentes)?.[cid])
   })
   pdfRodapeTodasPaginas(doc)
   doc.save('CPA_relatorio_geral.pdf')

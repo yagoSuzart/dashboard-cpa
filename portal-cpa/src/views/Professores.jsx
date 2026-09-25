@@ -84,6 +84,16 @@ function UmCurso({ curso, base }) {
           <span className="l">Professores avaliados</span>
           <span className="v grande">{fmtInt(profs.length)}</span>
         </div>
+        {['lives', 'tutoria'].map((t) => {
+          const x = base.livesTutoria?.[curso.id]?.[t]
+          return x ? (
+            <div key={t} className="card res-kpi">
+              <span className="l">{t === 'lives' ? 'Lives' : 'Tutoria'}</span>
+              <span className="v grande">{fmtNota(x.nota)}</span>
+              <span className="small muted">{fmtInt(x.respondentes)} respostas</span>
+            </div>
+          ) : null
+        })}
       </section>
 
       {!profs.length ? (

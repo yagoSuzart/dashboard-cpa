@@ -78,7 +78,7 @@ export async function carregarPerfil() {
 
 // Dados pequenos, carregados uma vez
 export async function carregarBase() {
-  const [cursos, categorias, setores, setorPerguntas, planos, usuarios, professores] = await Promise.all([
+  const [cursos, categorias, setores, setorPerguntas, planos, usuarios, professores, resp, lives] = await Promise.all([
     todas(() => sb.from('cursos').select('id, nome, modalidade').order('id')),
     todas(() => sb.from('curso_categorias').select('curso_id, categoria, nota').order('curso_id')),
     todas(() => sb.from('setores').select('id, nome, nota').order('id')),
@@ -91,10 +91,16 @@ export async function carregarBase() {
     ),
     todas(() => sb.from('usuarios').select('id, nome, role, setor_id').order('nome')),
     todas(() => sb.from('curso_professores').select('curso_id, nome, disciplina, nota, respondentes').order('curso_id')),
+    todas(() => sb.from('curso_respondentes').select('curso_id, respondentes').order('curso_id')),
+    todas(() => sb.from('curso_lives_tutoria').select('curso_id, tipo, nota, respondentes').order('curso_id')),
   ])
   const notas = {}
   for (const c of categorias) (notas[c.curso_id] ||= {})[c.categoria] = Number(c.nota)
-  return { cursos, notas, setores, setorPerguntas, planos, usuarios, professores }
+  // Alunos que responderam e notas de Lives e Tutoria, por curso
+  const respondentes = Object.fromEntries(resp.map((r) => [r.curso_id, r.respondentes]))
+  const livesTutoria = {}
+  for (const l of lives) (livesTutoria[l.curso_id] ||= {})[l.tipo] = { nota: Number(l.nota), respondentes: l.respondentes }
+  return { cursos, notas, setores, setorPerguntas, planos, usuarios, professores, respondentes, livesTutoria }
 }
 
 export async function carregarTurmas(cursoId) {

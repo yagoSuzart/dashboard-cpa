@@ -115,6 +115,9 @@ export default function Executiva({ perfil, base, escopo }) {
             </div>
             <div className="minis">
               <div className="res-mini"><span className="n">{fmtInt(sel.length)}</span><span className="l">curso(s) nesta visão</span></div>
+              {sel.some((id) => base.respondentes?.[id] != null) && (
+                <div className="res-mini"><span className="n">{fmtInt(sel.reduce((s, id) => s + (base.respondentes?.[id] || 0), 0))}</span><span className="l">alunos responderam</span></div>
+              )}
               <div className="res-mini">
                 <span className="n">{totalComent.chave === chaveSel && totalComent.n != null ? fmtInt(totalComent.n) : '—'}</span>
                 <span className="l">comentários recebidos</span>
