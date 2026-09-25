@@ -86,7 +86,7 @@ export async function carregarBase() {
     todas(() =>
       sb
         .from('planos_acao')
-        .select('id, tipo, curso_id, setor_id, usuario_id, categoria, titulo, descricao, indicador, prioridade, prazo, externa, area, status, comentario_revisor, revisado_por, revisado_em, validado_por, criado_em, enviado_coordenador_em, data_conclusao, comentarios_selecionados')
+        .select('*')
         .order('criado_em', { ascending: false }),
     ),
     todas(() => sb.from('usuarios').select('id, nome, role, setor_id').order('nome')),

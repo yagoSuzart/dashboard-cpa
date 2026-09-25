@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { entrar, esqueciSenha, trocarSenha } from '../lib/dados.js'
 
-export default function Login() {
+export default function Login({ onSolicitar }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [ver, setVer] = useState(false)
@@ -72,6 +72,13 @@ export default function Login() {
           {msg && <div className={'aviso ' + msg.tipo} role="alert">{msg.txt}</div>}
           <button className="btn escuro" style={{ height: 52 }} disabled={ocupado}>{ocupado ? 'Entrando…' : 'Entrar no Portal'}</button>
           <button type="button" className="btn" onClick={esqueci}>Esqueci a senha</button>
+          {onSolicitar && (
+            <p className="small muted" style={{ textAlign: 'center' }}>
+              Ainda não tem acesso?{' '}
+              <button type="button" onClick={onSolicitar} style={{ border: 0, background: 'none', color: 'var(--navy)', fontWeight: 700, padding: 0, cursor: 'pointer' }}>Solicitar acesso</button>
+            </p>
+          )}
+          <p className="small muted" style={{ textAlign: 'center' }}>No primeiro acesso, o Portal pergunta se você quer trocar a sua senha.</p>
         </form>
       </div>
     </div>

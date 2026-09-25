@@ -4,15 +4,29 @@ import { ROLE_LABELS, IMPORTA_ROLES, LINKS } from './lib/config.js'
 import { cursosDoEscopo, ehSetor, planosDoEscopo } from './lib/escopo.js'
 import { Carregando, Erro } from './components/ui.jsx'
 import Login, { TrocarSenha } from './views/Login.jsx'
+import SolicitarAcesso from './views/SolicitarAcesso.jsx'
+import PrimeiroAcesso from './views/PrimeiroAcesso.jsx'
 import Inicio from './views/Inicio.jsx'
+import Executiva from './views/Executiva.jsx'
 import Curso from './views/Curso.jsx'
+import Questionario6 from './views/Questionario6.jsx'
 import Questionarios from './views/Questionarios.jsx'
+import Professores from './views/Professores.jsx'
 import Comentarios from './views/Comentarios.jsx'
 import Planos from './views/Planos.jsx'
+import Nucleo from './views/Nucleo.jsx'
 import Setores from './views/Setores.jsx'
+import MeuSetor from './views/MeuSetor.jsx'
+import NucleoSetores from './views/NucleoSetores.jsx'
+import Agenda from './views/Agenda.jsx'
+import Feedback from './views/Feedback.jsx'
 import Importar from './views/Importar.jsx'
+import Admin from './views/Admin.jsx'
 import ProximaCPA from './views/ProximaCPA.jsx'
+import FormPlano from './components/FormPlano.jsx'
 import { LE_PROPOSTA } from './lib/proxima.js'
+import { podeVerAgenda, verificarCumprimentoEntrega } from './lib/agenda.js'
+import { ESCREVE_PLANO } from './lib/planos.js'
 
 function lerRota() {
   const [rota = 'inicio', ...resto] = location.hash.replace(/^#\/?/, '').split('/')
@@ -26,6 +40,8 @@ export default function App() {
   const [erro, setErro] = useState(null)
   const [rota, setRota] = useState(lerRota)
   const [recuperando, setRecuperando] = useState(false)
+  const [pedindo, setPedindo] = useState(false)
+  const [aviso, setAviso] = useState(null)
 
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setSessao(data.session))
@@ -58,13 +74,15 @@ export default function App() {
   }, [userId])
 
   const recarregarBase = useCallback(() => carregarBase().then(setBase), [])
+  // Depois de enviar um plano: dá baixa na cobrança de entrega pendente (como no sistema anterior)
+  const aoEnviarPlano = useCallback(() => perfil && verificarCumprimentoEntrega(perfil), [perfil])
 
-  const escopo = useMemo(() => (perfil && base && !perfil.semPerfil ? cursosDoEscopo(perfil, base.cursos) : []), [perfil, base])
-  const planos = useMemo(() => (perfil && base && !perfil.semPerfil ? planosDoEscopo(perfil, base.planos, escopo) : []), [perfil, base, escopo])
+  const escopoIds = useMemo(() => (perfil && base && !perfil.semPerfil ? cursosDoEscopo(perfil, base.cursos) : []), [perfil, base])
+  const planos = useMemo(() => (perfil && base && !perfil.semPerfil ? planosDoEscopo(perfil, base.planos, escopoIds) : []), [perfil, base, escopoIds])
 
   if (sessao === undefined) return <Carregando texto="Abrindo o Portal…" />
   if (recuperando) return <TrocarSenha onFim={() => setRecuperando(false)} />
-  if (!sessao) return <Login />
+  if (!sessao) return pedindo ? <SolicitarAcesso onVoltar={() => setPedindo(false)} /> : <Login onSolicitar={() => setPedindo(true)} />
   if (erro)
     return (
       <div className="conteudo">
@@ -85,55 +103,115 @@ export default function App() {
     )
 
   const setor = ehSetor(perfil)
-  const podeImportar = IMPORTA_ROLES.includes(perfil.role)
-  const nav = setor
+  const r = perfil.role
+  const podeImportar = IMPORTA_ROLES.includes(r)
+  const temCursos = perfil.cursos.length > 0
+  const grupos = setor
     ? [
-        { k: 'setores', t: 'Meu setor' },
-        { k: 'planos', t: 'Planos e demandas' },
+        {
+          g: 'Setor',
+          itens: [
+            ...(r === 'diretor_nucleo_setor' ? [{ k: 'nucleo-setores', t: 'Núcleo de setores' }] : [{ k: 'meu-setor', t: 'Meu setor' }]),
+            { k: 'setores', t: 'Setores' },
+            { k: 'planos', t: 'Planos e demandas' },
+          ],
+        },
       ]
     : [
-        { k: 'inicio', t: 'Visão geral' },
-        { k: 'curso', t: 'Cursos' },
-        { k: 'questionarios', t: 'Pergunta por pergunta' },
-        { k: 'comentarios', t: 'Comentários' },
-        { k: 'planos', t: 'Planos de ação' },
-        ...(LE_PROPOSTA.includes(perfil.role) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
-        ...(perfil.global ? [{ k: 'setores', t: 'Setores' }] : []),
-        ...(podeImportar ? [{ k: 'importar', t: 'Importar CPA' }] : []),
-      ]
+        {
+          g: 'Resultados',
+          itens: [
+            { k: 'inicio', t: 'Visão geral' },
+            { k: 'executiva', t: 'Visão executiva' },
+            { k: 'curso', t: 'Cursos' },
+            { k: 'q', t: 'Questionários' },
+            { k: 'questionarios', t: 'Pergunta por pergunta' },
+            ...(r !== 'professor_auxiliar' ? [{ k: 'professores', t: 'Por professor' }] : []),
+            { k: 'comentarios', t: 'Comentários' },
+            ...(r === 'diretor_nucleo' || perfil.global ? [{ k: 'nucleo', t: 'Núcleos' }] : []),
+            ...(perfil.global ? [{ k: 'setores', t: 'Setores' }] : []),
+          ],
+        },
+        {
+          g: 'Planos',
+          itens: [
+            { k: 'planos', t: 'Planos de ação' },
+            ...(podeVerAgenda(perfil) ? [{ k: 'agenda', t: r === 'admin' ? 'Agenda e prazos' : 'Agenda de entregas' }] : []),
+            ...(temCursos ? [{ k: 'feedback', t: 'Feedback para os alunos' }] : []),
+          ],
+        },
+        {
+          g: 'CPA',
+          itens: [
+            ...(LE_PROPOSTA.includes(r) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
+            ...(podeImportar ? [{ k: 'importar', t: 'Importar CPA' }] : []),
+            ...(r === 'admin' ? [{ k: 'admin', t: 'Administração' }] : []),
+          ],
+        },
+      ].filter((g) => g.itens.length)
+  const nav = grupos.flatMap((g) => g.itens)
   const atual = nav.some((n) => n.k === rota.rota) ? rota.rota : nav[0].k
-  const props = { perfil, base, escopo, planos, param: atual === rota.rota ? rota.param : '', recarregarBase }
+  const param = atual === rota.rota ? rota.param : ''
+  const props = { perfil, base, escopo: escopoIds, planos, param, recarregarBase, aoEnviarPlano }
   const iniciais = (perfil.nome || perfil.email || '?').split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  const escreve = ESCREVE_PLANO.includes(r) && temCursos
+  const [codQ, paramQ = ''] = param.split('/')
+
+  // Formulário do plano dentro de cada questionário (sem rascunho: envia direto para a análise)
+  const planoNoQuestionario = (curso, categoria, selecionados, limpar) =>
+    escreve && curso && perfil.cursos.includes(curso.id) ? (
+      <FormPlano key={curso.id + categoria} perfil={perfil} base={base} escopo={[curso]} cursoInicial={curso.id} categoriaInicial={categoria}
+        titulo={`Plano de ação · ${categoria}`} comentarios={selecionados.map((c) => c.texto)} mostrarSelecao={false}
+        onEnviado={() => { limpar(); aoEnviarPlano(); recarregarBase() }} />
+    ) : null
 
   return (
     <>
       <header className="top">
         <a href="#/"><img className="logo" src="/logo-unifecaf.png" alt="UniFECAF · Portal CPA" /></a>
-        <nav className="pilula" aria-label="Áreas do Portal">
-          {nav.map((n) => (
-            <a key={n.k} href={'#/' + n.k} aria-current={atual === n.k ? 'page' : undefined}>{n.t}</a>
-          ))}
-          <a href={LINKS.bancoPerguntas} target="_blank" rel="noreferrer">Banco de perguntas ↗</a>
-          {LINKS.sistemaAtual && <a href={LINKS.sistemaAtual} target="_blank" rel="noreferrer" title="Criar e aprovar planos, agenda, PDFs e usuários">Sistema anterior ↗</a>}
-        </nav>
         <div className="spacer" />
+        <div className="links-top">
+          <a href={LINKS.bancoPerguntas} target="_blank" rel="noreferrer">Banco de perguntas ↗</a>
+          {LINKS.sistemaAtual && <a href={LINKS.sistemaAtual} target="_blank" rel="noreferrer">Sistema anterior ↗</a>}
+        </div>
         <div className="quem">
           <div className="av" aria-hidden="true">{iniciais}</div>
           <div className="nm">
             <b>{perfil.nome}</b>
-            <span>{ROLE_LABELS[perfil.role] || perfil.role}</span>
+            <span>{ROLE_LABELS[r] || r}</span>
           </div>
         </div>
         <button className="btn sm" onClick={() => sair()}>Sair</button>
       </header>
+      <nav className="menu" aria-label="Áreas do Portal">
+        {grupos.map((g) => (
+          <div key={g.g} className="menu-grupo">
+            <span className="menu-g">{g.g}</span>
+            {g.itens.map((n) => (
+              <a key={n.k} href={'#/' + n.k} aria-current={atual === n.k ? 'page' : undefined}>{n.t}</a>
+            ))}
+          </div>
+        ))}
+      </nav>
+      <PrimeiroAcesso perfil={perfil} onFim={(x) => x?.mensagem && setAviso(x.mensagem)} />
       <main className="conteudo">
+        {aviso && <div className="aviso ok" role="status" onClick={() => setAviso(null)}>{aviso}</div>}
         {atual === 'inicio' && <Inicio {...props} />}
+        {atual === 'executiva' && <Executiva {...props} />}
         {atual === 'curso' && <Curso {...props} />}
+        {atual === 'q' && <Questionario6 {...props} key={codQ || 'cd'} cod={codQ || 'cd'} param={paramQ} renderPlano={planoNoQuestionario} />}
         {atual === 'questionarios' && <Questionarios {...props} />}
+        {atual === 'professores' && <Professores {...props} />}
         {atual === 'comentarios' && <Comentarios {...props} />}
-        {atual === 'planos' && <Planos {...props} />}
+        {atual === 'planos' && <Planos {...props} key={param} />}
+        {atual === 'nucleo' && <Nucleo {...props} />}
         {atual === 'setores' && <Setores {...props} />}
+        {atual === 'meu-setor' && <MeuSetor {...props} key={param} />}
+        {atual === 'nucleo-setores' && <NucleoSetores {...props} key={param} />}
+        {atual === 'agenda' && <Agenda {...props} key={param} />}
+        {atual === 'feedback' && <Feedback {...props} />}
         {atual === 'importar' && <Importar {...props} />}
+        {atual === 'admin' && <Admin {...props} />}
         {atual === 'proxima' && <ProximaCPA {...props} />}
       </main>
     </>

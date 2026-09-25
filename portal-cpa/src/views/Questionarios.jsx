@@ -6,6 +6,8 @@ import { rotuloCurso } from '../lib/escopo.js'
 import { Carregando, Erro, Vazio, Distribuicao, Legenda } from '../components/ui.jsx'
 import { ListaComentarios } from './Comentarios.jsx'
 import { ListaPlanos } from './Planos.jsx'
+import FormPlano from '../components/FormPlano.jsx'
+import { ESCREVE_PLANO } from '../lib/planos.js'
 
 const CAMPOS = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'nao_utilizo', 'n', 'soma']
 
@@ -26,7 +28,7 @@ function somarPorPergunta(linhas) {
   return [...m.values()]
 }
 
-export default function Questionarios({ perfil, base, escopo, planos, param }) {
+export default function Questionarios({ perfil, base, escopo, planos, param, recarregarBase, aoEnviarPlano }) {
   const [ciclos, setCiclos] = useState(null)
   const [erro, setErro] = useState(null)
   useEffect(() => {
@@ -43,10 +45,10 @@ export default function Questionarios({ perfil, base, escopo, planos, param }) {
         {IMPORTA_ROLES.includes(perfil.role) && <a className="btn escuro" href="#/importar">Importar a planilha</a>}
       </div>
     )
-  return <Painel ciclos={ciclos} perfil={perfil} base={base} escopo={escopo} planos={planos} param={param} />
+  return <Painel ciclos={ciclos} perfil={perfil} recarregarBase={recarregarBase} aoEnviarPlano={aoEnviarPlano} base={base} escopo={escopo} planos={planos} param={param} />
 }
 
-function Painel({ ciclos, perfil, base, escopo, planos, param }) {
+function Painel({ ciclos, perfil, base, escopo, planos, param, recarregarBase, aoEnviarPlano }) {
   const porId = useMemo(() => Object.fromEntries(base.cursos.map((c) => [c.id, c])), [base.cursos])
   const doEscopo = escopo.map((id) => porId[id]).filter(Boolean).sort((a, b) => rotuloCurso(a).localeCompare(rotuloCurso(b)))
   const inicial = param && escopo.includes(param) ? param : perfil.global ? 'inst' : doEscopo.length === 1 ? doEscopo[0].id : 'escopo'
@@ -141,6 +143,9 @@ function Painel({ ciclos, perfil, base, escopo, planos, param }) {
             cursosFiltro={alvo === 'inst' ? null : alvo === 'escopo' ? escopo : [alvo]}
             base={base}
             planos={planos}
+            perfil={perfil}
+            recarregarBase={recarregarBase}
+            aoEnviarPlano={aoEnviarPlano}
           />
         </>
       )}
@@ -148,9 +153,15 @@ function Painel({ ciclos, perfil, base, escopo, planos, param }) {
   )
 }
 
-function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, planos }) {
+function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, planos, perfil, recarregarBase, aoEnviarPlano }) {
   const [detalhe, setDetalhe] = useState(null)
   const [filtro, setFiltro] = useState('')
+  const [sel, setSel] = useState([])
+  const [escrevendo, setEscrevendo] = useState(false)
+  const alternar = (t) => setSel((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]))
+  const dimPlano = [...DIMENSOES, SATISFACAO].includes(pesquisa.dim) ? pesquisa.dim : SATISFACAO
+  // Escreve plano quem tem cursos vinculados (o plano é sempre de um curso)
+  const podeEscrever = !!perfil && ESCREVE_PLANO.includes(perfil.role) && perfil.cursos.length > 0
   const temProfessor = normalizar(pesquisa.pesquisa).includes('docente')
 
   useEffect(() => {
@@ -184,7 +195,7 @@ function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, pl
   const media = tot.n ? tot.soma / tot.n : null
   const escalaMax = pesquisa.escala === '0a10' ? 10 : 5
   const dimComent = pesquisa.dim && pesquisa.dim !== SATISFACAO ? pesquisa.dim : null
-  const planosDim = planos.filter((p) => p.categoria === pesquisa.dim && (!cursosFiltro || cursosFiltro.includes(p.curso_id)))
+  const planosDim = planos.filter((p) => (p.categoria || '').split(', ').includes(pesquisa.dim) && (!cursosFiltro || cursosFiltro.includes(p.curso_id)))
 
   return (
     <section className="grid-lado">
@@ -263,6 +274,8 @@ function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, pl
             professor={escolhido?.professor || null}
             base={base}
             porPagina={6}
+            selecionados={podeEscrever ? sel : undefined}
+            onAlternar={podeEscrever ? alternar : undefined}
           />
         </div>
         <div className="card">
@@ -274,8 +287,18 @@ function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, pl
             <div className="spacer" />
             <span className="selo cinza">{fmtInt(planosDim.length)}</span>
           </div>
-          <ListaPlanos planos={planosDim.slice(0, 8)} base={base} compacto />
+          <ListaPlanos planos={planosDim.slice(0, 8)} base={base} perfil={perfil} onMudou={() => recarregarBase()} compacto />
+          {podeEscrever && !escrevendo && (
+            <button className="btn escuro" style={{ alignSelf: 'flex-start' }} onClick={() => setEscrevendo(true)}>Escrever um plano para esta dimensão</button>
+          )}
         </div>
+        {podeEscrever && escrevendo && (
+          <FormPlano perfil={perfil} base={base} escopo={base.cursos.filter((c) => perfil.cursos.includes(c.id))}
+            cursoInicial={cursoId && perfil.cursos.includes(cursoId) ? cursoId : undefined}
+            categoriaInicial={dimPlano} titulo={`Plano de ação · ${dimPlano}`}
+            comentarios={sel} onRemoverComentario={alternar}
+            onEnviado={() => { setSel([]); aoEnviarPlano?.(); recarregarBase() }} />
+        )}
       </div>
     </section>
   )

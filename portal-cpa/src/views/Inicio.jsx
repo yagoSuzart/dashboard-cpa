@@ -4,6 +4,8 @@ import { mediasPorDimensao, rotuloCurso, contarTrilho } from '../lib/escopo.js'
 import { contarComentarios } from '../lib/dados.js'
 import { fmtNota, fmtInt } from '../lib/cpa.js'
 import { BarraNota, Anel, Erro } from '../components/ui.jsx'
+import AvisoEntregas from '../components/AvisoEntregas.jsx'
+import { BotaoPdf } from '../components/BotoesPdf.jsx'
 
 const QUEM = {
   enviado: 'Esperando a primeira leitura',
@@ -54,6 +56,8 @@ export default function Inicio({ perfil, base, escopo, planos }) {
 
   return (
     <>
+      <AvisoEntregas perfil={perfil} />
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}><BotaoPdf tipo="geral" base={base} escopo={escopo} /></div>
       <section className="grid-lado hero-inicio">
         <div className="cab">
           <div className="txt">

@@ -1,0 +1,25 @@
+/* Acesso e administração (Solicitar acesso, Primeiro acesso, Administração) */
+.adm-form { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 18px; }
+.adm-link { border: 0; background: none; color: var(--navy); font-weight: 600; font-size: 13px; padding: 0; cursor: pointer; }
+.adm-checks {
+  display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto;
+  border: 1px solid #d6cebd; border-radius: 12px; padding: 10px 12px; background: var(--paper-2);
+}
+.adm-checks label { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; font-weight: 400; color: var(--ink); padding: 3px 0; cursor: pointer; }
+.adm-checks input { width: 16px; height: 16px; margin-top: 2px; flex: none; }
+.adm-checks span { overflow-wrap: anywhere; }
+.adm-item { padding: 16px 18px; border-radius: 16px; border: 1px solid var(--line); background: #fff; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.adm-item .topo { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.adm-item .topo b { font-size: 15px; flex: 1; min-width: 180px; overflow-wrap: anywhere; }
+.adm-item .meta { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.adm-item .desc { font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.adm-item .desc strong { font-weight: 600; }
+.adm-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn.perigo { color: var(--ember-ink); border-color: #eab79a; }
+.btn.perigo.confirmando { background: var(--ember-soft); }
+.adm-edicao { margin-top: 4px; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper-2); display: flex; flex-direction: column; gap: 12px; }
+.adm-lista { display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 860px) {
+  .adm-filtros .input { flex: 1 1 100%; min-width: 0 !important; }
+}
+.adm-acoes .btn { white-space: normal; height: auto; min-height: 38px; padding-top: 6px; padding-bottom: 6px; text-align: center; }

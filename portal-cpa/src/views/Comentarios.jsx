@@ -47,7 +47,7 @@ export default function Comentarios({ base, escopo, perfil }) {
   )
 }
 
-export function ListaComentarios({ cursos, categoria = null, professor = null, base, porPagina = 20 }) {
+export function ListaComentarios({ cursos, categoria = null, professor = null, base, porPagina = 20, selecionados, onAlternar }) {
   const [sentimento, setSentimento] = useState('warn')
   const [busca, setBusca] = useState('')
   const [buscaAtiva, setBuscaAtiva] = useState('')
@@ -107,6 +107,12 @@ export function ListaComentarios({ cursos, categoria = null, professor = null, b
             {rotuloCurso(porId[c.curso_id])}
             {c.turma && <span>· {c.turma}</span>}
             {c.professor && <span>· {c.professor}</span>}
+            {onAlternar && (
+              <button type="button" className={'btn sm' + (selecionados?.includes(c.texto) ? ' escuro' : '')} style={{ marginLeft: 'auto', height: 30 }}
+                aria-pressed={!!selecionados?.includes(c.texto)} onClick={() => onAlternar(c.texto)}>
+                {selecionados?.includes(c.texto) ? 'Anexado ao plano ✓' : 'Usar no plano'}
+              </button>
+            )}
           </div>
         </div>
       ))}

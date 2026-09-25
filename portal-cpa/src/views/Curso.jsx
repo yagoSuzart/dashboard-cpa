@@ -6,6 +6,7 @@ import { fmtNota, fmtInt } from '../lib/cpa.js'
 import { BarraNota, Delta, Carregando, Erro, Vazio } from '../components/ui.jsx'
 import { ListaComentarios } from './Comentarios.jsx'
 import { ListaPlanos } from './Planos.jsx'
+import BotoesPdf from '../components/BotoesPdf.jsx'
 
 const CURTO = {
   'Conteúdo das Disciplinas': 'Conteúdo',
@@ -23,14 +24,14 @@ function corCelula(v) {
   return { background: '#1C6DB3', color: '#fff' }
 }
 
-export default function Curso({ perfil, base, escopo, planos, param }) {
+export default function Curso({ perfil, base, escopo, planos, param, recarregarBase }) {
   const { cursos, notas, professores } = base
   const porId = useMemo(() => Object.fromEntries(cursos.map((c) => [c.id, c])), [cursos])
   const doEscopo = escopo.map((id) => porId[id]).filter(Boolean)
   const id = param && escopo.includes(param) ? param : doEscopo.length === 1 ? doEscopo[0].id : ''
 
   if (!id) return <EscolherCurso cursos={doEscopo} notas={notas} />
-  return <UmCurso key={id} curso={porId[id]} perfil={perfil} base={base} escopo={escopo} planos={planos} professores={professores} irmaos={doEscopo.filter((c) => c.nome === porId[id].nome)} />
+  return <UmCurso key={id} curso={porId[id]} perfil={perfil} recarregarBase={recarregarBase} base={base} escopo={escopo} planos={planos} professores={professores} irmaos={doEscopo.filter((c) => c.nome === porId[id].nome)} />
 }
 
 function EscolherCurso({ cursos, notas }) {
@@ -63,7 +64,7 @@ function EscolherCurso({ cursos, notas }) {
   )
 }
 
-function UmCurso({ curso, perfil, base, escopo, planos, professores, irmaos }) {
+function UmCurso({ curso, perfil, base, escopo, planos, professores, irmaos, recarregarBase }) {
   const { notas, cursos } = base
   const [turmas, setTurmas] = useState(null)
   const [erro, setErro] = useState(null)
@@ -110,6 +111,7 @@ function UmCurso({ curso, perfil, base, escopo, planos, professores, irmaos }) {
               ))}
             </div>
           )}
+          <BotoesPdf tipos={['curso', 'geral']} base={base} escopo={escopo} cursoId={curso.id} />
         </div>
         <div className="spacer" />
         <div className="card escuro" style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12, padding: '18px 24px' }}>
@@ -184,7 +186,7 @@ function UmCurso({ curso, perfil, base, escopo, planos, professores, irmaos }) {
               <div className="spacer" />
               <span className="selo cinza">{fmtInt(planosCurso.length)}</span>
             </div>
-            <ListaPlanos planos={planosCurso.slice(0, 6)} base={base} compacto />
+            <ListaPlanos planos={planosCurso.slice(0, 6)} base={base} perfil={perfil} onMudou={() => recarregarBase()} compacto />
             {planosCurso.length > 6 && <a className="btn sm" href="#/planos">Ver todos</a>}
           </div>
         </div>

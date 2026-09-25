@@ -5,7 +5,7 @@ import { ListaPlanos } from './Planos.jsx'
 // Núcleo de Facilities agrupa Limpeza, Manutenção e Segurança (regra do sistema atual)
 const NUCLEO_SETORES = { facilities: ['limpeza', 'manutencao', 'seguranca'] }
 
-export default function Setores({ perfil, base, planos }) {
+export default function Setores({ perfil, base, planos, recarregarBase }) {
   const { setores, setorPerguntas } = base
   let visiveis = setores
   if (perfil.role === 'setor') visiveis = setores.filter((s) => s.id === perfil.setor)
@@ -48,7 +48,7 @@ export default function Setores({ perfil, base, planos }) {
         {visiveis.length === 1 && (
           <div className="card">
             <div className="card-h"><div className="t"><h2>Planos e demandas do setor</h2></div></div>
-            <ListaPlanos planos={planos} base={base} />
+            <ListaPlanos planos={planos} base={base} perfil={perfil} onMudou={() => recarregarBase()} />
           </div>
         )}
       </div>
