@@ -2,31 +2,35 @@
   /* Cores da UniFECAF (tiradas da logo): azul-escuro #004A7C, azul #0062AB, verde #2AA862 */
   --brand-blue: #0062ab;
   --brand-green: #2aa862;
-  --paper: #ffffff;
-  --paper-2: #f4f8fc;
-  --sand: #e8f1fa;
-  --line: #d9e4ef;
-  --line-2: #edf3f9;
-  --track: #edf2f7;
+  --paper: #f4f6f9;
+  --paper-2: #eef2f7;
+  --sand: #ffffff;
+  --line: #e1e7ef;
+  --line-2: #edf1f6;
+  --track: #e9eef5;
   --card: #ffffff;
-  --ink: #0b2540;
-  --ink-2: #34475c;
-  --muted: #5a6a7c;
-  --navy: #004a7c;
-  --blue: #0062ab;
-  --blue-soft: #dcebf8;
-  --blue-ink: #003a63;
-  --green: #1f8f50;
-  --green-soft: #dff3e7;
-  --green-ink: #0f5a31;
+  --ink: #191919;
+  --ink-2: #3c4a5c;
+  --muted: #5b6b7f;
+  --navy: #1a3666;
+  --blue: #0e77cc;
+  --blue-soft: #dfeefb;
+  --blue-ink: #0b4f8a;
+  --green: #17a460;
+  --green-soft: #e3f5ec;
+  --green-ink: #087543;
   --mint: #9fe0b8;
   --ember: #c2571f;
   --ember-soft: #fbe7da;
   --ember-ink: #6e2a0c;
   --ember-deep: #8e3413;
   --amber: #e7b75a;
-  --f-title: 'Fraunces', Georgia, serif;
-  --f-ui: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-title: 'Poppins', 'Segoe UI', sans-serif;
+  --f-ui: 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --navy-deep: #002156;
+  --cyan: #00b1d2;
+  --sombra: 0 8px 28px rgba(20, 45, 80, 0.08);
   --r: 20px;
 }
 
@@ -303,3 +307,63 @@ button.plano-item:hover { border-color: #c9d6e3; background: var(--paper-2); }
 .menu a[aria-current='page'] { background: var(--navy); }
 .card.escuro { background: var(--navy); border-color: var(--navy); }
 @media (max-width: 860px) { .marca .sep, .marca .nome span { display: none; } .marca .nome b { font-size: 12px; } }
+
+/* ===== Tema inspirado nos painéis da UniFECAF (só cores, fontes e acabamento) ===== */
+body { background: var(--paper); font-size: 14.5px; }
+h1, h2, h3 { font-weight: 700; letter-spacing: -0.015em; color: var(--navy); }
+.card.escuro h1, .card.escuro h2, .card.escuro h3, .card.azul h2, .card.azul h3 { color: #fff; }
+.eyebrow, .menu-g { font-family: var(--f-mono); font-weight: 500; letter-spacing: 0.14em; }
+.eyebrow { color: var(--green); }
+
+/* Topo azul-marinho com linha verde */
+.top { background: var(--navy); color: #fff; border-top: 0; border-bottom: 3px solid var(--green); border-image: none; backdrop-filter: none; }
+.top .quem .nm b { color: #fff; }
+.top .quem .nm span { color: #b9c5d6; }
+.top .quem .av { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.top .btn { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.28); color: #fff; }
+.top .btn:hover { background: rgba(255, 255, 255, 0.2); }
+.links-top a { color: #dbe4f0; }
+.links-top a:hover { color: #fff; }
+.marca .sep { background: rgba(255, 255, 255, 0.25); }
+.marca .nome b { color: #fff; font-family: var(--f-title); font-weight: 600; }
+.marca .nome span { color: var(--cyan); font-family: var(--f-mono); font-weight: 500; }
+
+/* Menu branco em pílulas */
+.menu { top: 75px; background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 2px 8px rgba(20, 45, 80, 0.04); }
+.menu-grupo { background: transparent; padding: 0; gap: 6px; }
+.menu-g { color: var(--muted); padding: 0 4px 0 0; }
+.menu a { border: 1px solid var(--line); background: #fff; color: var(--muted); font-weight: 600; transition: 0.15s; }
+.menu a:hover { border-color: var(--navy); color: var(--navy); background: #fff; }
+.menu a[aria-current='page'] { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* Cartões com sombra suave e cantos menores */
+.card { border-radius: 10px; border-color: var(--line); box-shadow: var(--sombra); }
+.card-h h2, .card > h2, .card > h3 { border-left: 4px solid var(--blue); padding-left: 10px; }
+.card.escuro, .card.azul { background: linear-gradient(135deg, var(--navy), var(--blue) 160%); border-color: transparent; }
+.card.escuro .muted, .card.azul .muted { color: #dce6f2; }
+.card.escuro .eyebrow { color: var(--cyan) !important; }
+.plano-item, .coment { border-radius: 8px; }
+
+/* Botões e campos */
+.btn { border-radius: 8px; border-color: var(--line); color: var(--navy); }
+.btn:hover { border-color: var(--blue); color: var(--blue); background: #fff; }
+.btn.escuro { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.escuro:hover { background: #0b66b0; border-color: #0b66b0; color: #fff; }
+.campo input, .campo select, .input { border-radius: 8px; border-color: var(--line); }
+.campo input:focus, .campo select:focus, .input:focus, textarea.input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(14, 119, 204, 0.1); }
+.chip-btn[aria-pressed='true'], .chip-btn[aria-selected='true'] { background: var(--blue); border-color: var(--blue); color: #fff; }
+.seg button[aria-pressed='true'] { color: var(--navy); }
+
+/* Selos em estilo etiqueta */
+.selo { font-family: var(--f-mono); font-size: 11px; font-weight: 500; }
+.selo.escuro { background: var(--navy); }
+
+/* Janelas com borda verde no topo */
+.modal { border-radius: 10px; border-top: 3px solid var(--green); box-shadow: 0 20px 70px rgba(0, 0, 0, 0.28); }
+.modal-fundo { background: rgba(16, 39, 71, 0.62); }
+
+@media (max-width: 860px) { .menu { top: auto; } .menu a { border-color: var(--line); } }
+h1 { font-weight: 600; letter-spacing: -0.02em; }
+.h1-grande { font-size: 46px; }
+.cab h1 { font-size: clamp(28px, 3.2vw, 42px); line-height: 1.15; }
+.eyebrow { letter-spacing: 0.1em; }

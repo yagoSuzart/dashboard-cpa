@@ -185,7 +185,7 @@ export default function App() {
     <>
       <header className="top">
         <a href="#/" className="marca" aria-label="UniFECAF · Comissão Própria de Avaliação · início">
-          <img className="logo" src="/logo-unifecaf.png" alt="UniFECAF" />
+          <img className="logo" src="/logo-unifecaf-branco.png" alt="UniFECAF" />
           <span className="sep" aria-hidden="true" />
           <span className="nome"><b>Comissão Própria de Avaliação</b><span>Portal CPA</span></span>
         </a>
