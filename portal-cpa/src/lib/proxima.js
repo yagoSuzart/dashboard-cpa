@@ -7,7 +7,6 @@ export const ATUAIS = instrumento.perguntas
 export const ATUAL_POR_ID = Object.fromEntries(ATUAIS.map((p) => [p.id, p]))
 export const BANCO = banco.perguntas
 export const BANCO_POR_ID = Object.fromEntries(BANCO.map((p) => [p.id, p]))
-export const FONTE_PRINCIPAL = 'Perguntas propostas'
 
 export const MODALIDADES = ['EAD', 'PRESENCIAL', 'SEMIPRESENCIAL']
 export const MOD_CURTO = { EAD: 'EAD', PRESENCIAL: 'Presencial', SEMIPRESENCIAL: 'Semi' }

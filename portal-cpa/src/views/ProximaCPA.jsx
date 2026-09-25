@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   carregarProposta, iniciarProposta, salvarItem, criarItem, apagarItem, criarQuestionario, mudarStatus, registrar,
-  ATUAL_POR_ID, BANCO, FONTE_PRINCIPAL, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
+  ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
@@ -244,7 +244,7 @@ function Montar({ ctx }) {
             <h2>Acrescentar pergunta</h2>
             <p className="muted small">Entra no questionário selecionado ({questionarios.find((x) => x.id === q)?.nome || 'a definir'}).</p>
             <div className="filtros">
-              <button className="btn escuro" onClick={() => setModal('banco')}>Do banco de perguntas</button>
+              <button className="btn escuro" onClick={() => setModal('banco')}>Das perguntas propostas</button>
               <button className="btn" onClick={() => setModal('nova')}>Escrever uma nova</button>
             </div>
             <NovoQuestionario ctx={ctx} onCriado={(id) => setQ(id)} />
@@ -452,12 +452,10 @@ function proximaPosicao(itens, qid) {
 
 function ModalBanco({ ctx, questionarioId, onFechar }) {
   const { perfil, dados, modo, setDados, setAviso } = ctx
-  const [fonte, setFonte] = useState(FONTE_PRINCIPAL)
   const [busca, setBusca] = useState('')
   const [dim, setDim] = useState('')
-  const fontes = [...new Set(BANCO.map((b) => b.fonte))]
   const usados = new Set(dados.itens.map((i) => i.banco_id).filter(Boolean))
-  const lista = BANCO.filter((b) => (!fonte || b.fonte === fonte) && (!dim || String(b.dimensao) === dim) && (!busca || b.texto.toLowerCase().includes(busca.toLowerCase())))
+  const lista = BANCO.filter((b) => (!dim || String(b.dimensao) === dim) && (!busca || b.texto.toLowerCase().includes(busca.toLowerCase())))
   const adicionar = async (b) => {
     try {
       const novo = await criarItem({
@@ -468,7 +466,7 @@ function ModalBanco({ ctx, questionarioId, onFechar }) {
         incluida: true, adicionada_pr: modo === 'pr',
       }, perfil.id)
       setDados((d) => ({ ...d, itens: [...d.itens, novo] }))
-      registrar(dados.proposta.id, perfil.id, 'acrescentou do banco', { texto: b.texto, fonte: b.fonte }, novo.id)
+      registrar(dados.proposta.id, perfil.id, 'acrescentou uma pergunta proposta', { texto: b.texto, fonte: b.fonte }, novo.id)
     } catch (e) {
       setAviso({ tipo: 'erro', txt: e.message })
     }
@@ -477,15 +475,10 @@ function ModalBanco({ ctx, questionarioId, onFechar }) {
     <div className="modal-fundo" role="dialog" aria-modal="true" aria-labelledby="banco-t" onClick={(e) => e.target === e.currentTarget && onFechar()}>
       <div className="modal" style={{ maxWidth: 860 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h2 id="banco-t" style={{ flex: 1 }}>Banco de perguntas</h2>
+          <h2 id="banco-t" style={{ flex: 1 }}>Perguntas propostas ({BANCO.length})</h2>
           <button className="btn sm" onClick={onFechar}>Fechar</button>
         </div>
         <div className="filtros">
-          <label className="sr-only" htmlFor="bf">Fonte</label>
-          <select id="bf" className="input" value={fonte} onChange={(e) => setFonte(e.target.value)}>
-            {fontes.map((f) => <option key={f} value={f}>{f} ({BANCO.filter((b) => b.fonte === f).length})</option>)}
-            <option value="">Todas as fontes ({BANCO.length})</option>
-          </select>
           <label className="sr-only" htmlFor="bd">Dimensão</label>
           <select id="bd" className="input" value={dim} onChange={(e) => setDim(e.target.value)}>
             <option value="">Todas as dimensões</option>
