@@ -114,6 +114,7 @@ export default function App() {
             <a key={n.k} href={'#/' + n.k} aria-current={atual === n.k ? 'page' : undefined}>{n.t}</a>
           ))}
           <a href={LINKS.bancoPerguntas} target="_blank" rel="noreferrer">Banco de perguntas ↗</a>
+          {LINKS.sistemaAtual && <a href={LINKS.sistemaAtual} target="_blank" rel="noreferrer" title="Criar e aprovar planos, agenda, PDFs e usuários">Sistema anterior ↗</a>}
         </nav>
         <div className="spacer" />
         <div className="quem">

@@ -1,0 +1,9 @@
+// Publica o Portal no mesmo Worker do Plano de Ação (cpa-unifecaf.yago-brito.workers.dev)
+{
+  "name": "cpa-unifecaf",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
