@@ -8,8 +8,9 @@ import BotoesPdf from '../components/BotoesPdf.jsx'
 import FormPlano from '../components/FormPlano.jsx'
 import ItemPlano from '../components/ItemPlano.jsx'
 import PlanoSituacao, { SelosSituacao } from '../components/PlanoSituacao.jsx'
-import { CoberturaGeral, CoberturaMinha } from '../components/PlanoCobertura.jsx'
-import { ESCREVE_PLANO, SELO_STATUS, SITUACOES, fmtData, autorRotulo, contarSituacoes, devolvidoAoCoordenador, nomeArea, rotuloStatus, seloPrazo, situacaoDe, urgencia } from '../lib/planos.js'
+import { CoberturaGeral, CoberturaMinha, CoberturaPessoa } from '../components/PlanoCobertura.jsx'
+import { coberturaResumida } from '../lib/cobertura.js'
+import { ESCREVE_PLANO, SELO_STATUS, SITUACOES, fmtData, autorRotulo, contarSituacoes, devolvidoAoCoordenador, nomeArea, rotuloStatus, seloPrazo, situacaoDe, urgencia, useVinculos } from '../lib/planos.js'
 import './planos.css'
 
 
@@ -137,6 +138,7 @@ function Secao({ t, itens, perfil, base, mudou, vazio, contexto }) {
 // Acompanhamento da supervisão: uma linha por pessoa (coordenação) e por setor, com os pendentes
 function Acompanhamento({ perfil, base, planos, mudou }) {
   const [aberto, setAberto] = useState(null)
+  const { lista: vinculos } = useVinculos()
   const porUsuario = useMemo(() => Object.fromEntries(base.usuarios.map((u) => [u.id, u])), [base.usuarios])
   const pend = (l) => {
     const c = contarSituacoes(l)
@@ -156,6 +158,7 @@ function Acompanhamento({ perfil, base, planos, mudou }) {
       return (
         <>
           <button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => setAberto(null)}>← Voltar para a lista</button>
+          {!setor && <CoberturaPessoa base={base} pessoa={c.u} />}
           {setor ? <SaudeSetor base={base} setorId={c.itens[0].setor_id} /> : <SaudeCurso base={base} cursoId={c.itens[0]?.curso_id} />}
           <Secao t={`${setor ? base.setores.find((s) => s.id === c.itens[0].setor_id)?.nome || 'Setor' : c.u?.nome || 'Autor'} · ${c.itens.length} item(ns)`}
             itens={[...c.itens].sort((a, b) => urgencia(a) - urgencia(b))} {...{ perfil, base, mudou }} contexto />
@@ -163,7 +166,7 @@ function Acompanhamento({ perfil, base, planos, mudou }) {
       )
     }
   }
-  const Linha = ({ c, nome, sub }) => (
+  const Linha = ({ c, nome, sub, entrega }) => (
     <button className="plano-item acomp-linha" onClick={() => setAberto(c.id)}>
       <span className="av" aria-hidden="true" style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--track)', display: 'grid', placeItems: 'center', fontWeight: 700, flexShrink: 0 }}>
         {(nome || '?').split(/\s+/).slice(0, 2).map((x) => x[0]).join('').toUpperCase()}
@@ -171,6 +174,11 @@ function Acompanhamento({ perfil, base, planos, mudou }) {
       <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
         <b>{nome}</b>
         <span className="small muted">{sub}</span>
+        {entrega && (
+          <span className={'selo ' + (entrega.entregues < entrega.total ? 'laranja' : 'verde')} style={{ alignSelf: 'flex-start' }}>
+            {entrega.entregues < entrega.total ? '✗' : '✓'} {entrega.entregues} de {entrega.total} {entrega.total === 1 ? 'curso entregue' : 'cursos entregues'}
+          </span>
+        )}
       </span>
       <SelosSituacao planos={c.itens} />
     </button>
@@ -181,7 +189,7 @@ function Acompanhamento({ perfil, base, planos, mudou }) {
         <h3 style={{ fontSize: 20 }}>Cursos sob sua supervisão</h3>
         {cursos.length === 0 && <Vazio>Nenhum plano de ação registrado pelos coordenadores deste recorte ainda.</Vazio>}
         {cursos.map((c) => (
-          <Linha key={c.id} c={c} nome={c.u?.nome || 'Autor não encontrado'}
+          <Linha key={c.id} c={c} nome={c.u?.nome || 'Autor não encontrado'} entrega={coberturaResumida(vinculos, base, c.id)}
             sub={`${c.itens.length} item(ns) · ${[...new Set(c.itens.map((p) => rotuloCurso(base.cursos.find((x) => x.id === p.curso_id))))].join(', ')}`} />
         ))}
       </section>

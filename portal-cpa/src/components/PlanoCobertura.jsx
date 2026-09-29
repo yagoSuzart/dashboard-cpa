@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { MODALIDADE_LABEL } from '../lib/config.js'
 import { fmtInt } from '../lib/cpa.js'
 import { CATEGORIAS_PLANO, useVinculos } from '../lib/planos.js'
+import { calcularCobertura, cursosDaPessoa, nomeCurso, ordCurso, planosDaCobertura } from '../lib/cobertura.js'
 import { Vazio } from './ui.jsx'
 
 // Nomes curtos das colunas (o nome completo fica no title)
@@ -14,36 +15,7 @@ const CURTO = {
   'Satisfação Geral': 'Satisfação Geral',
 }
 
-const dimensoesDe = (p) => (p.categoria || '').split(',').map((x) => x.trim()).filter(Boolean)
 
-// Planos que contam como cobertura dos cursos de uma pessoa: os dela e os dos professores
-// auxiliares / coordenadores adjuntos dos mesmos cursos.
-function planosDaCobertura(base, pessoaId, cursoIds) {
-  const cursos = new Set(cursoIds)
-  const aux = new Set(base.usuarios.filter((u) => u.role === 'professor_auxiliar').map((u) => u.id))
-  return base.planos.filter((p) => p.tipo !== 'setor' && cursos.has(p.curso_id) && (p.usuario_id === pessoaId || aux.has(p.usuario_id)))
-}
-
-// Conta, por curso e por dimensão, quantos planos existem
-function calcularCobertura(cursos, planos) {
-  const linhas = cursos.map((c) => {
-    const doCurso = planos.filter((p) => p.curso_id === c.id)
-    const porDim = Object.fromEntries(CATEGORIAS_PLANO.map((d) => [d, 0]))
-    let semDim = 0
-    for (const p of doCurso) {
-      const ds = dimensoesDe(p).filter((d) => porDim[d] != null)
-      if (!ds.length) semDim++
-      for (const d of ds) porDim[d]++
-    }
-    const faltam = CATEGORIAS_PLANO.filter((d) => !porDim[d])
-    return { curso: c, total: doCurso.length, porDim, semDim, faltam }
-  })
-  const comPlano = linhas.filter((l) => l.total > 0).length
-  const completos = linhas.filter((l) => l.total > 0 && l.faltam.length === 0).length
-  return { linhas, comPlano, completos, total: linhas.length }
-}
-
-const nomeCurso = (c) => c.nome || c.id
 const modalidade = (c) => MODALIDADE_LABEL[c.modalidade] || c.modalidade || ''
 
 // Matriz: cursos (curso + modalidade de oferta) nas linhas, as 5 dimensões + Satisfação Geral nas colunas
@@ -122,9 +94,6 @@ export function CoberturaMinha({ perfil, base }) {
   )
 }
 
-function ordCurso(a, b) {
-  return nomeCurso(a).localeCompare(nomeCurso(b), 'pt-BR') || String(a.modalidade).localeCompare(String(b.modalidade))
-}
 
 // Para a CPA / Pró-Reitoria / admin: uma matriz por coordenador, com o resumo de quem deixou curso de fora
 export function CoberturaGeral({ base }) {
@@ -191,5 +160,67 @@ export function CoberturaGeral({ base }) {
         )
       })}
     </>
+  )
+}
+
+// Dentro do coordenador (acompanhamento da CPA): check de entrega por curso e modalidade de oferta,
+// no estilo do gabarito SINAES, e a matriz por dimensão logo abaixo
+export function CoberturaPessoa({ base, pessoa }) {
+  const { lista: vinculos, erro } = useVinculos()
+  const [verDim, setVerDim] = useState(false)
+  const cursos = useMemo(() => cursosDaPessoa(vinculos, base, pessoa?.id), [vinculos, base, pessoa])
+  const cob = useMemo(() => calcularCobertura(cursos, planosDaCobertura(base, pessoa?.id, cursos.map((c) => c.id))), [cursos, base, pessoa])
+  if (!pessoa) return null
+  if (erro) return <div className="aviso erro">Não foi possível ler os cursos vinculados: {erro}</div>
+  if (!vinculos) return <p className="small muted">Carregando os cursos vinculados…</p>
+  if (!cursos.length) return <div className="aviso">Nenhum curso vinculado a {pessoa.nome} no Portal.</div>
+  // agrupa por curso (nome), com as modalidades de oferta lado a lado
+  const grupos = new Map()
+  for (const l of cob.linhas) {
+    const k = nomeCurso(l.curso)
+    if (!grupos.has(k)) grupos.set(k, [])
+    grupos.get(k).push(l)
+  }
+  const faltando = cob.linhas.filter((l) => !l.total)
+  return (
+    <section className="card" style={{ gap: 12 }}>
+      <div className="card-h">
+        <div className="t">
+          <span className="eyebrow">Entrega dos planos por curso</span>
+          <h3 style={{ fontSize: 20 }}>{pessoa.nome} · {fmtInt(cob.comPlano)} de {fmtInt(cob.total)} {cob.total === 1 ? 'curso entregue' : 'cursos entregues'}</h3>
+        </div>
+        <div className="spacer" />
+        <span className={'selo ' + (faltando.length ? 'laranja' : 'verde')}>{faltando.length ? `${faltando.length} ${faltando.length === 1 ? 'curso sem plano' : 'cursos sem plano'}` : 'Todos os cursos entregues'}</span>
+      </div>
+      {faltando.length > 0 && (
+        <div className="aviso erro" style={{ flexDirection: 'column', gap: 4 }}>
+          <b className="small">Faltou plano para:</b>
+          <span className="small">{faltando.map((l) => `${nomeCurso(l.curso)} · ${modalidade(l.curso)}`).join(' · ')}</span>
+        </div>
+      )}
+      <div className="cob-check">
+        {[...grupos.entries()].map(([nome, linhas]) => {
+          const ok = linhas.every((l) => l.total)
+          return (
+            <div key={nome} className={'cob-check-linha ' + (ok ? 'ok' : 'falta')}>
+              <span className="cob-check-icone" aria-hidden="true">{ok ? '✓' : '!'}</span>
+              <b className="cob-check-nome">{nome}</b>
+              <span className="cob-check-mods">
+                {linhas.map((l) => (
+                  <span key={l.curso.id} className={'selo ' + (l.total ? 'verde' : 'laranja')}>
+                    {l.total ? '✓' : '✗'} {modalidade(l.curso)} · {l.total ? `${l.total} ${l.total === 1 ? 'plano' : 'planos'}` : 'falta'}
+                  </span>
+                ))}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <button type="button" className="btn sm" style={{ alignSelf: 'flex-start' }} aria-expanded={verDim} onClick={() => setVerDim(!verDim)}>
+        {verDim ? 'Esconder por dimensão' : 'Ver também por dimensão'}
+      </button>
+      {verDim && <MatrizCobertura cob={cob} />}
+      <p className="small muted">Contam os planos de {pessoa.nome} e os dos professores auxiliares / coordenadores adjuntos dos mesmos cursos, em qualquer situação.</p>
+    </section>
   )
 }

@@ -49,3 +49,15 @@
   .plano-selos { justify-content: flex-start; max-width: none; }
   .set-form { grid-template-columns: minmax(0, 1fr); }
 }
+/* Check de entrega por curso (dentro do coordenador) */
+.cob-check { display: flex; flex-direction: column; gap: 8px; }
+.cob-check-linha { display: grid; grid-template-columns: 28px minmax(160px, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--paper-2); border: 1px solid var(--line-2); }
+.cob-check-linha.falta { background: var(--ember-soft); border-color: #f1c9ae; }
+.cob-check-icone { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--green); }
+.cob-check-linha.falta .cob-check-icone { background: var(--ember); }
+.cob-check-nome { font-size: 14px; }
+.cob-check-mods { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 760px) {
+  .cob-check-linha { grid-template-columns: 28px minmax(0, 1fr); }
+  .cob-check-mods { grid-column: 1 / -1; justify-content: flex-start; }
+}
