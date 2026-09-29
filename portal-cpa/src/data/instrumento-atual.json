@@ -325,9 +325,7 @@
    "texto": "Serviço de portaria",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -343,9 +341,7 @@
    "texto": "Acessibilidade das instalações",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -361,9 +357,7 @@
    "texto": "Atendimento da biblioteca",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -379,9 +373,7 @@
    "texto": "Espaço físico da biblioteca",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -397,9 +389,7 @@
    "texto": "Acervo físico e virtual da biblioteca",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -415,9 +405,7 @@
    "texto": "Atendimento das cantinas",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -433,9 +421,7 @@
    "texto": "Higiene e limpeza das cantinas",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -451,9 +437,7 @@
    "texto": "Preço dos produtos das cantinas",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -469,9 +453,7 @@
    "texto": "Qualidade e variedade dos produtos das cantinas",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -487,9 +469,7 @@
    "texto": "Atendimento do Departamento de Tecnologia da Informação (TI)",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -505,9 +485,7 @@
    "texto": "Qualidade dos Laboratórios de Informática",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -523,9 +501,7 @@
    "texto": "Quantidade de computadores",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -541,9 +517,7 @@
    "texto": "Qualidade da conexão à internet sem fio (Wi‑Fi)",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -559,9 +533,7 @@
    "texto": "Qualidade dos Laboratórios Específicos",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -577,9 +549,7 @@
    "texto": "Qualidade das salas de aula",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -595,9 +565,7 @@
    "texto": "Limpeza das salas de aula",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -613,9 +581,7 @@
    "texto": "Higiene e limpeza dos banheiros",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -631,9 +597,7 @@
    "texto": "Portal do aluno UniFECAF ONE",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -649,9 +613,7 @@
    "texto": "Atendimento do setor Agiliza",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 3,
@@ -667,9 +629,7 @@
    "texto": "Atendimento do setor de Carreiras",
    "tipo": "nota_1a5",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 3,
@@ -685,9 +645,7 @@
    "texto": "Deixe aqui seus comentários sobre a infraestrutura física e os serviços da UniFECAF",
    "tipo": "aberta",
    "modalidades": [
-    "EAD",
-    "PRESENCIAL",
-    "SEMIPRESENCIAL"
+    "PRESENCIAL"
    ],
    "variantes": {},
    "eixo": 5,
@@ -701,7 +659,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -720,7 +677,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -739,7 +695,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -758,7 +713,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -777,7 +731,6 @@
    "tipo": "aberta",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -949,7 +902,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -968,7 +920,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -987,7 +938,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -1006,7 +956,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -1025,7 +974,6 @@
    "tipo": "aberta",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -1040,7 +988,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -1059,7 +1006,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
@@ -1078,7 +1024,6 @@
    "tipo": "nota_1a5",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {
@@ -1099,7 +1044,6 @@
    "tipo": "aberta",
    "modalidades": [
     "EAD",
-    "PRESENCIAL",
     "SEMIPRESENCIAL"
    ],
    "variantes": {},
