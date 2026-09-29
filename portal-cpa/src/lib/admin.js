@@ -199,3 +199,25 @@ export async function carregarUsuarios() {
 export const editarUsuario = (targetUserId, role, cursos) => chamar('admin-editar-usuario', { targetUserId, role, cursos })
 export const excluirUsuario = (targetUserId) => chamar('admin-excluir-usuario', { targetUserId })
 export const resetarSenha = (targetUserId) => chamar('admin-resetar-senha', { targetUserId })
+
+// ---------- setores (admin) ----------
+// id do setor: minúsculas, sem acento, só letras/números e "_" (ex.: "Secretaria Acadêmica" → "secretaria_academica")
+export function idDeSetor(nome) {
+  return String(nome || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 40)
+}
+
+// Cadastra um setor novo (a nota fica vazia até a próxima pesquisa). Só o admin tem permissão no banco.
+export async function criarSetor({ id, nome }) {
+  const { error } = await sb.from('setores').insert({ id, nome: nome.trim() })
+  if (error) {
+    if (error.code === '23505' || /duplicate key/i.test(error.message)) throw new Error('Já existe um setor com este identificador.')
+    if (/row-level security/i.test(error.message)) throw new Error('O banco não permitiu cadastrar o setor (permissão de administrador).')
+    throw new Error(error.message)
+  }
+}

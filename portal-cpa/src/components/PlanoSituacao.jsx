@@ -34,7 +34,7 @@ export function SelosSituacao({ planos }) {
     <span className="plano-selos" aria-label="Situação dos planos desta pessoa">
       {SITUACOES.filter((s) => SEMPRE.includes(s.k) || c[s.k] > 0).map((s) => (
         <span key={s.k} className={'selo ' + (c[s.k] ? s.c : 'cinza')} title={s.t}>
-          {fmtInt(c[s.k])} {s.curto}
+          {fmtInt(c[s.k])} {c[s.k] === 1 ? s.curto1 || s.curto : s.curto}
         </span>
       ))}
     </span>

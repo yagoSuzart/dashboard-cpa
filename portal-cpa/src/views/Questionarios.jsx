@@ -8,6 +8,8 @@ import { ListaComentarios } from './Comentarios.jsx'
 import { ListaPlanos } from './Planos.jsx'
 import FormPlano from '../components/FormPlano.jsx'
 import { ESCREVE_PLANO } from '../lib/planos.js'
+import { eixoDimDoId } from '../lib/proxima.js'
+import { SelosEixoDim } from '../components/ProximaSelos.jsx'
 
 const CAMPOS = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'nao_utilizo', 'n', 'soma']
 
@@ -221,7 +223,7 @@ function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, pl
           <div className="card-h">
             <div className="t">
               <h2>Pergunta por pergunta</h2>
-              <p className="muted small">Da média mais baixa para a mais alta. Os números aparecem como estão na pesquisa.</p>
+              <p className="muted small">Da média mais baixa para a mais alta. Os números aparecem como estão na pesquisa. Cada pergunta traz o eixo e a dimensão do SINAES.</p>
             </div>
           </div>
           {temProfessor && cursoId && (
@@ -237,11 +239,13 @@ function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, pl
           <div>
             {perguntas.map(({ r, est }, i) => {
               const recomenda = pesquisa.escala === '0a10' && normalizar(r.pergunta).includes('recomenda')
+              const ed = eixoDimDoId(`${pesquisa.id}:${r.pergunta_posicao}`)
               return (
                 <div key={r.pergunta_posicao} className={'pergunta' + (i === 0 && perguntas.length > 1 ? ' pior' : '')}>
                   <span className="pos">{r.pergunta_posicao}</span>
                   <div>
                     <p className="txt">{r.pergunta}</p>
+                    {ed && <div className="px-selos" style={{ marginTop: 6 }}><SelosEixoDim eixo={ed.eixo} dimensao={ed.dimensao} /></div>}
                     <Distribuicao est={est} />
                     {recomenda && est.nps != null && (
                       <p className="small" style={{ marginTop: 10, color: 'var(--ink-2)' }}>

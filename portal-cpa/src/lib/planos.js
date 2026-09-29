@@ -330,10 +330,10 @@ export function rotuloStatus(p) {
 export const SITUACOES = [
   { k: 'enviado', t: 'Aguardando validação da CPA', curto: 'aguardando', c: 'escuro' },
   { k: 'aguardando_coordenador', t: 'Com o coordenador (equipe)', curto: 'com o coordenador', c: 'laranja' },
-  { k: 'devolvido', t: 'Devolvidos para ajuste', curto: 'devolvidos', c: 'laranja' },
+  { k: 'devolvido', t: 'Devolvidos para ajuste', curto: 'devolvidos', curto1: 'devolvido', c: 'laranja' },
   { k: 'aguardando_pro_reitoria', t: 'Com a Pró-Reitoria', curto: 'com a Pró-Reitoria', c: 'azul' },
-  { k: 'aprovado', t: 'Aprovados', curto: 'aprovados', c: 'azul' },
-  { k: 'concluido', t: 'Concluídos', curto: 'concluídos', c: 'verde' },
+  { k: 'aprovado', t: 'Aprovados', curto: 'aprovados', curto1: 'aprovado', c: 'azul' },
+  { k: 'concluido', t: 'Concluídos', curto: 'concluídos', curto1: 'concluído', c: 'verde' },
 ]
 export const situacaoDe = (p) => (p.status === 'rascunho' ? 'enviado' : p.status)
 export function contarSituacoes(planos) {

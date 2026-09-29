@@ -189,7 +189,7 @@ export function eixoDimDoId(id) {
 export function coberturaDosQuestionarios(ids) {
   const m = new Map()
   for (const a of ATUAIS) {
-    if (!ids.includes(a.questionario_id) || !a.dimensao) continue
+    if (!ids.includes(a.questionario_id) || !a.dimensao || a.tipo === 'aberta') continue
     const k = a.dimensao
     const g = m.get(k) || { eixo: a.eixo || EIXO_DA_DIM[a.dimensao], dimensao: a.dimensao, perguntas: 0 }
     g.perguntas++

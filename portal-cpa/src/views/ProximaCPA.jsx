@@ -3,22 +3,39 @@ import {
   carregarProposta, iniciarProposta, salvarItem, criarItem, apagarItem, criarQuestionario, mudarStatus, registrar,
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
+  ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
+  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
+import { SelosEixoDim, Alternativas, EscalaResumo } from '../components/ProximaSelos.jsx'
+import ProximaPrefixo from '../components/ProximaPrefixo.jsx'
+import ProximaAtencao from '../components/ProximaAtencao.jsx'
+import ProximaResumo from '../components/ProximaResumo.jsx'
+import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState(null)
-  const [aba, setAba] = useState('montar')
+  const [aba, setAba] = useState(perfil.role === 'pro_reitoria' ? 'resumo' : 'montar')
   const [aviso, setAviso] = useState(null)
+  // Resultados da planilha importada, por pergunta e modalidade (undefined = carregando, null = sem importação)
+  const [res, setRes] = useState(undefined)
 
   const recarregar = useCallback(() => carregarProposta().then(setDados).catch(setErro), [])
   useEffect(() => {
     recarregar()
   }, [recarregar])
+  useEffect(() => {
+    let vivo = true
+    carregarResultadosModalidade().then((r) => vivo && setRes(r)).catch(() => vivo && setRes(null))
+    return () => {
+      vivo = false
+    }
+  }, [])
 
   const nomes = useMemo(() => Object.fromEntries(base.usuarios.map((u) => [u.id, u.nome])), [base.usuarios])
+  const candidatas = useMemo(() => (dados?.proposta ? candidatasRetirada(dados.itens, res || null, dados.questionarios) : []), [dados, res])
   if (erro) return <Erro erro={erro} />
   if (!dados) return <Carregando texto="Abrindo a Próxima CPA…" />
 
@@ -47,7 +64,41 @@ export default function ProximaCPA({ perfil, base }) {
 
   const podeEditar = (ehCpa && ['montagem', 'devolvida'].includes(proposta.status)) || (ehPr && proposta.status === 'pro_reitoria')
   const modo = !podeEditar ? 'leitura' : ehPr ? 'pr' : 'cpa'
-  const ctx = { perfil, dados, modo, recarregar, setDados, setAviso, nomes }
+  // Salva um item e registra no histórico; devolve o item novo (ou null se deu erro)
+  const salvarIt = async (item, patch, acao, detalhe) => {
+    try {
+      const novo = await salvarItem(item, patch, perfil.id)
+      setDados((d) => ({ ...d, itens: d.itens.map((x) => (x.id === novo.id ? novo : x)) }))
+      if (acao) registrar(proposta.id, perfil.id, acao, detalhe || { texto: novo.texto }, novo.id)
+      return novo
+    } catch (e) {
+      setAviso({ tipo: 'erro', txt: 'Não foi possível salvar: ' + (e.message || e) })
+      return null
+    }
+  }
+  const criarIt = async (dadosItem, acao, detalhe) => {
+    try {
+      const novo = await criarItem(dadosItem, perfil.id)
+      setDados((d) => ({ ...d, itens: [...d.itens, novo] }))
+      if (acao) registrar(proposta.id, perfil.id, acao, detalhe || { texto: novo.texto }, novo.id)
+      return novo
+    } catch (e) {
+      setAviso({ tipo: 'erro', txt: 'Não foi possível acrescentar: ' + (e.message || e) })
+      return null
+    }
+  }
+  const excluirIt = async (item) => {
+    try {
+      await apagarItem(item)
+      setDados((d) => ({ ...d, itens: d.itens.filter((x) => x.id !== item.id) }))
+      registrar(proposta.id, perfil.id, 'excluiu a pergunta', { texto: item.texto })
+    } catch (e) {
+      setAviso({ tipo: 'erro', txt: e.message })
+    }
+  }
+  const candPorItem = Object.fromEntries(candidatas.map((c) => [c.item.id, c]))
+  const irPara = (k) => setAba(k)
+  const ctx = { perfil, dados, modo, recarregar, setDados, setAviso, nomes, res: res || null, candidatas, candPorItem, salvarIt, criarIt, excluirIt, irPara }
 
   return (
     <>
@@ -61,7 +112,9 @@ export default function ProximaCPA({ perfil, base }) {
       {aviso && <div className={'aviso ' + (aviso.tipo || '')} role="status">{aviso.txt}</div>}
       <div className="seg" role="tablist" aria-label="Seções da Próxima CPA">
         {[
+          ...(ehPr ? [['resumo', 'Resumo das mudanças']] : []),
           ['montar', modo === 'pr' ? 'Analisar as perguntas' : 'Montar a proposta'],
+          ...(!ehPr ? [['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças']] : []),
           ['previa', 'Prévia por modalidade'],
           ['documento', 'Documento para o T.I'],
           ['historico', 'Histórico'],
@@ -69,6 +122,7 @@ export default function ProximaCPA({ perfil, base }) {
           <button key={k} role="tab" aria-pressed={aba === k} onClick={() => { setAba(k); if (k === 'historico') recarregar() }}>{t}</button>
         ))}
       </div>
+      {aba === 'resumo' && <ProximaResumo ctx={ctx} titulo={ehPr ? 'Para a sua análise' : 'Revisar antes de enviar'} />}
       {aba === 'montar' && <Montar ctx={ctx} />}
       {aba === 'previa' && <Previa ctx={ctx} />}
       {aba === 'documento' && <Documento ctx={ctx} />}
@@ -87,8 +141,9 @@ function tituloPorStatus(s, ehPr) {
 
 /* ---------------- barra de status e ações principais ---------------- */
 function BarraStatus({ ctx }) {
-  const { perfil, dados, recarregar, setAviso, nomes } = ctx
+  const { perfil, dados, recarregar, setAviso, nomes, candidatas, irPara } = ctx
   const { proposta, itens } = dados
+  const pendentes = candidatas.filter((c) => !c.analisada).length
   const [confirmar, setConfirmar] = useState(null)
   const [coment, setComent] = useState('')
   const ehCpa = EDITA_CPA.includes(perfil.role)
@@ -126,7 +181,13 @@ function BarraStatus({ ctx }) {
       )}
       <div className="filtros">
         {ehCpa && ['montagem', 'devolvida'].includes(proposta.status) && (
-          <button className="btn escuro" onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
+          <>
+            <button type="button" className={'px-pend' + (pendentes ? '' : ' ok')} onClick={() => { irPara('montar'); setTimeout(() => document.getElementById('px-atencao')?.scrollIntoView({ behavior: 'smooth' }), 60) }}>
+              {pendentes ? `${pendentes} ${pendentes === 1 ? 'pergunta sugerida' : 'perguntas sugeridas'} para revisão ainda não ${pendentes === 1 ? 'analisada' : 'analisadas'}` : 'Todas as sugestões de revisão foram analisadas'}
+            </button>
+            <button className="btn" onClick={() => irPara('resumo')}>Revisar antes de enviar</button>
+            <button className="btn escuro" onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
+          </>
         )}
         {ehPr && proposta.status === 'pro_reitoria' && (
           <>
@@ -150,6 +211,7 @@ function BarraStatus({ ctx }) {
                 <h2>Enviar para a Pró-Reitoria?</h2>
                 <p className="muted">{fmtInt(itens.filter(entra).length)} perguntas entram no instrumento. Enquanto a proposta estiver com a Pró-Reitoria, só ela edita.</p>
                 {faltam.length > 0 && <div className="aviso">Ainda sem pergunta: {faltam.map((d) => `D${d} ${DIMS[d]}`).join(', ')}.</div>}
+                {pendentes > 0 && <div className="aviso">{pendentes} {pendentes === 1 ? 'pergunta sugerida' : 'perguntas sugeridas'} para revisão ainda não {pendentes === 1 ? 'foi analisada' : 'foram analisadas'} (painel “Precisa de atenção”).</div>}
                 <div className="filtros">
                   <button className="btn escuro" onClick={() => executar({ status: 'pro_reitoria', enviado_por: perfil.id, enviado_em: agora(), comentario_pr: null }, 'enviou para a Pró-Reitoria', 'Proposta enviada para a Pró-Reitoria.')}>Enviar</button>
                   <button className="btn" onClick={() => setConfirmar(null)}>Cancelar</button>
@@ -204,6 +266,8 @@ function Montar({ ctx }) {
   const [mod, setMod] = useState('')
   const [verRetiradas, setVerRetiradas] = useState(true)
   const [modal, setModal] = useState(null)
+  const [dimNova, setDimNova] = useState('')
+  const nomeQ = questionarios.find((x) => x.id === q)?.nome
 
   const contagem = (id) => itens.filter((i) => (i.questionario_id || '') === id && entra(i)).length
   const lista = itens
@@ -214,6 +278,8 @@ function Montar({ ctx }) {
   const semQuest = itens.filter((i) => !i.questionario_id)
 
   return (
+    <>
+    {modo === 'cpa' && <ProximaAtencao ctx={ctx} onNova={(d) => { setDimNova(String(d)); setModal('nova') }} />}
     <section className="grid-lado">
       <div className="coluna">
         <div className="chips" role="tablist" aria-label="Questionários">
@@ -236,9 +302,10 @@ function Montar({ ctx }) {
             <input type="checkbox" checked={verRetiradas} onChange={(e) => setVerRetiradas(e.target.checked)} /> Mostrar as retiradas
           </label>
         </div>
+        {q && <ProximaPrefixo key={q} ctx={ctx} qid={q} nomeQ={nomeQ} />}
         {!lista.length && <Vazio>Nenhuma pergunta neste questionário{mod ? ' para ' + MOD_CURTO[mod] : ''}.</Vazio>}
         {lista.map((it, i) => (
-          <ItemCard key={it.id} ctx={ctx} item={it} vizinhos={[lista[i - 1], lista[i + 1]]} />
+          <ItemCard key={it.id} ctx={ctx} item={it} mod={mod} vizinhos={[lista[i - 1], lista[i + 1]]} />
         ))}
       </div>
 
@@ -250,20 +317,22 @@ function Montar({ ctx }) {
             <p className="muted small">Entra no questionário selecionado ({questionarios.find((x) => x.id === q)?.nome || 'a definir'}).</p>
             <div className="filtros">
               <button className="btn escuro" onClick={() => setModal('banco')}>Das perguntas propostas ({itens.filter((i) => i.banco_id).length} de {BANCO.length} já na proposta)</button>
-              <button className="btn" onClick={() => setModal('nova')}>Escrever uma nova</button>
+              <button className="btn" onClick={() => { setDimNova(''); setModal('nova') }}>Escrever uma nova</button>
             </div>
             <NovoQuestionario ctx={ctx} onCriado={(id) => setQ(id)} />
           </div>
         )}
       </div>
       {modal === 'banco' && <ModalBanco ctx={ctx} questionarioId={q} onFechar={() => setModal(null)} />}
-      {modal === 'nova' && <ModalNova ctx={ctx} questionarioId={q} onFechar={() => setModal(null)} />}
+      {modal === 'nova' && <ModalNova ctx={ctx} questionarioId={q} dimInicial={dimNova} onFechar={() => setModal(null)} />}
     </section>
+    </>
   )
 }
 
-function ItemCard({ ctx, item, vizinhos }) {
-  const { perfil, dados, modo, setDados, setAviso, nomes } = ctx
+function ItemCard({ ctx, item, vizinhos, mod }) {
+  const { perfil, dados, modo, setDados, setAviso, nomes, res, candPorItem } = ctx
+  const [verEscala, setVerEscala] = useState(false)
   const [editando, setEditando] = useState(false)
   const [texto, setTexto] = useState(item.texto)
   const [ocupado, setOcupado] = useState(false)
@@ -301,6 +370,15 @@ function ItemCard({ ctx, item, vizinhos }) {
   }
   const editavel = modo !== 'leitura'
   const apagado = !entra(item)
+  const modsVer = mod ? item.modalidades.filter((m) => m === mod) : item.modalidades
+  const leituras = item.tipo === 'aberta' || !item.questionario_id ? [] : gruposPrefixo(dados.prefixos, item.questionario_id, modsVer).filter(([t]) => t)
+  const eadInfra = ehInfra(item) ? item.modalidades.filter((m) => m === 'EAD' || m === 'SEMIPRESENCIAL') : []
+  const g = item.atual_id && res ? res.porId[item.atual_id] : null
+  const cand = candPorItem[item.id]
+  const trocarEscala = (e) => {
+    const esc = e || null
+    salvar({ escala: esc, tipo: tipoDaEscala(esc || escalaOriginal({ ...item, escala: null }, item.modalidades[0]), item.tipo) }, 'mudou a escala')
+  }
 
   return (
     <div className="card" style={{ padding: 20, gap: 12, opacity: apagado ? 0.62 : 1 }}>
@@ -329,14 +407,57 @@ function ItemCard({ ctx, item, vizinhos }) {
             <p className="small muted">Hoje aparece diferente em: {variantes.map(([m, t]) => `${MOD_CURTO[m]} (“${t}”)`).join(', ')}</p>
           )}
           {item.opcoes && <p className="small muted">Opções: {item.opcoes}</p>}
+          <div className="px-selos">
+            <SelosEixoDim eixo={item.eixo} dimensao={item.dimensao} />
+          </div>
+          {leituras.map(([t, ms]) => (
+            <p key={t} className="px-leitura">
+              <span className="mods">Como o aluno lê{leituras.length > 1 || ms.length < item.modalidades.length ? ' · ' + ms.map((m) => MOD_CURTO[m]).join(', ') : ''}</span>
+              <span className="pref">{t}</span> {textoNaModalidade(item, ms[0])}
+            </p>
+          ))}
           <div className="chips" style={{ gap: 6 }}>
             <span className={'selo ' + s.c}>{s.t}</span>
             <span className="selo cinza">{TIPOS[item.tipo] || item.tipo}</span>
             {item.origem === 'banco' && <span className="selo cinza">do banco</span>}
             {item.editada_pr && <span className="selo azul">editada pela Pró-Reitoria</span>}
             {item.decisao_pr === 'aprovada' && <span className="selo verde">aprovada pela Pró-Reitoria</span>}
-            {item.dimensao ? <span className="selo escuro">Eixo {item.eixo || EIXO_DA_DIM[item.dimensao]} · D{item.dimensao} {DIMS[item.dimensao]}</span> : <span className="selo laranja">sem dimensão</span>}
+            {cand && !cand.analisada && entra(item) && <span className="selo laranja" title={cand.motivos.map((m) => m.t).join('\n')}>sugerida para revisão</span>}
+            {foiAnalisada(item) && <span className="selo verde">mantida após análise</span>}
+            {!item.incluida && item.observacao && <span className="selo cinza px-selo">motivo: {item.observacao}</span>}
           </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="small" style={{ fontWeight: 700 }}>Critério avaliativo:</span>
+            <EscalaResumo item={item} />
+            {item.escala && <span className="selo azul">escala trocada na proposta</span>}
+            <button type="button" className="btn sm" onClick={() => setVerEscala((v) => !v)}>{verEscala ? 'Esconder alternativas' : 'Ver alternativas'}</button>
+          </div>
+          {verEscala && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {escalasPorModalidade(item).map(([e, ms]) => (
+                <div key={e} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span className="small muted">{ms.map((m) => MOD_CURTO[m]).join(', ')} · {ESCALAS[e]?.d}</span>
+                  <Alternativas escala={e} />
+                </div>
+              ))}
+            </div>
+          )}
+          {eadInfra.length > 0 && entra(item) && (
+            <div className="px-infra" role="note">
+              <span><b>Infraestrutura física aberta para {eadInfra.map((m) => MOD_CURTO[m]).join(' e ')}.</b> O aluno EAD normalmente não utiliza a estrutura física.</span>
+              {g && eadInfra.map((m) => {
+                const x = g[m]
+                if (!x) return <span key={m}>{MOD_CURTO[m]}: nenhuma resposta na pesquisa {res.ciclo}.</span>
+                return <span key={m}>{MOD_CURTO[m]} na pesquisa {res.ciclo}: <b>{fmtInt(x.n + x.nu)}</b> alunos responderam, <b>{fmtInt(x.nu)}</b> “Não utilizo” ({fmtPct(x.n + x.nu ? x.nu / (x.n + x.nu) : 0)}).</span>
+              })}
+              {editavel && item.modalidades.length > 1 && (
+                <div className="filtros" style={{ gap: 8 }}>
+                  <span>Sugestão:</span>
+                  {eadInfra.map((m) => <button key={m} className="btn sm" disabled={ocupado} onClick={() => toggleMod(m)}>Tirar {MOD_CURTO[m]} desta pergunta</button>)}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -357,6 +478,11 @@ function ItemCard({ ctx, item, vizinhos }) {
                 </optgroup>
               ))}
             </select>
+            <label className="sr-only" htmlFor={'esc-' + item.id}>Escala</label>
+            <select id={'esc-' + item.id} className="input" style={{ height: 36, fontSize: 13 }} value={item.escala || ''} disabled={ocupado} onChange={(e) => trocarEscala(e.target.value)}>
+              <option value="">Escala: como no instrumento</option>
+              {Object.entries(ESCALAS).map(([k, e]) => <option key={k} value={k}>Escala: {e.t}</option>)}
+            </select>
             <label className="sr-only" htmlFor={'q-' + item.id}>Questionário</label>
             <select id={'q-' + item.id} className="input" style={{ height: 36, fontSize: 13 }} value={item.questionario_id || ''} disabled={ocupado} onChange={(e) => salvar({ questionario_id: e.target.value || null, posicao: 900 }, 'mudou de questionário')}>
               <option value="">Questionário a definir</option>
@@ -370,7 +496,7 @@ function ItemCard({ ctx, item, vizinhos }) {
         <div style={{ flex: 1 }} />
         {modo === 'cpa' && (
           <>
-            <button className={'btn sm' + (item.incluida ? '' : ' escuro')} disabled={ocupado} onClick={() => salvar({ incluida: !item.incluida }, item.incluida ? 'retirou a pergunta' : 'manteve a pergunta')}>
+            <button className={'btn sm' + (item.incluida ? '' : ' escuro')} disabled={ocupado} onClick={() => salvar(item.incluida ? { incluida: false, ...(foiAnalisada(item) ? { observacao: null } : {}) } : { incluida: true, observacao: null }, item.incluida ? 'retirou a pergunta' : 'trouxe a pergunta de volta')}>
               {item.incluida ? 'Retirar' : 'Trazer de volta'}
             </button>
             {item.origem !== 'atual' && (
@@ -486,9 +612,9 @@ function ModalBanco({ ctx, questionarioId, onFechar }) {
   )
 }
 
-function ModalNova({ ctx, questionarioId, onFechar }) {
+function ModalNova({ ctx, questionarioId, dimInicial = '', onFechar }) {
   const { perfil, dados, modo, setDados, setAviso } = ctx
-  const [f, setF] = useState({ texto: '', tipo: 'nota_1a5', opcoes: '', q: questionarioId || '', mods: [...MODALIDADES], dim: '' })
+  const [f, setF] = useState({ texto: '', tipo: 'nota_1a5', opcoes: '', q: questionarioId || '', mods: [...MODALIDADES], dim: dimInicial, escala: 'likert_5' })
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
   const salvar = async (e) => {
     e.preventDefault()
@@ -497,6 +623,7 @@ function ModalNova({ ctx, questionarioId, onFechar }) {
       const novo = await criarItem({
         proposta_id: dados.proposta.id, origem: 'nova', questionario_id: f.q || null, posicao: proximaPosicao(dados.itens, f.q),
         texto: f.texto.trim(), texto_original: null, tipo: f.tipo, opcoes: f.tipo === 'multipla' ? f.opcoes.trim() || null : null,
+        escala: f.tipo === 'nota_1a5' ? f.escala : f.tipo === 'nota_0a10' ? 'nps_0_10' : f.tipo === 'aberta' ? 'aberta' : null,
         modalidades: f.mods, eixo: dim ? EIXO_DA_DIM[dim] : null, dimensao: dim, incluida: true, adicionada_pr: modo === 'pr',
       }, perfil.id)
       setDados((d) => ({ ...d, itens: [...d.itens, novo] }))
@@ -509,7 +636,7 @@ function ModalNova({ ctx, questionarioId, onFechar }) {
   return (
     <div className="modal-fundo" role="dialog" aria-modal="true" aria-labelledby="nova-t" onClick={(e) => e.target === e.currentTarget && onFechar()}>
       <form className="modal" onSubmit={salvar}>
-        <h2 id="nova-t">Pergunta nova</h2>
+        <h2 id="nova-t">Pergunta nova{f.dim ? ` para D${f.dim} · ${DIMS[f.dim]}` : ''}</h2>
         <div className="campo">
           <label htmlFor="nv-t">Texto da pergunta</label>
           <textarea id="nv-t" className="input" rows={3} style={{ height: 'auto', padding: 12 }} required value={f.texto} onChange={(e) => set('texto', e.target.value)} />
@@ -529,6 +656,15 @@ function ModalNova({ ctx, questionarioId, onFechar }) {
             </select>
           </div>
         </div>
+        {f.tipo === 'nota_1a5' && (
+          <div className="campo">
+            <label htmlFor="nv-esc">Critério avaliativo (escala)</label>
+            <select id="nv-esc" className="input" value={f.escala} onChange={(e) => set('escala', e.target.value)}>
+              <option value="likert_5">{ESCALAS.likert_5.t} · {ESCALAS.likert_5.d}</option>
+              <option value="likert_5_na">{ESCALAS.likert_5_na.t}</option>
+            </select>
+          </div>
+        )}
         {f.tipo === 'multipla' && (
           <div className="campo">
             <label htmlFor="nv-op">Opções (separe com |)</label>
@@ -578,18 +714,22 @@ function Previa({ ctx }) {
           <button key={x.id} role="tab" className="chip-btn" aria-selected={q === x.id} onClick={() => setQ(x.id)}>{x.nome}</button>
         ))}
       </div>
-      <p className="small muted">Como o aluno de cada modalidade vai ver o questionário “{nome}”. É uma aproximação: a tela real é a da plataforma da pesquisa.</p>
+      <p className="small muted">Como o aluno de cada modalidade vai ver o questionário “{nome}”, com o enunciado e as alternativas. É uma aproximação: a tela real é a da plataforma da pesquisa.</p>
       <div className="grid3" style={{ alignItems: 'start' }}>
         {MODALIDADES.map((m) => {
           const lista = doQ.filter((i) => i.modalidades.includes(m))
+          const pref = prefixoDe(dados.prefixos, q, m)
           return (
             <div key={m} className="card" style={{ padding: 20, gap: 14 }}>
               <div className="card-h"><div className="t"><span className="eyebrow">{MOD_CURTO[m]}</span><h3>{nome}</h3></div><div className="spacer" /><span className="selo cinza">{lista.length}</span></div>
+              {lista.length > 0 && pref && <p className="px-leitura"><span className="mods">Enunciado</span><span className="pref">{pref}</span></p>}
               {!lista.length && <Vazio>Este questionário não aparece para {MOD_CURTO[m]}.</Vazio>}
               {lista.map((it, i) => (
                 <div key={it.id} style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 12, borderTop: '1px solid var(--line-2)' }}>
+                  {pref && it.tipo !== 'aberta' && <span className="small" style={{ color: 'var(--blue-ink)' }}>{pref}</span>}
                   <p style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.45 }}>{i + 1}. {textoNaModalidade(it, m)}</p>
-                  <Resposta item={it} />
+                  <Resposta item={it} mod={m} />
+                  <div className="px-selos"><SelosEixoDim eixo={it.eixo} dimensao={it.dimensao} /></div>
                 </div>
               ))}
             </div>
@@ -600,8 +740,7 @@ function Previa({ ctx }) {
   )
 }
 
-function Resposta({ item }) {
-  if (item.tipo === 'aberta') return <div style={{ height: 56, borderRadius: 10, border: '1px solid #c9d6e3', background: 'var(--paper-2)' }} aria-hidden="true" />
+function Resposta({ item, mod }) {
   if (item.tipo === 'multipla' || item.tipo === 'outro')
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }} aria-hidden="true">
@@ -610,14 +749,7 @@ function Resposta({ item }) {
         ))}
       </div>
     )
-  const valores = item.tipo === 'nota_0a10' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] : [1, 2, 3, 4, 5]
-  return (
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }} aria-hidden="true">
-      {valores.map((v) => (
-        <span key={v} style={{ minWidth: 28, height: 28, borderRadius: 8, border: '1px solid #c9d6e3', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700 }}>{v}</span>
-      ))}
-    </div>
-  )
+  return <Alternativas escala={escalaDoItem(item, mod) || (item.tipo === 'nota_0a10' ? 'nps_0_10' : item.tipo === 'aberta' ? 'aberta' : 'likert_5')} />
 }
 
 /* ---------------- documento para o T.I ---------------- */
@@ -625,12 +757,13 @@ function Documento({ ctx }) {
   const { dados, nomes } = ctx
   const { itens, questionarios, proposta } = dados
   const semQ = itens.filter((i) => !i.questionario_id && entra(i))
+  const prefMud = prefixosAlterados(dados.prefixos)
   return (
     <div className="card" style={{ gap: 20 }}>
       <div className="card-h no-print">
         <div className="t">
           <h2>Documento para o T.I</h2>
-          <p className="muted small">Textos literais, questionário por questionário e modalidade por modalidade. Use “Imprimir / PDF” para enviar.</p>
+          <p className="muted small">Textos literais, questionário por questionário e modalidade por modalidade, com o enunciado, a escala e o eixo/dimensão de cada pergunta. Use “Imprimir / PDF” para enviar.</p>
         </div>
         <div className="spacer" />
         <button className="btn escuro" onClick={() => window.print()}>Imprimir / PDF</button>
@@ -644,8 +777,14 @@ function Documento({ ctx }) {
           Situação: {STATUS[proposta.status].t}
           {proposta.decidido_em && proposta.status !== 'devolvida' ? ` · aprovada por ${nomes[proposta.decidido_por] || '—'} em ${new Date(proposta.decidido_em).toLocaleDateString('pt-BR')}` : ''}
         </p>
+        <p className="small muted" style={{ marginTop: 6 }}>Escalas: {Object.values(ESCALAS).map((e) => `${e.t} (${e.d})`).join(' · ')}.</p>
       </div>
       {semQ.length > 0 && <div className="aviso">{semQ.length} pergunta(s) ainda sem questionário definido.</div>}
+      {prefMud.length > 0 && (
+        <div className="aviso">
+          <span><b>Enunciados alterados:</b> {prefMud.map((r) => `${questionarios.find((x) => x.id === r.questionario_id)?.nome || r.questionario_id} (${MOD_CURTO[r.modalidade]}): “${r.texto}” no lugar de “${r.texto_original ?? prefixoOriginal(r.questionario_id, r.modalidade)}”`).join('; ')}</span>
+        </div>
+      )}
       {questionarios.map((q) => {
         const doQ = itens.filter((i) => i.questionario_id === q.id).sort((a, b) => (a.posicao ?? 999) - (b.posicao ?? 999))
         const ficam = doQ.filter(entra)
@@ -657,21 +796,29 @@ function Documento({ ctx }) {
             {MODALIDADES.map((m) => {
               const lista = ficam.filter((i) => i.modalidades.includes(m))
               if (!lista.length) return null
+              const pref = prefixoDe(dados.prefixos, q.id, m)
               return (
-                <div key={m} className="rolagem">
-                  <table className="tabela">
-                    <thead><tr><th style={{ width: 36 }}>Nº</th><th>{MOD_CURTO[m]} · pergunta (texto literal)</th><th style={{ width: 150 }}>Resposta</th><th style={{ width: 150 }}>Situação</th></tr></thead>
-                    <tbody>
-                      {lista.map((it, i) => (
-                        <tr key={it.id}>
-                          <td>{i + 1}</td>
-                          <td>{textoNaModalidade(it, m)}{it.opcoes ? <div className="small muted">Opções: {it.opcoes}</div> : null}</td>
-                          <td>{TIPOS[it.tipo]}</td>
-                          <td>{situacao(it).t}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div key={m} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <p className="small"><b>{MOD_CURTO[m]} · enunciado antes das perguntas de nota:</b> {pref ? `“${pref}”` : '(sem enunciado)'}</p>
+                  <div className="rolagem">
+                    <table className="tabela">
+                      <thead><tr><th style={{ width: 36 }}>Nº</th><th>{MOD_CURTO[m]} · pergunta (texto literal)</th><th style={{ width: 170 }}>Critério avaliativo (escala)</th><th style={{ width: 190 }}>Eixo e dimensão</th><th style={{ width: 120 }}>Situação</th></tr></thead>
+                      <tbody>
+                        {lista.map((it, i) => {
+                          const esc = escalaDoItem(it, m)
+                          return (
+                            <tr key={it.id}>
+                              <td>{i + 1}</td>
+                              <td>{textoNaModalidade(it, m)}{it.opcoes ? <div className="small muted">Opções: {it.opcoes}</div> : null}</td>
+                              <td>{it.tipo === 'multipla' || it.tipo === 'outro' ? TIPOS[it.tipo] : nomeEscala(esc)}{esc && ESCALAS[esc] && esc !== 'aberta' ? <div className="small muted">{ESCALAS[esc].d}</div> : null}</td>
+                              <td className="small">{it.dimensao ? <>{rotuloEixo(it.eixo || EIXO_DA_DIM[it.dimensao])}<br />{rotuloDim(it.dimensao)}</> : '—'}</td>
+                              <td>{situacao(it).t}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )
             })}
@@ -694,7 +841,15 @@ function Historico({ ctx }) {
         {dados.historico.map((h) => (
           <div key={h.id} className="item" style={{ alignItems: 'flex-start' }}>
             <span className="small muted" style={{ width: 150, flexShrink: 0 }}>{new Date(h.em).toLocaleString('pt-BR')}</span>
-            <span><b>{nomes[h.usuario_id] || '—'}</b> {h.acao}{h.detalhe?.texto ? `: “${h.detalhe.texto}”` : ''}{h.detalhe?.comentario ? `: “${h.detalhe.comentario}”` : ''}</span>
+            <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+              <b>{nomes[h.usuario_id] || '—'}</b> {h.acao}
+              {h.detalhe?.questionario ? ` de “${h.detalhe.questionario}”${h.detalhe.modalidades ? ' (' + h.detalhe.modalidades.map((m) => MOD_CURTO[m] || m).join(', ') + ')' : ''}` : ''}
+              {h.detalhe?.texto ? `: “${h.detalhe.texto}”` : ''}
+              {h.detalhe?.antes ? ` (antes: “${h.detalhe.antes}”)` : ''}
+              {h.detalhe?.motivo ? ` · motivo: ${h.detalhe.motivo}` : ''}
+              {h.detalhe?.tirou ? ` · tirou ${MOD_CURTO[h.detalhe.tirou] || h.detalhe.tirou}` : ''}
+              {h.detalhe?.comentario ? `: “${h.detalhe.comentario}”` : ''}
+            </span>
           </div>
         ))}
       </div>

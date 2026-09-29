@@ -13,8 +13,12 @@ import {
   resetarSenha,
   NUCLEO_SETORES,
   NUCLEO_SETOR_LABELS,
+  criarSetor,
+  idDeSetor,
 } from '../lib/admin.js'
+import { fmtNota } from '../lib/cpa.js'
 import './admin.css'
+import './planos.css'
 
 // Administração do Portal: só o Gestor Técnico (role "admin"), como no sistema anterior.
 export default function Admin({ perfil, base, recarregarBase }) {
@@ -34,10 +38,12 @@ export default function Admin({ perfil, base, recarregarBase }) {
       <div className="seg" role="tablist" aria-label="Administração">
         <button role="tab" aria-selected={aba === 'aprovacoes'} aria-pressed={aba === 'aprovacoes'} onClick={() => { setAba('aprovacoes'); setAviso(null) }}>Aprovações</button>
         <button role="tab" aria-selected={aba === 'usuarios'} aria-pressed={aba === 'usuarios'} onClick={() => { setAba('usuarios'); setAviso(null) }}>Usuários</button>
+        <button role="tab" aria-selected={aba === 'setores'} aria-pressed={aba === 'setores'} onClick={() => { setAba('setores'); setAviso(null) }}>Setores</button>
       </div>
       {aviso && <div className={'aviso ' + aviso.tipo} role={aviso.tipo === 'erro' ? 'alert' : 'status'}>{aviso.txt}</div>}
       {aba === 'aprovacoes' && <Aprovacoes base={base} setAviso={setAviso} recarregarBase={recarregarBase} />}
       {aba === 'usuarios' && <Usuarios base={base} perfil={perfil} setAviso={setAviso} recarregarBase={recarregarBase} />}
+      {aba === 'setores' && <SetoresAdmin base={base} setAviso={setAviso} recarregarBase={recarregarBase} />}
     </>
   )
 }
@@ -350,5 +356,85 @@ function EditarUsuario({ u, cursos, salvando, onSalvar }) {
         <button type="button" className="btn sm escuro" disabled={salvando} onClick={() => onSalvar(role, sel)}>{salvando ? 'Salvando…' : 'Salvar alterações'}</button>
       </div>
     </div>
+  )
+}
+
+// ---------------- Setores ----------------
+// Setores que recebem demandas dos planos de ação ("esta ação depende de outro setor").
+// O responsável de cada setor ganha acesso pela solicitação de acesso (perfil "Responsável de Setor").
+function SetoresAdmin({ base, setAviso, recarregarBase }) {
+  const [nome, setNome] = useState('')
+  const [id, setId] = useState('')
+  const [idManual, setIdManual] = useState(false)
+  const [salvando, setSalvando] = useState(false)
+  const idFinal = idManual ? idDeSetor(id) : idDeSetor(nome)
+  const existe = base.setores.some((s) => s.id === idFinal)
+  const responsaveis = (sid) => base.usuarios.filter((u) => u.role === 'setor' && u.setor_id === sid)
+  const ordenados = [...base.setores].sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'))
+
+  const salvar = async (e) => {
+    e.preventDefault()
+    if (!nome.trim() || !idFinal) return setAviso({ tipo: 'erro', txt: 'Escreva o nome do setor.' })
+    if (existe) return setAviso({ tipo: 'erro', txt: 'Já existe um setor com o identificador "' + idFinal + '".' })
+    setSalvando(true)
+    try {
+      await criarSetor({ id: idFinal, nome })
+      setAviso({ tipo: 'ok', txt: 'Setor "' + nome.trim() + '" cadastrado. Ele já aparece na lista de setores dos planos de ação.' })
+      setNome('')
+      setId('')
+      setIdManual(false)
+      recarregarBase?.()
+    } catch (err) {
+      setAviso({ tipo: 'erro', txt: 'Não foi possível cadastrar o setor: ' + err.message })
+    }
+    setSalvando(false)
+  }
+
+  return (
+    <>
+      <form className="card" onSubmit={salvar}>
+        <div className="card-h">
+          <div className="t">
+            <h3>Cadastrar setor</h3>
+            <span className="small muted">O setor passa a aparecer em "Esta ação depende de outro setor" nos planos de ação. A nota fica vazia até a próxima pesquisa.</span>
+          </div>
+        </div>
+        <div className="set-form">
+          <div className="campo">
+            <label htmlFor="set-nome">Nome do setor</label>
+            <input id="set-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Secretaria Acadêmica" />
+          </div>
+          <div className="campo">
+            <label htmlFor="set-id">Identificador (gerado do nome)</label>
+            <input id="set-id" value={idManual ? id : idFinal} onChange={(e) => { setIdManual(true); setId(e.target.value) }} onBlur={() => idManual && setId(idDeSetor(id))} />
+          </div>
+          <button className="btn escuro" disabled={salvando || !idFinal || existe}>{salvando ? 'Salvando…' : 'Cadastrar setor'}</button>
+        </div>
+        {existe && <div className="aviso erro small">Já existe um setor com o identificador "{idFinal}".</div>}
+      </form>
+      <div className="card">
+        <div className="card-h">
+          <div className="t">
+            <h3>Setores cadastrados</h3>
+            <span className="small muted">{fmtInt(base.setores.length)} setores · mais "Polos" e "Financeiro / Outra", que não têm responsável próprio</span>
+          </div>
+        </div>
+        <div className="adm-lista">
+          {ordenados.map((s) => {
+            const r = responsaveis(s.id)
+            return (
+              <div key={s.id} className="adm-item">
+                <div className="topo">
+                  <b>{s.nome}</b>
+                  <span className="selo cinza">{s.id}</span>
+                  <span className={'selo ' + (s.nota == null ? 'laranja' : 'azul')}>{s.nota == null ? 'sem nota ainda' : 'nota ' + fmtNota(Number(s.nota))}</span>
+                </div>
+                <p className="desc small muted">{r.length ? 'Responsável: ' + r.map((u) => u.nome).join(', ') : 'Sem responsável com acesso ainda (crie pela solicitação de acesso, perfil Responsável de Setor).'}</p>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </>
   )
 }

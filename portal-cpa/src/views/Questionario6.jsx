@@ -6,6 +6,18 @@ import { cursosOrdenados, comentariosQuestionario, QUESTIONARIOS } from '../lib/
 import { Anel, Carregando, Erro, Vazio, Paginacao } from '../components/ui.jsx'
 import { FiltroCursos } from './Executiva.jsx'
 import './resultados.css'
+import { coberturaDosQuestionarios } from '../lib/proxima.js'
+import { SelosEixoDim } from '../components/ProximaSelos.jsx'
+
+// Questionários da planilha (instrumento-atual.json) que cada categoria do Portal reúne
+const QUESTIONARIOS_DA_CATEGORIA = {
+  cd: ['conteudo_das_disciplinas'],
+  ia: ['infraestrutura_e_atendimento'],
+  pa: ['politicas_academicas'],
+  pg: ['politicas_de_gestao'],
+  dt: ['docente', 'tutores', 'professores_lives'],
+  sg: ['satisfacao_geral'],
+}
 
 const POR_PAGINA = 10
 
@@ -38,6 +50,7 @@ export default function Questionario6({ base, escopo, param, cod, renderPlano })
           </a>
         ))}
       </nav>
+      <EixosDoQuestionario cod={q.cod} />
       <FiltroCursos cursos={doEscopo} modalidade={modalidade} curso={curso} onModalidade={trocarModalidade} onCurso={setCurso} idPrefixo={'q6-' + q.cod} />
       {curso ? (
         <UmCurso key={q.cod + curso} q={q} curso={base.cursos.find((c) => c.id === curso)} base={base} renderPlano={renderPlano} />
@@ -171,6 +184,25 @@ function ComentariosSelecionaveis({ cursoId, categoria, turma, selecionados, onA
         )
       })}
       <Paginacao pagina={pagina} total={total} porPagina={POR_PAGINA} onPagina={setPagina} />
+    </div>
+  )
+}
+
+// Eixos e dimensões do SINAES cobertos pelas perguntas de nota deste questionário
+function EixosDoQuestionario({ cod }) {
+  const lista = coberturaDosQuestionarios(QUESTIONARIOS_DA_CATEGORIA[cod] || [])
+  if (!lista.length) return null
+  return (
+    <div className="card" style={{ padding: '16px 20px', gap: 10 }}>
+      <span className="small" style={{ fontWeight: 700 }}>Eixos e dimensões do SINAES que este questionário cobre</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {lista.map((x) => (
+          <div key={x.dimensao} className="px-selos">
+            <SelosEixoDim eixo={x.eixo} dimensao={x.dimensao} />
+            <span className="small muted">{x.perguntas} {x.perguntas === 1 ? 'pergunta' : 'perguntas'}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
