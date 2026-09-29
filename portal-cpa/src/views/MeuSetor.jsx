@@ -85,7 +85,7 @@ export default function MeuSetor({ perfil, base, param, recarregarBase }) {
 }
 
 function VisaoGeral({ perfil, base, setor, meusPlanos, selecionados, onAlternar, onEnviado }) {
-  const nota = Number(setor.nota)
+  const nota = numOuNada(setor.nota)
   const ranking = base.setores.filter((s) => s.nota != null).sort((a, b) => Number(b.nota) - Number(a.nota))
   const posicao = ranking.findIndex((s) => s.id === setor.id)
   const perguntas = base.setorPerguntas.filter((p) => p.setor_id === setor.id)
@@ -102,7 +102,11 @@ function VisaoGeral({ perfil, base, setor, meusPlanos, selecionados, onAlternar,
           <div className="small muted">Escala de 1 a 5 · média ponderada das respostas dos alunos</div>
         </div>
         <div className="minis">
-          <div className="nu-mini"><span className="n">{posicao + 1}º</span><span className="l">de {ranking.length} setores</span></div>
+          {posicao >= 0 ? (
+            <div className="nu-mini"><span className="n">{posicao + 1}º</span><span className="l">de {ranking.length} setores</span></div>
+          ) : (
+            <div className="nu-mini"><span className="n">—</span><span className="l">sem nota ainda (setor novo)</span></div>
+          )}
           <div className="nu-mini"><span className="n">{perguntas.length}</span><span className="l">perguntas avaliadas</span></div>
         </div>
       </section>

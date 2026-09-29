@@ -115,8 +115,8 @@ export function Anel({ valor, max = 10, rotulo }) {
     <svg width="150" height="150" viewBox="0 0 160 160" role="img" aria-label={`${rotulo || ''} ${fmtNota(valor)} de ${max}`}>
       <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="12" />
       <circle cx="80" cy="80" r={r} fill="none" stroke="#9FE0B8" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c * f} ${c}`} transform="rotate(-90 80 80)" />
-      <text x="80" y="88" textAnchor="middle" fontFamily="Fraunces, Georgia, serif" fontSize="40" fill="#fff">{fmtNota(valor)}</text>
-      <text x="80" y="110" textAnchor="middle" fontFamily="Manrope, sans-serif" fontSize="12" fill="#C9D3E1">de {max}</text>
+      <text x="80" y="88" textAnchor="middle" fontFamily="Poppins, sans-serif" fontWeight="600" fontSize="40" fill="#fff">{fmtNota(valor)}</text>
+      <text x="80" y="110" textAnchor="middle" fontFamily="Roboto Condensed, sans-serif" fontSize="12" fill="#C9D3E1">de {max}</text>
     </svg>
   )
 }
