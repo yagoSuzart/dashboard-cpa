@@ -24,7 +24,7 @@ const CAMPOS_CONTEUDO = ['titulo', 'descricao', 'indicador', 'prioridade', 'praz
 // nunca aceitamos o valor vindo do cliente.
 const CAMPOS_TRANSICAO = [
   'status', 'comentario_revisor', 'revisado_em', 'revisado_por',
-  'validado_por', 'data_conclusao', 'enviado_coordenador_em',
+  'validado_por', 'data_conclusao', 'enviado_coordenador_em', 'consideracoes_cpa',
 ]
 
 // Estados válidos de "planos_acao.status" — qualquer outro valor é rejeitado
@@ -43,18 +43,22 @@ function podeTransitar(opts: {
   papel: string
   isOwner: boolean
   escopoCoordenador: boolean
+  autorAuxiliar: boolean
 }): boolean {
-  const { statusAtual, novoStatus, papel, isOwner, escopoCoordenador } = opts
+  const { statusAtual, novoStatus, papel, isOwner, escopoCoordenador, autorAuxiliar } = opts
 
   if (papel === 'admin') return true // Yago: aprova/edita/exclui qualquer coisa, em qualquer etapa
 
   if (papel === 'pro_reitoria') {
     if (novoStatus === 'aprovado') return true // palavra final: aprova em qualquer etapa e fecha o item
     if (novoStatus === 'devolvido' && ['enviado', 'aguardando_pro_reitoria'].includes(statusAtual)) return true
+    // plano de professor auxiliar volta para o coordenador do curso, não para o auxiliar
+    if (novoStatus === 'aguardando_coordenador' && autorAuxiliar && ['enviado', 'aguardando_pro_reitoria'].includes(statusAtual)) return true
   }
 
   if (papel === 'diretor_cpa' && statusAtual === 'enviado') {
     if (novoStatus === 'aguardando_pro_reitoria' || novoStatus === 'devolvido') return true
+    if (novoStatus === 'aguardando_coordenador' && autorAuxiliar) return true
   }
 
   if (papel === 'coordenador' && escopoCoordenador) {
@@ -121,6 +125,9 @@ Deno.serve(async (req: Request) => {
 
     const isOwner = item.usuario_id === callerId
 
+    const { data: autor } = await adminClient.from('usuarios').select('role').eq('id', item.usuario_id).maybeSingle()
+    const autorAuxiliar = autor?.role === 'professor_auxiliar'
+
     let escopoCoordenador = false
     if (perfil.role === 'coordenador' && item.curso_id) {
       const { data: vinculo } = await adminClient
@@ -170,6 +177,7 @@ Deno.serve(async (req: Request) => {
         papel: perfil.role,
         isOwner,
         escopoCoordenador,
+        autorAuxiliar,
       })
       if (!ok) {
         throw new Error(
@@ -186,6 +194,16 @@ Deno.serve(async (req: Request) => {
       if ('validado_por' in patch) {
         patch.validado_por = perfil.nome
       }
+    } else if (chaves.length === 1 && chaves[0] === 'comentario_revisor') {
+      // Quem devolveu (CPA, Pró-Reitoria ou admin) pode corrigir o próprio comentário enquanto o plano não voltou
+      const podeCorrigir =
+        ['admin', 'diretor_cpa', 'pro_reitoria'].includes(perfil.role) &&
+        ['devolvido', 'aguardando_coordenador'].includes(item.status)
+      if (!podeCorrigir) throw new Error('Você não pode alterar o comentário desta devolução.')
+    } else if (chaves.length === 1 && chaves[0] === 'consideracoes_cpa') {
+      if (!['admin', 'diretor_cpa'].includes(perfil.role) || item.status !== 'aguardando_pro_reitoria') {
+        throw new Error('Só a Coordenação da CPA altera as considerações de um plano com a Pró-Reitoria.')
+      }
     } else if (chaves.length === 1 && chaves[0] === 'atendido_pelo_setor') {
       if (!escopoSetorDemanda) {
         throw new Error('Você não pode marcar este item como atendido.')
@@ -194,9 +212,8 @@ Deno.serve(async (req: Request) => {
       const chaveInvalida = chaves.find((k) => !CAMPOS_CONTEUDO.includes(k))
       if (chaveInvalida) throw new Error('Campo não permitido nesta operação: ' + chaveInvalida)
       let podeEditar = isOwner
-      if (!podeEditar && escopoCoordenador && ['aguardando_coordenador', 'enviado', 'rascunho'].includes(item.status)) {
-        const { data: autor } = await adminClient.from('usuarios').select('role').eq('id', item.usuario_id).maybeSingle()
-        podeEditar = autor?.role === 'professor_auxiliar'
+      if (!podeEditar && escopoCoordenador && autorAuxiliar && ['aguardando_coordenador', 'enviado', 'rascunho', 'devolvido'].includes(item.status)) {
+        podeEditar = true
       }
       if (!podeEditar) throw new Error('Só o autor do item pode editar o conteúdo.')
     }

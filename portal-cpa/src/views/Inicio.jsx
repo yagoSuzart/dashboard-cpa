@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { DIMENSOES, SATISFACAO, TRILHO, STATUS_PLANO } from '../lib/config.js'
 import { mediasPorDimensao, rotuloCurso, contarTrilho } from '../lib/escopo.js'
 import { contarComentarios } from '../lib/dados.js'
-import { fmtNota, fmtInt } from '../lib/cpa.js'
+import { fmtNota, fmtInt, numOuNada } from '../lib/cpa.js'
 import { BarraNota, Anel, Erro } from '../components/ui.jsx'
 import AvisoEntregas from '../components/AvisoEntregas.jsx'
 import { BotaoPdf } from '../components/BotoesPdf.jsx'
@@ -16,7 +16,8 @@ const QUEM = {
 }
 
 export default function Inicio({ perfil, base, escopo, planos }) {
-  const { cursos, notas, setores } = base
+  const { cursos, notas } = base
+  const setores = base.setores.filter((s) => s.nota != null)
   const [voz, setVoz] = useState(null)
   const [erro, setErro] = useState(null)
   const idsEscopoChave = escopo.join(',')
@@ -174,8 +175,8 @@ export default function Inicio({ perfil, base, escopo, planos }) {
             {[...setores].sort((a, b) => a.nota - b.nota).map((s) => (
               <div key={s.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 90px 44px', gap: 12, alignItems: 'center' }}>
                 <span style={{ fontWeight: 600 }}>{s.nome}</span>
-                <BarraNota v={Number(s.nota)} fina />
-                <span className="num" style={{ fontSize: 18, textAlign: 'right' }}>{fmtNota(Number(s.nota))}</span>
+                <BarraNota v={numOuNada(s.nota)} fina />
+                <span className="num" style={{ fontSize: 18, textAlign: 'right' }}>{fmtNota(numOuNada(s.nota))}</span>
               </div>
             ))}
           </div>

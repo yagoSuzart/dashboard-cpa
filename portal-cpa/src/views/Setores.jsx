@@ -1,4 +1,4 @@
-import { fmtNota } from '../lib/cpa.js'
+import { fmtNota, numOuNada } from '../lib/cpa.js'
 import { BarraNota, SeloNota } from '../components/ui.jsx'
 import { ListaPlanos } from './Planos.jsx'
 
@@ -7,7 +7,7 @@ const NUCLEO_SETORES = { facilities: ['limpeza', 'manutencao', 'seguranca'] }
 
 export default function Setores({ perfil, base, planos, recarregarBase }) {
   const { setores, setorPerguntas } = base
-  let visiveis = setores
+  let visiveis = setores.filter((s) => s.nota != null || perfil.role === 'setor')
   if (perfil.role === 'setor') visiveis = setores.filter((s) => s.id === perfil.setor)
   if (perfil.role === 'diretor_nucleo_setor') visiveis = setores.filter((s) => (NUCLEO_SETORES[perfil.nucleoSetor] || []).includes(s.id))
   const ordenados = [...visiveis].sort((a, b) => a.nota - b.nota)
@@ -28,10 +28,10 @@ export default function Setores({ perfil, base, planos, recarregarBase }) {
               <div className="card-h">
                 <div className="t">
                   <h2>{s.nome}</h2>
-                  <SeloNota v={Number(s.nota)} />
+                  <SeloNota v={numOuNada(s.nota)} />
                 </div>
                 <div className="spacer" />
-                <span className="valor-grande">{fmtNota(Number(s.nota))}</span>
+                <span className="valor-grande">{fmtNota(numOuNada(s.nota))}</span>
               </div>
               <div>
                 {pergs.map((p) => (

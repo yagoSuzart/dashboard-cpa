@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fmtNota } from '../lib/cpa.js'
+import { fmtNota, numOuNada } from '../lib/cpa.js'
 import { demandasParaSetor, nomeNucleoSetor, planosDosSetores, setoresDoNucleo } from '../lib/nucleo.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
 import ItemPlano from '../components/ItemPlano.jsx'
@@ -69,7 +69,7 @@ export default function NucleoSetores({ perfil, base, param, recarregarBase }) {
                 <div key={s.id} className="card nu-card">
                   <div className="topo">
                     <h3>{s.nome}</h3>
-                    <span className="num" style={{ fontSize: 26 }}>{fmtNota(Number(s.nota))}</span>
+                    <span className="num" style={{ fontSize: 26 }}>{fmtNota(numOuNada(s.nota))}</span>
                   </div>
                   {pior && <div className="nu-pt"><b>Ponto mais fraco</b><span>{pior.pergunta}: {fmtNota(Number(pior.nota))}</span></div>}
                 </div>

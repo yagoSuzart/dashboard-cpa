@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fmtNota, fmtInt, textoComentario } from '../lib/cpa.js'
+import { fmtNota, fmtInt, textoComentario, numOuNada } from '../lib/cpa.js'
 import { buscarComentarios } from '../lib/dados.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import { PRIORIDADES, fmtData } from '../lib/planos.js'
@@ -86,7 +86,7 @@ export default function MeuSetor({ perfil, base, param, recarregarBase }) {
 
 function VisaoGeral({ perfil, base, setor, meusPlanos, selecionados, onAlternar, onEnviado }) {
   const nota = Number(setor.nota)
-  const ranking = [...base.setores].sort((a, b) => Number(b.nota) - Number(a.nota))
+  const ranking = base.setores.filter((s) => s.nota != null).sort((a, b) => Number(b.nota) - Number(a.nota))
   const posicao = ranking.findIndex((s) => s.id === setor.id)
   const perguntas = base.setorPerguntas.filter((p) => p.setor_id === setor.id)
   const piores = [...perguntas].sort((a, b) => Number(a.nota) - Number(b.nota)).slice(0, 2)
@@ -167,7 +167,7 @@ function LinhaRank({ s, i, total, meu }) {
     <div className={'nu-rank' + (meu ? ' destaque' : '')}>
       <span className={'pos ' + rankClasseSetor(i, total)}>{i + 1}</span>
       <span className="nm">{s.nome}{meu ? ' (seu setor)' : ''}</span>
-      <span className="num" style={{ fontSize: 20 }}>{fmtNota(Number(s.nota))}</span>
+      <span className="num" style={{ fontSize: 20 }}>{fmtNota(numOuNada(s.nota))}</span>
     </div>
   )
 }

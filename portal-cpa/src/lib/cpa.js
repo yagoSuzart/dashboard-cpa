@@ -82,3 +82,8 @@ export const SENTIMENTO = {
   bad: { rotulo: 'Negativos', selo: 'laranja' },
   good: { rotulo: 'Positivos', selo: 'azul' },
 }
+
+// Nota que pode não existir ainda (ex.: setor recém-cadastrado): null continua null
+export function numOuNada(v) {
+  return v == null || v === '' ? null : Number(v)
+}

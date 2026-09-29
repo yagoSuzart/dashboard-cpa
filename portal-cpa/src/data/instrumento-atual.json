@@ -15,7 +15,12 @@
    ],
    "variantes": {},
    "eixo": 1,
-   "dimensao": 8
+   "dimensao": 8,
+   "escalas": {
+    "PRESENCIAL": "nps_0_10",
+    "SEMIPRESENCIAL": "nps_0_10",
+    "EAD": "nps_0_10"
+   }
   },
   {
    "id": "18:2",
@@ -30,7 +35,12 @@
    ],
    "variantes": {},
    "eixo": 4,
-   "dimensao": 6
+   "dimensao": 6,
+   "escalas": {
+    "PRESENCIAL": "nps_0_10",
+    "SEMIPRESENCIAL": "nps_0_10",
+    "EAD": "nps_0_10"
+   }
   },
   {
    "id": "18:3",
@@ -47,7 +57,12 @@
     "SEMIPRESENCIAL": "Professores da UniFECAF"
    },
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "nps_0_10",
+    "SEMIPRESENCIAL": "nps_0_10",
+    "EAD": "nps_0_10"
+   }
   },
   {
    "id": "20:1",
@@ -62,7 +77,12 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 9
+   "dimensao": 9,
+   "escalas": {
+    "PRESENCIAL": "likert_5",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "20:2",
@@ -77,7 +97,12 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "20:3",
@@ -92,7 +117,12 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 4
+   "dimensao": 4,
+   "escalas": {
+    "PRESENCIAL": "likert_5",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "20:4",
@@ -107,7 +137,12 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 4
+   "dimensao": 4,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "20:5",
@@ -122,7 +157,12 @@
    ],
    "variantes": {},
    "eixo": 2,
-   "dimensao": 3
+   "dimensao": 3,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "20:6",
@@ -137,7 +177,12 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "20:7",
@@ -169,7 +214,12 @@
    ],
    "variantes": {},
    "eixo": 4,
-   "dimensao": 6
+   "dimensao": 6,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "21:2",
@@ -184,7 +234,12 @@
    ],
    "variantes": {},
    "eixo": 4,
-   "dimensao": 6
+   "dimensao": 6,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "21:3",
@@ -199,7 +254,12 @@
    ],
    "variantes": {},
    "eixo": 4,
-   "dimensao": 6
+   "dimensao": 6,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "21:4",
@@ -214,7 +274,12 @@
    ],
    "variantes": {},
    "eixo": 4,
-   "dimensao": 6
+   "dimensao": 6,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "21:5",
@@ -229,7 +294,12 @@
    ],
    "variantes": {},
    "eixo": 4,
-   "dimensao": 6
+   "dimensao": 6,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na",
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "21:6",
@@ -261,7 +331,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:2",
@@ -276,7 +349,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:3",
@@ -291,7 +367,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:4",
@@ -306,7 +385,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:5",
@@ -321,7 +403,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:6",
@@ -336,7 +421,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:7",
@@ -351,7 +439,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:8",
@@ -366,7 +457,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:9",
@@ -381,7 +475,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:10",
@@ -396,7 +493,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:11",
@@ -411,7 +511,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:12",
@@ -426,7 +529,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:13",
@@ -441,7 +547,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:14",
@@ -456,7 +565,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:15",
@@ -471,7 +583,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:16",
@@ -486,7 +601,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:17",
@@ -501,7 +619,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:18",
@@ -516,7 +637,10 @@
    ],
    "variantes": {},
    "eixo": 5,
-   "dimensao": 7
+   "dimensao": 7,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "22:19",
@@ -531,7 +655,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 9
+   "dimensao": 9,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:20",
@@ -546,7 +673,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 9
+   "dimensao": 9,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "22:21",
@@ -576,7 +706,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "23:2",
@@ -591,7 +725,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "23:3",
@@ -606,7 +744,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "23:4",
@@ -621,7 +763,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "23:5",
@@ -649,7 +795,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:2",
@@ -662,7 +811,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:3",
@@ -675,7 +827,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:4",
@@ -688,7 +843,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:5",
@@ -701,7 +859,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:6",
@@ -714,7 +875,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5_na"
+   }
   },
   {
    "id": "24:7",
@@ -727,7 +891,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:8",
@@ -740,7 +907,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:9",
@@ -753,7 +923,10 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "PRESENCIAL": "likert_5"
+   }
   },
   {
    "id": "24:10",
@@ -781,7 +954,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5_na",
+    "EAD": "likert_5_na"
+   }
   },
   {
    "id": "25:2",
@@ -796,7 +973,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "25:3",
@@ -811,7 +992,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "25:4",
@@ -826,7 +1011,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "25:5",
@@ -856,7 +1045,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "26:2",
@@ -871,7 +1064,11 @@
    ],
    "variantes": {},
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "26:3",
@@ -888,7 +1085,11 @@
     "EAD": "Conhecimento do tutor sobre os conteúdos"
    },
    "eixo": 3,
-   "dimensao": 2
+   "dimensao": 2,
+   "escalas": {
+    "SEMIPRESENCIAL": "likert_5",
+    "EAD": "likert_5"
+   }
   },
   {
    "id": "26:4",
@@ -905,5 +1106,46 @@
    "eixo": 3,
    "dimensao": 2
   }
- ]
+ ],
+ "prefixos": {
+  "satisfacao_geral": {
+   "PRESENCIAL": "Em uma escala de 0 a 10, o quanto você:",
+   "SEMIPRESENCIAL": "Em uma escala de 0 a 10, o quanto você:",
+   "EAD": "Em uma escala de 0 a 10, o quanto você:"
+  },
+  "politicas_academicas": {
+   "PRESENCIAL": "Qual o seu grau de satisfação com relação a:",
+   "SEMIPRESENCIAL": "Qual o seu grau de satisfação com relação a:",
+   "EAD": "Qual o seu grau de satisfação com relação a:"
+  },
+  "politicas_de_gestao": {
+   "PRESENCIAL": "Qual o seu grau de satisfação com relação a:",
+   "SEMIPRESENCIAL": "Qual o seu grau de satisfação com relação a:",
+   "EAD": "Qual o seu grau de satisfação com relação a:"
+  },
+  "infraestrutura_e_atendimento": {
+   "PRESENCIAL": "Qual o seu grau de satisfação com relação a:"
+  },
+  "docente": {
+   "PRESENCIAL": "Qual o seu grau de satisfação com relação a:"
+  },
+  "conteudo_das_disciplinas": {
+   "SEMIPRESENCIAL": "Qual o seu grau de satisfação com relação a:",
+   "EAD": "Qual o seu grau de satisfação com relação a:"
+  },
+  "professores_lives": {
+   "SEMIPRESENCIAL": "Qual o seu grau de satisfação com relação a:",
+   "EAD": "Qual o seu grau de satisfação com relação a:"
+  },
+  "tutores": {
+   "SEMIPRESENCIAL": "Qual o seu grau de satisfação com relação a:",
+   "EAD": "Qual o seu grau de satisfação com relação a:"
+  }
+ },
+ "escalas": {
+  "likert_5": "1 a 5 (Muito insatisfeito → Muito satisfeito)",
+  "likert_5_na": "1 a 5 + \"Não sei / Não utilizo\"",
+  "nps_0_10": "0 a 10",
+  "aberta": "Resposta aberta (texto)"
+ }
 }
