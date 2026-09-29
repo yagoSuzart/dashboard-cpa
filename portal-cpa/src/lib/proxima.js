@@ -334,7 +334,7 @@ export function parecido(a, b) {
   for (const w of A) if (B.has(w)) c++
   return c < 2 ? 0 : (2 * c) / (A.size + B.size)
 }
-export const LIMITE_PARECIDO = 0.55
+export const LIMITE_PARECIDO = 0.5
 
 // Perguntas que talvez possam sair, com os motivos e os números da planilha importada
 export function candidatasRetirada(itens, res, questionarios = []) {
@@ -400,3 +400,53 @@ export function resumoMudancas(itens, prefixos) {
   }
   return r
 }
+
+// Marcadores gravados no campo `observacao` do item
+export const MARCA_RETIRADA = 'Retirada após análise'
+export const MARCA_CONFIRMADA = 'Retirada confirmada'
+export const MARCA_PR_VOLTA = 'Trazida de volta pela Pró-Reitoria'
+export function marcar(marca, motivo) {
+  const m = String(motivo || '').trim()
+  return m ? `${marca}: ${m}` : marca
+}
+export function retiradaConfirmada(item) {
+  return !item.incluida && (item.observacao || '').startsWith(MARCA_CONFIRMADA)
+}
+// O motivo escrito, sem o marcador
+export function motivoDe(item) {
+  const o = item.observacao || ''
+  for (const m of [MARCA_MANTIDA, MARCA_RETIRADA, MARCA_CONFIRMADA, MARCA_PR_VOLTA]) if (o.startsWith(m)) return o.slice(m.length).replace(/^:\s*/, '')
+  return o
+}
+
+// Agrupa as modalidades que têm a mesma escala: [[escala, [mods]]]
+export function escalasPorModalidade(item, mods = item.modalidades) {
+  const m = new Map()
+  for (const mod of MODALIDADES.filter((x) => mods.includes(x))) {
+    const e = escalaDoItem(item, mod) || 'likert_5'
+    m.set(e, [...(m.get(e) || []), mod])
+  }
+  return [...m.entries()]
+}
+
+export function nomeEscala(e) {
+  return ESCALAS[e]?.t || e || '—'
+}
+
+
+// Modalidades em que o questionário aparece (pelas perguntas que entram; se não houver, as do instrumento)
+export function modsDoQuestionario(itens, qid) {
+  const ms = new Set(itens.filter((i) => i.questionario_id === qid && entra(i)).flatMap((i) => i.modalidades))
+  return MODALIDADES.filter((m) => ms.has(m))
+}
+
+// [[texto, [mods]]]
+export function gruposPrefixo(prefixos, qid, mods) {
+  const m = new Map()
+  for (const mod of mods) {
+    const t = prefixoDe(prefixos, qid, mod)
+    m.set(t, [...(m.get(t) || []), mod])
+  }
+  return [...m.entries()]
+}
+

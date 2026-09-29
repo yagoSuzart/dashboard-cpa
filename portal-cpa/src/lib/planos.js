@@ -3,7 +3,7 @@
 // passam pela função do servidor `plano-acao-escrever`, que confere o papel de quem pede.
 import { useEffect, useState } from 'react'
 import { sb } from './dados.js'
-import { DIMENSOES, SATISFACAO, ROLE_LABELS } from './config.js'
+import { DIMENSOES, SATISFACAO, ROLE_LABELS, STATUS_PLANO } from './config.js'
 
 // Quem escreve plano de curso (precisa ter cursos vinculados)
 export const ESCREVE_PLANO = ['coordenador', 'professor_auxiliar', 'diretor_nucleo', 'admin', 'diretor_cpa', 'pro_reitoria']
@@ -205,7 +205,18 @@ export const excluirPlano = (itemId) => escrever({ acao: 'delete', itemId })
 // Ações de cada etapa (as mesmas que a função do servidor aceita)
 export const acoes = {
   editar: (id, c) =>
-    atualizarPlano(id, { titulo: c.titulo.trim(), descricao: c.descricao.trim(), indicador: c.indicador?.trim() || '', prioridade: c.prioridade, prazo: c.prazo }),
+    atualizarPlano(id, {
+      titulo: c.titulo.trim(),
+      descricao: c.descricao.trim(),
+      indicador: c.indicador?.trim() || '',
+      prioridade: c.prioridade,
+      prazo: c.prazo,
+      // Dependência de outro setor (sem dependência, os campos do setor vão como null)
+      externa: !!c.externa,
+      area: c.externa ? c.area : null,
+      queixa_aluno: c.externa ? c.queixa_aluno?.trim() || null : null,
+      prazo_estimado: c.externa && c.prazo_estimado ? c.prazo_estimado : null,
+    }),
   validarCPA: (id, perfil, consideracoes) =>
     atualizarPlano(id, {
       status: 'aguardando_pro_reitoria',
@@ -307,8 +318,12 @@ export function devolvidoAoCoordenador(p) {
   return p.status === 'aguardando_coordenador' && !!p.comentario_revisor
 }
 
-export function ehAuxiliar(p, base) {
-  return base.usuarios.find((u) => u.id === p.usuario_id)?.role === 'professor_auxiliar'
+// Texto da situação do plano nos selos (o mesmo vocabulário do quadro de situação)
+export function rotuloStatus(p) {
+  const st = situacaoDe(p)
+  if (st === 'enviado') return 'Aguardando validação da CPA'
+  if (st === 'aguardando_coordenador') return devolvidoAoCoordenador(p) ? 'Devolvido ao coordenador' : 'Com o coordenador'
+  return STATUS_PLANO[st] || st
 }
 
 // Situação de cada plano, para os contadores (conta pelo status real; rascunho conta como aguardando a CPA)

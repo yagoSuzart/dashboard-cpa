@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { DIMENSOES, SATISFACAO, STATUS_PLANO, TRILHO, GLOBAL_SUPERVISOR_ROLES } from '../lib/config.js'
-import { rotuloCurso, contarTrilho } from '../lib/escopo.js'
+import { DIMENSOES, SATISFACAO, TRILHO, GLOBAL_SUPERVISOR_ROLES } from '../lib/config.js'
+import { rotuloCurso } from '../lib/escopo.js'
 import { fmtInt, fmtNota } from '../lib/cpa.js'
 import { buscarComentarios } from '../lib/dados.js'
-import { urgencia } from '../lib/planos.js'
 import { Vazio } from '../components/ui.jsx'
 import BotoesPdf from '../components/BotoesPdf.jsx'
 import FormPlano from '../components/FormPlano.jsx'
 import ItemPlano from '../components/ItemPlano.jsx'
-import { ESCREVE_PLANO, SELO_STATUS, fmtData, autorRotulo, seloPrazo } from '../lib/planos.js'
+import PlanoSituacao, { SelosSituacao } from '../components/PlanoSituacao.jsx'
+import { CoberturaGeral, CoberturaMinha } from '../components/PlanoCobertura.jsx'
+import { ESCREVE_PLANO, SELO_STATUS, SITUACOES, fmtData, autorRotulo, contarSituacoes, devolvidoAoCoordenador, nomeArea, rotuloStatus, seloPrazo, situacaoDe, urgencia } from '../lib/planos.js'
+import './planos.css'
 
 
 export default function Planos(props) {
@@ -25,10 +27,11 @@ export default function Planos(props) {
   const abas = [
     ...(podeEscrever || meus.length ? [{ k: 'meus', t: `Meus planos (${meus.length})` }] : []),
     ...(equipe.length ? [{ k: 'equipe', t: `Planos da equipe (${equipe.filter((p) => p.status === 'aguardando_coordenador').length} para revisar)` }] : []),
-    ...(supervisor ? [{ k: 'acompanhamento', t: 'Acompanhamento' }] : []),
+    ...(supervisor ? [{ k: 'acompanhamento', t: 'Acompanhamento' }, { k: 'cobertura', t: 'Cobertura' }] : []),
     { k: 'todos', t: 'Todos os planos' },
   ]
-  const [aba, setAba] = useState(abas.some((a) => a.k === param) ? param : abas[0].k)
+  const [aba, setAba] = useState(abas.some((a) => a.k === param) ? param : param && statusValido(param) ? 'todos' : abas[0].k)
+  const [status, setStatus] = useState(statusValido(param) ? param : '')
   const [aviso, setAviso] = useState(null)
   const mudou = (msg) => {
     if (msg) setAviso(msg)
@@ -49,15 +52,19 @@ export default function Planos(props) {
           <button key={a.k} role="tab" aria-pressed={aba === a.k} onClick={() => { setAba(a.k); setAviso(null) }}>{a.t}</button>
         ))}
       </div>
+      <PlanoSituacao planos={planos} ativo={aba === 'todos' ? status : ''} onEscolher={(st) => { setStatus(st); setAba('todos'); setAviso(null) }} />
       {aviso && <div className="aviso ok" role="status">{aviso}</div>}
       <BotoesPdf tipos={[...(perfil.role !== 'setor' && perfil.role !== 'diretor_nucleo_setor' ? ['meuPlano'] : []), ...(perfil.global ? ['planos'] : [])]} base={base} perfil={perfil} escopo={escopo} />
       {aba === 'meus' && <MeusPlanos {...{ perfil, base, meus, podeEscrever, mudou, aoEnviarPlano }} />}
       {aba === 'equipe' && <Equipe {...{ perfil, base, equipe, mudou }} />}
       {aba === 'acompanhamento' && <Acompanhamento {...{ perfil, base, planos, mudou }} />}
-      {aba === 'todos' && <Todos {...{ perfil, base, planos, param, mudou }} />}
+      {aba === 'cobertura' && <CoberturaGeral base={base} />}
+      {aba === 'todos' && <Todos {...{ perfil, base, planos, status, setStatus, mudou }} />}
     </>
   )
 }
+
+const statusValido = (s) => SITUACOES.some((x) => x.k === s)
 
 function agrupar(lista, chave) {
   const g = new Map()
@@ -74,6 +81,7 @@ function MeusPlanos({ perfil, base, meus, podeEscrever, mudou, aoEnviarPlano }) 
   const grupos = agrupar(meus, (p) => p.categoria || 'Sem questionário vinculado')
   return (
     <>
+      {perfil.role === 'coordenador' && <CoberturaMinha perfil={perfil} base={base} />}
       {podeEscrever && (
         novo ? (
           <FormPlano perfil={perfil} base={base} escopo={base.cursos.filter((c) => perfil.cursos.includes(c.id))}
@@ -95,12 +103,20 @@ function MeusPlanos({ perfil, base, meus, podeEscrever, mudou, aoEnviarPlano }) 
 }
 
 function Equipe({ perfil, base, equipe, mudou }) {
-  const pendentes = equipe.filter((p) => p.status === 'aguardando_coordenador')
+  const devolvidosCPA = equipe.filter(devolvidoAoCoordenador)
+  const pendentes = equipe.filter((p) => p.status === 'aguardando_coordenador' && !devolvidoAoCoordenador(p))
   const fila = equipe.filter((p) => p.status === 'enviado' || p.status === 'rascunho')
   const revisados = equipe.filter((p) => !['aguardando_coordenador', 'enviado', 'rascunho'].includes(p.status))
   return (
     <>
       <p className="muted">Planos dos professores auxiliares e coordenadores adjuntos dos seus cursos. Revise, edite ou exclua; quando estiver tudo certo, clique em "Aprovar e enviar para validação".</p>
+      {devolvidosCPA.length > 0 && (
+        <section className="card plano-destaque" style={{ gap: 10 }}>
+          <h3 style={{ fontSize: 20 }}>Devolvidos pela CPA/Pró-Reitoria ({devolvidosCPA.length})</h3>
+          <p className="small">Estes planos da sua equipe voltaram para você com um comentário. Ajuste (ou combine o ajuste com o professor) e clique em "Aprovar e enviar para validação" de novo.</p>
+          {devolvidosCPA.map((p) => <ItemPlano key={p.id} p={p} perfil={perfil} base={base} onMudou={mudou} />)}
+        </section>
+      )}
       <Secao t={`Aguardando sua revisão (${pendentes.length})`} itens={pendentes} {...{ perfil, base, mudou }} vazio="Nada esperando a sua revisão agora." />
       {fila.length > 0 && <Secao t={`Já enviados para validação · ainda dá para puxar de volta (${fila.length})`} itens={fila} {...{ perfil, base, mudou }} />}
       {revisados.length > 0 && <Secao t={`Já revisados (${revisados.length})`} itens={revisados} {...{ perfil, base, mudou }} />}
@@ -122,7 +138,10 @@ function Secao({ t, itens, perfil, base, mudou, vazio, contexto }) {
 function Acompanhamento({ perfil, base, planos, mudou }) {
   const [aberto, setAberto] = useState(null)
   const porUsuario = useMemo(() => Object.fromEntries(base.usuarios.map((u) => [u.id, u])), [base.usuarios])
-  const pend = (l) => l.filter((p) => ['enviado', 'rascunho', 'aguardando_pro_reitoria'].includes(p.status)).length
+  const pend = (l) => {
+    const c = contarSituacoes(l)
+    return c.enviado + c.aguardando_pro_reitoria + c.devolvido + c.aguardando_coordenador
+  }
   const montar = (lista) =>
     agrupar(lista.filter((p) => p.usuario_id !== perfil.id), (p) => p.usuario_id)
       .map(([id, itens]) => ({ id, u: porUsuario[id], itens, pendentes: pend(itens) }))
@@ -145,7 +164,7 @@ function Acompanhamento({ perfil, base, planos, mudou }) {
     }
   }
   const Linha = ({ c, nome, sub }) => (
-    <button className="plano-item" onClick={() => setAberto(c.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+    <button className="plano-item acomp-linha" onClick={() => setAberto(c.id)}>
       <span className="av" aria-hidden="true" style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--track)', display: 'grid', placeItems: 'center', fontWeight: 700, flexShrink: 0 }}>
         {(nome || '?').split(/\s+/).slice(0, 2).map((x) => x[0]).join('').toUpperCase()}
       </span>
@@ -153,7 +172,7 @@ function Acompanhamento({ perfil, base, planos, mudou }) {
         <b>{nome}</b>
         <span className="small muted">{sub}</span>
       </span>
-      <span className={'selo ' + (c.pendentes ? 'laranja' : 'cinza')} title="Itens esperando análise">{c.pendentes}</span>
+      <SelosSituacao planos={c.itens} />
     </button>
   )
   return (
@@ -241,18 +260,15 @@ function Contexto({ p, base }) {
   )
 }
 
-function Todos({ perfil, base, planos, param, mudou }) {
-  const [status, setStatus] = useState(TRILHO.includes(param) || param === 'devolvido' ? param : '')
+function Todos({ perfil, base, planos, status, setStatus, mudou }) {
   const [dim, setDim] = useState('')
   const [curso, setCurso] = useState('')
   const [busca, setBusca] = useState('')
   const porId = useMemo(() => Object.fromEntries(base.cursos.map((c) => [c.id, c])), [base.cursos])
-  const { c: trilho, devolvidos } = contarTrilho(planos)
   const cursosComPlano = [...new Set(planos.map((p) => p.curso_id).filter(Boolean))].map((id) => porId[id]).filter(Boolean).sort((a, b) => rotuloCurso(a).localeCompare(rotuloCurso(b)))
 
   const lista = planos.filter((p) => {
-    const st = p.status === 'rascunho' ? 'enviado' : p.status
-    if (status && st !== status) return false
+    if (status && situacaoDe(p) !== status) return false
     if (dim && !(p.categoria || '').split(', ').includes(dim)) return false
     if (curso && p.curso_id !== curso) return false
     if (busca && !`${p.titulo} ${p.descricao}`.toLowerCase().includes(busca.toLowerCase())) return false
@@ -261,19 +277,11 @@ function Todos({ perfil, base, planos, param, mudou }) {
 
   return (
     <>
-      <div className="etapas">
-        {TRILHO.map((s, i) => (
-          <button key={s} className={'etapa e' + (i + 1)} aria-pressed={status === s} onClick={() => setStatus(status === s ? '' : s)}>
-            <span className="n">{i + 1} · {STATUS_PLANO[s]}</span>
-            <span className="q">{fmtInt(trilho[s])}</span>
-          </button>
-        ))}
-      </div>
       <div className="card">
         <div className="filtros">
-          {devolvidos > 0 && (
-            <button className="chip-btn" aria-pressed={status === 'devolvido'} onClick={() => setStatus(status === 'devolvido' ? '' : 'devolvido')}>
-              Devolvidos para ajuste ({fmtInt(devolvidos)})
+          {status && (
+            <button className="chip-btn" aria-pressed="true" onClick={() => setStatus('')} title="Tirar este filtro">
+              {SITUACOES.find((x) => x.k === status)?.t} ×
             </button>
           )}
           <label className="sr-only" htmlFor="p-dim">Dimensão</label>
@@ -321,15 +329,17 @@ export function ListaPlanos({ planos, base, compacto, perfil, onMudou }) {
             <button key={p.id} className="plano-item" onClick={() => setAbertoId(p.id)}>
               <b>{p.titulo}</b>
               <div className="chips" style={{ gap: 6 }}>
-                <span className={'selo ' + SELO_STATUS[p.status]}>{STATUS_PLANO[p.status === 'rascunho' ? 'enviado' : p.status] || p.status}</span>
+                <span className={'selo ' + SELO_STATUS[p.status]}>{rotuloStatus(p)}</span>
                 {p.categoria && <span className="selo cinza">{p.categoria}</span>}
                 {p.prioridade && !compacto && <span className="selo cinza">Prioridade {p.prioridade.toLowerCase()}</span>}
                 {prazo && prazo.c !== 'verde' && <span className={'selo ' + prazo.c}>{prazo.t}</span>}
+                {p.externa && !compacto && <span className="selo laranja">Depende do setor: {nomeArea(p.area, base.setores)}</span>}
               </div>
               {!compacto && (
                 <span className="small muted">
                   {alvo(p)} · {porUsuario[p.usuario_id]?.nome || 'autor não encontrado'}
-                  {p.prazo && ` · prazo ${fmtData(p.prazo)}`}
+                  {p.prazo && ` · prazo do plano (definido por ${porUsuario[p.usuario_id]?.nome || 'o autor'}): ${fmtData(p.prazo)}`}
+                  {p.externa && ` · prazo estimado pelo setor (não vinculante): ${fmtData(p.prazo_estimado) || 'não informado'}`}
                 </span>
               )}
             </button>
@@ -368,6 +378,7 @@ function DetalhePlano({ p, alvo, autor, base, perfil, onMudou, onFechar }) {
           {perfil ? <ItemPlano p={p} perfil={perfil} base={base} onMudou={onMudou} /> : <p style={{ whiteSpace: 'pre-line' }}>{p.descricao}</p>}
           <div className="passos" aria-label="Trilho de aprovação">
             {p.status === 'devolvido' && <div className="aviso erro" style={{ marginBottom: 12 }}>Devolvido para ajuste</div>}
+            {devolvidoAoCoordenador(p) && <div className="aviso erro" style={{ marginBottom: 12 }}>Devolvido pela CPA/Pró-Reitoria ao coordenador do curso</div>}
             {passos.map((x, i) => {
               const cls = p.status === 'devolvido' ? (i === 0 ? 'feito' : '') : i < idx || st === 'concluido' ? 'feito' : i === idx ? 'atual' : ''
               return (

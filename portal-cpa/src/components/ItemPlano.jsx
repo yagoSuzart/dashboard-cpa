@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { STATUS_PLANO } from '../lib/config.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import {
-  PRIORIDADES, SELO_STATUS, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, coordenadoresDoCurso, devolvidoAoCoordenador, excluirPlano, fmtData, hoje,
-  nomeArea, partesPrazoPlano, seloPrazo, textoPrazoSetor, useVinculos,
+  PRIORIDADES, SELO_STATUS, areasDisponiveis, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, coordenadoresDoCurso, devolvidoAoCoordenador, excluirPlano, fmtData, hoje,
+  nomeArea, partesPrazoPlano, rotuloStatus, seloPrazo, textoPrazoSetor, useVinculos,
 } from '../lib/planos.js'
 
 const ROTULO = {
@@ -77,7 +76,7 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
         <span className="selo cinza">{alvo}</span>
         {p.categoria && <span className="selo cinza">{p.categoria}</span>}
         {p.prioridade && <span className="selo cinza">Prioridade {p.prioridade.toLowerCase()}</span>}
-        <span className={'selo ' + SELO_STATUS[p.status]} title={TEXTO_STATUS[p.status]}>{STATUS_PLANO[p.status === 'rascunho' ? 'enviado' : p.status] || p.status}</span>
+        <span className={'selo ' + SELO_STATUS[p.status]} title={TEXTO_STATUS[p.status]}>{rotuloStatus(p)}</span>
         {prazo && <span className={'selo ' + prazo.c}>{prazo.t}</span>}
         {p.externa && p.atendido_pelo_setor && <span className="selo verde">Atendido pelo setor</span>}
         {autor && autor.id !== perfil.id && <span className="selo cinza">Criado por: {autor.nome}</span>}
@@ -151,7 +150,7 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
           botao="Salvar comentário" onFechar={() => setModal(null)} ocupado={ocupado} erro={erro}
           onOk={(t) => rodar(() => acoes.editarComentario(p.id, t), 'Comentário da devolução atualizado.')} />
       )}
-      {modal === 'editar' && <ModalEditar p={p} onFechar={() => setModal(null)} ocupado={ocupado} erro={erro} onOk={(c) => rodar(() => acoes.editar(p.id, c), 'Alterações salvas.')} />}
+      {modal === 'editar' && <ModalEditar p={p} base={base} onFechar={() => setModal(null)} ocupado={ocupado} erro={erro} onOk={(c) => rodar(() => acoes.editar(p.id, c), 'Alterações salvas.')} />}
       {modal === 'jaResolvi' && <ModalResolvido onFechar={() => setModal(null)} ocupado={ocupado} erro={erro} onOk={(d) => rodar(() => acoes.jaResolvi(p.id, perfil, d), 'Marcado como resolvido.')} />}
       {modal === 'excluir' && (
         <Modal titulo="Excluir este item?" onFechar={() => setModal(null)}>
@@ -236,12 +235,26 @@ function ModalTexto({ titulo, rotulo, id, ajuda, botao, inicial = '', opcional =
   )
 }
 
-function ModalEditar({ p, onFechar, onOk, ocupado, erro }) {
-  const [c, setC] = useState({ titulo: p.titulo || '', descricao: p.descricao || '', indicador: p.indicador || '', prioridade: p.prioridade || 'Média', prazo: p.prazo || '' })
+function ModalEditar({ p, base, onFechar, onOk, ocupado, erro }) {
+  const areas = areasDisponiveis(base.setores)
+  const [c, setC] = useState({
+    titulo: p.titulo || '',
+    descricao: p.descricao || '',
+    indicador: p.indicador || '',
+    prioridade: p.prioridade || 'Média',
+    prazo: p.prazo || '',
+    externa: !!p.externa,
+    area: p.area && areas.some((a) => a.v === p.area) ? p.area : p.area || areas[0]?.v,
+    queixa_aluno: p.queixa_aluno || '',
+    prazo_estimado: p.prazo_estimado || '',
+  })
   const [aviso, setAviso] = useState(null)
-  const set = (k) => (e) => setC({ ...c, [k]: e.target.value })
+  const set = (k) => (e) => setC({ ...c, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
+  // Um setor antigo que já não está na lista continua aparecendo como opção
+  const opcoes = c.area && !areas.some((a) => a.v === c.area) ? [{ v: c.area, t: nomeArea(c.area, base.setores) }, ...areas] : areas
   function salvar() {
-    if (!c.titulo.trim() || !c.descricao.trim() || !c.prazo) return setAviso('Preencha ao menos o título, a descrição e o prazo antes de salvar.')
+    if (!c.titulo.trim() || !c.descricao.trim() || !c.prazo) return setAviso('Preencha ao menos o título, a descrição e o prazo do plano antes de salvar.')
+    if (c.externa && !c.queixa_aluno.trim()) return setAviso('Descreva a queixa do aluno relacionada a este problema, para ajudar o setor responsável a entender a demanda.')
     onOk(c)
   }
   return (
@@ -253,6 +266,32 @@ function ModalEditar({ p, onFechar, onOk, ocupado, erro }) {
         <div className="campo"><label htmlFor="ed-p">Prioridade</label><select id="ed-p" value={c.prioridade} onChange={set('prioridade')}>{PRIORIDADES.map((x) => <option key={x}>{x}</option>)}</select></div>
         <div className="campo"><label htmlFor="ed-z">Prazo do plano</label><input id="ed-z" type="date" value={c.prazo} onChange={set('prazo')} /></div>
       </div>
+      {p.tipo !== 'setor' && (
+        <>
+          <label className="small" style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 600 }}>
+            <input id="ed-ext" type="checkbox" checked={c.externa} onChange={set('externa')} />
+            Esta ação depende de outro setor (não está sob gestão direta)
+          </label>
+          {c.externa && (
+            <div className="card" style={{ background: 'var(--paper-2)', gap: 12, padding: 16 }}>
+              <div className="campo">
+                <label htmlFor="ed-area">Setor responsável</label>
+                <select id="ed-area" value={c.area || ''} onChange={set('area')}>
+                  {opcoes.map((a) => <option key={a.v} value={a.v}>{a.t}</option>)}
+                </select>
+              </div>
+              <div className="campo">
+                <label htmlFor="ed-q">Queixa do aluno relacionada</label>
+                <textarea id="ed-q" className="input" rows={3} value={c.queixa_aluno} onChange={set('queixa_aluno')} style={{ height: 'auto', padding: 12 }} />
+              </div>
+              <div className="campo">
+                <label htmlFor="ed-pe">Prazo estimado pelo setor (não vinculante)</label>
+                <input id="ed-pe" type="date" value={c.prazo_estimado} onChange={set('prazo_estimado')} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
       {(aviso || erro) && <div className="aviso erro">{aviso || erro}</div>}
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn escuro" disabled={ocupado} onClick={salvar}>Salvar alterações</button>
