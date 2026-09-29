@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { STATUS_PLANO } from '../lib/config.js'
 import { rotuloCurso } from '../lib/escopo.js'
-import { PRIORIDADES, SELO_STATUS, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, excluirPlano, fmtData, hoje, nomeArea, seloPrazo } from '../lib/planos.js'
+import {
+  PRIORIDADES, SELO_STATUS, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, coordenadoresDoCurso, devolvidoAoCoordenador, excluirPlano, fmtData, hoje,
+  nomeArea, partesPrazoPlano, seloPrazo, textoPrazoSetor, useVinculos,
+} from '../lib/planos.js'
 
 const ROTULO = {
   validarCPA: 'Validar e encaminhar à Pró-Reitoria',
@@ -15,7 +18,11 @@ const ROTULO = {
   enviarParaValidacao: 'Aprovar e enviar para validação',
   puxarParaRevisao: 'Puxar de volta para revisão',
   atendidoPeloSetor: 'Marcar como atendido pelo setor',
+  editarComentario: 'Editar comentário da devolução',
+  editarConsideracoes: 'Editar considerações da CPA',
 }
+// Quem devolve e, se o autor for professor auxiliar, o plano volta para o coordenador do curso
+const REVISORES = ['diretor_cpa', 'pro_reitoria', 'admin']
 const PRINCIPAIS = ['validarCPA', 'aprovar', 'reenviar', 'concluir', 'jaResolvi', 'enviarParaValidacao']
 
 // Um plano com todos os detalhes e os botões que a pessoa pode usar nele
@@ -29,6 +36,10 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
   const alvo = p.tipo === 'setor' ? setor?.nome || p.setor_id : rotuloCurso(curso)
   const botoes = perfil.role === 'comissao_cpa' ? [] : botoesDoPlano(p, perfil, { coordenaAutor: coordenaAutor(perfil, p, base) })
   const prazo = seloPrazo(p)
+  const pz = partesPrazoPlano(p, autor)
+  const autorAuxiliar = autor?.role === 'professor_auxiliar'
+  const paraCoordenador = autorAuxiliar && REVISORES.includes(perfil.role) && !!p.curso_id
+  const voltouAoCoordenador = devolvidoAoCoordenador(p)
   const borda = p.prioridade === 'Alta' ? 'var(--ember)' : p.prioridade === 'Média' ? '#e0b44a' : 'var(--green)'
 
   async function rodar(fn, sucesso) {
@@ -47,8 +58,7 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
   }
 
   function clicar(b) {
-    if (['devolver', 'editar', 'jaResolvi', 'excluir'].includes(b)) return setModal(b)
-    if (b === 'validarCPA') return rodar(() => acoes.validarCPA(p.id, perfil), 'Plano validado e encaminhado à Pró-Reitoria.')
+    if (['devolver', 'editar', 'jaResolvi', 'excluir', 'validarCPA', 'editarComentario', 'editarConsideracoes'].includes(b)) return setModal(b)
     if (b === 'aprovar') return rodar(() => acoes.aprovar(p.id, perfil), 'Plano aprovado.')
     if (b === 'reenviar') return rodar(() => acoes.reenviar(p.id), 'Plano reenviado para análise.')
     if (b === 'concluir') return rodar(() => acoes.concluir(p.id), 'Plano marcado como concluído.')
@@ -61,7 +71,7 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
     <article className="plano-item" style={{ borderLeft: `4px solid ${borda}` }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <b style={{ flex: 1, minWidth: 200 }}>{p.titulo}</b>
-        {p.externa ? <span className="selo laranja">Depende de: {nomeArea(p.area, base.setores)}</span> : <span className="selo verde">Sob gestão direta</span>}
+        {p.externa ? <span className="selo laranja">Depende do setor: {nomeArea(p.area, base.setores)}</span> : <span className="selo verde">Sob gestão direta</span>}
       </div>
       <div className="chips" style={{ gap: 6 }}>
         <span className="selo cinza">{alvo}</span>
@@ -74,14 +84,19 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
       </div>
       <p style={{ fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-line' }}>{p.descricao}</p>
       {p.indicador && <p className="small"><b>Indicador de sucesso:</b> {p.indicador}</p>}
-      <p className="small muted">
-        {p.externa
-          ? `Prazo do coordenador: ${fmtData(p.prazo) || '—'} · Estimativa da área (não vinculante): ${fmtData(p.prazo_estimado) || '—'}`
-          : `Prazo de entrega: ${fmtData(p.prazo) || '—'}`}
-      </p>
+      <div className="plano-prazos small">
+        <span><b>{pz.rotulo}:</b> {pz.valor}</span>
+        {p.externa && <span className="muted">{textoPrazoSetor(p, base.setores)}</span>}
+      </div>
       {p.status === 'concluido' && <p className="small" style={{ color: 'var(--green-ink)' }}>Concluído{p.data_conclusao ? ` em ${fmtData(p.data_conclusao)}` : ''}{p.revisado_por ? ` · ${p.revisado_por}` : ''}</p>}
       {p.status === 'aprovado' && <p className="small" style={{ color: 'var(--green-ink)' }}>Aprovado por {p.revisado_por || '—'}</p>}
       {p.status === 'aguardando_pro_reitoria' && <p className="small" style={{ color: 'var(--ember-ink)' }}>Validado pela CPA ({p.validado_por || '—'}) · aguardando a aprovação final da Pró-Reitoria</p>}
+      {p.consideracoes_cpa && (
+        <div className="aviso plano-consideracoes" style={{ flexDirection: 'column', gap: 2 }}>
+          <b className="small">Considerações da CPA{p.validado_por ? ` · ${p.validado_por}` : ''}</b>
+          <span className="small" style={{ whiteSpace: 'pre-line' }}>{p.consideracoes_cpa}</span>
+        </div>
+      )}
       {contexto}
       {p.comentarios_selecionados?.length > 0 && (
         <details className="small">
@@ -97,10 +112,13 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
           <span className="small">{p.queixa_aluno}</span>
         </div>
       )}
-      {p.status === 'devolvido' && p.comentario_revisor && (
+      {(p.status === 'devolvido' || voltouAoCoordenador) && p.comentario_revisor && (
         <div className="aviso erro" style={{ flexDirection: 'column', gap: 2 }}>
-          <b className="small">Comentário de {p.revisado_por || 'quem revisou'}</b>
-          <span className="small">{p.comentario_revisor}</span>
+          <b className="small">
+            {voltouAoCoordenador ? 'Devolvido pela CPA/Pró-Reitoria ao coordenador do curso' : 'Devolvido para ajuste'}
+            {' · '}comentário de {p.revisado_por || 'quem revisou'}{p.revisado_em ? ` em ${fmtData(p.revisado_em)}` : ''}
+          </b>
+          <span className="small" style={{ whiteSpace: 'pre-line' }}>{p.comentario_revisor}</span>
         </div>
       )}
       {erro && <div className="aviso erro" role="alert">{erro}</div>}
@@ -113,7 +131,26 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
           ))}
         </div>
       )}
-      {modal === 'devolver' && <ModalDevolver onFechar={() => setModal(null)} ocupado={ocupado} erro={erro} onOk={(t) => rodar(() => acoes.devolver(p.id, perfil, t), 'Plano devolvido com o seu comentário.')} />}
+      {modal === 'devolver' && (
+        <ModalDevolver p={p} base={base} paraCoordenador={paraCoordenador} onFechar={() => setModal(null)} ocupado={ocupado} erro={erro}
+          onOk={(t) => rodar(() => acoes.devolver(p.id, perfil, t, { paraCoordenador }), paraCoordenador ? 'Plano devolvido ao coordenador do curso com o seu comentário.' : 'Plano devolvido com o seu comentário.')} />
+      )}
+      {modal === 'validarCPA' && (
+        <ModalTexto titulo="Validar e encaminhar à Pró-Reitoria" rotulo="Considerações da CPA (opcional)" id="cpa-cons" opcional
+          ajuda="A Pró-Reitoria lê estas considerações antes de aprovar; depois elas ficam visíveis para todos no plano. Você pode editá-las enquanto o plano estiver com a Pró-Reitoria."
+          botao="Validar e encaminhar" onFechar={() => setModal(null)} ocupado={ocupado} erro={erro}
+          onOk={(t) => rodar(() => acoes.validarCPA(p.id, perfil, t), 'Plano validado e encaminhado à Pró-Reitoria.')} />
+      )}
+      {modal === 'editarConsideracoes' && (
+        <ModalTexto titulo="Editar considerações da CPA" rotulo="Considerações da CPA (deixe vazio para remover)" id="cpa-cons" opcional inicial={p.consideracoes_cpa || ''}
+          botao="Salvar considerações" onFechar={() => setModal(null)} ocupado={ocupado} erro={erro}
+          onOk={(t) => rodar(() => acoes.editarConsideracoes(p.id, t), 'Considerações da CPA atualizadas.')} />
+      )}
+      {modal === 'editarComentario' && (
+        <ModalTexto titulo="Editar comentário da devolução" rotulo="Comentário da devolução" id="dev-ed" inicial={p.comentario_revisor || ''}
+          botao="Salvar comentário" onFechar={() => setModal(null)} ocupado={ocupado} erro={erro}
+          onOk={(t) => rodar(() => acoes.editarComentario(p.id, t), 'Comentário da devolução atualizado.')} />
+      )}
       {modal === 'editar' && <ModalEditar p={p} onFechar={() => setModal(null)} ocupado={ocupado} erro={erro} onOk={(c) => rodar(() => acoes.editar(p.id, c), 'Alterações salvas.')} />}
       {modal === 'jaResolvi' && <ModalResolvido onFechar={() => setModal(null)} ocupado={ocupado} erro={erro} onOk={(d) => rodar(() => acoes.jaResolvi(p.id, perfil, d), 'Marcado como resolvido.')} />}
       {modal === 'excluir' && (
@@ -148,10 +185,11 @@ export function Modal({ titulo, onFechar, children }) {
   )
 }
 
-function ModalDevolver({ onFechar, onOk, ocupado, erro }) {
+function ModalDevolver({ p, base, paraCoordenador, onFechar, onOk, ocupado, erro }) {
   const [t, setT] = useState('')
   return (
     <Modal titulo="Devolver para ajuste" onFechar={onFechar}>
+      {paraCoordenador && <AvisoAuxiliar p={p} base={base} />}
       <div className="campo">
         <label htmlFor="dev-t">Explique o motivo da devolução</label>
         <textarea id="dev-t" className="input" rows={4} autoFocus value={t} onChange={(e) => setT(e.target.value)} style={{ height: 'auto', padding: 12 }} />
@@ -159,6 +197,39 @@ function ModalDevolver({ onFechar, onOk, ocupado, erro }) {
       {erro && <div className="aviso erro">{erro}</div>}
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn escuro" disabled={ocupado || !t.trim()} onClick={() => onOk(t)}>Devolver</button>
+        <button className="btn" onClick={onFechar}>Cancelar</button>
+      </div>
+    </Modal>
+  )
+}
+
+// Aviso de que o plano do professor auxiliar volta para o coordenador do curso (não para o auxiliar)
+function AvisoAuxiliar({ p, base }) {
+  const { lista } = useVinculos()
+  const nomes = coordenadoresDoCurso(p.curso_id, lista, base).map((u) => u.nome)
+  const quem = lista == null ? '…' : nomes.length ? nomes.join(' / ') : 'do curso'
+  return (
+    <div className="aviso" role="note">
+      <span className="small">
+        <b>Este plano é de um professor auxiliar:</b> ele volta para o coordenador {quem}, que ajusta e envia de novo para validação.
+      </span>
+    </div>
+  )
+}
+
+// Janela com um texto (considerações da CPA, correção do comentário da devolução)
+function ModalTexto({ titulo, rotulo, id, ajuda, botao, inicial = '', opcional = false, onFechar, onOk, ocupado, erro }) {
+  const [t, setT] = useState(inicial)
+  return (
+    <Modal titulo={titulo} onFechar={onFechar}>
+      {ajuda && <p className="small muted">{ajuda}</p>}
+      <div className="campo">
+        <label htmlFor={id}>{rotulo}</label>
+        <textarea id={id} className="input" rows={5} autoFocus value={t} onChange={(e) => setT(e.target.value)} style={{ height: 'auto', padding: 12 }} />
+      </div>
+      {erro && <div className="aviso erro">{erro}</div>}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button className="btn escuro" disabled={ocupado || (!opcional && !t.trim())} onClick={() => onOk(t)}>{botao}</button>
         <button className="btn" onClick={onFechar}>Cancelar</button>
       </div>
     </Modal>
@@ -180,7 +251,7 @@ function ModalEditar({ p, onFechar, onOk, ocupado, erro }) {
       <div className="campo"><label htmlFor="ed-i">Indicador de sucesso</label><input id="ed-i" value={c.indicador} onChange={set('indicador')} /></div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         <div className="campo"><label htmlFor="ed-p">Prioridade</label><select id="ed-p" value={c.prioridade} onChange={set('prioridade')}>{PRIORIDADES.map((x) => <option key={x}>{x}</option>)}</select></div>
-        <div className="campo"><label htmlFor="ed-z">Prazo</label><input id="ed-z" type="date" value={c.prazo} onChange={set('prazo')} /></div>
+        <div className="campo"><label htmlFor="ed-z">Prazo do plano</label><input id="ed-z" type="date" value={c.prazo} onChange={set('prazo')} /></div>
       </div>
       {(aviso || erro) && <div className="aviso erro">{aviso || erro}</div>}
       <div style={{ display: 'flex', gap: 8 }}>

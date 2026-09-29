@@ -3,7 +3,7 @@ import { rotuloCurso } from '../lib/escopo.js'
 import { fmtNota } from '../lib/cpa.js'
 import { buscarComentarios } from '../lib/dados.js'
 import { DIMENSOES, SATISFACAO } from '../lib/config.js'
-import { AREAS, CATEGORIAS_PLANO, MODELOS, PRIORIDADES, criarPlano, modeloSetor, statusDeEnvio } from '../lib/planos.js'
+import { CATEGORIAS_PLANO, areasDisponiveis, nomeArea, MODELOS, PRIORIDADES, criarPlano, modeloSetor, statusDeEnvio } from '../lib/planos.js'
 
 const VAZIO = { titulo: '', descricao: '', indicador: '', prioridade: 'Média', prazo: '', externa: false, area: 'nead', queixa_aluno: '', prazo_estimado: '' }
 
@@ -20,6 +20,9 @@ export default function FormPlano({ perfil, base, escopo, tipo = 'curso', cursoI
   const cursoAtual = cursoInicial || curso
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
   const perguntasSetor = useMemo(() => base.setorPerguntas.filter((p) => p.setor_id === perfil.setor), [base.setorPerguntas, perfil.setor])
+  const areas = useMemo(() => areasDisponiveis(base.setores), [base.setores])
+  // Se a área guardada não existe na lista (ex.: setor removido), usa a primeira da lista
+  const area = areas.some((a) => a.v === f.area) ? f.area : areas[0]?.v
   const vaiPara = statusDeEnvio(perfil) === 'aguardando_coordenador' ? 'o coordenador do curso' : 'a análise da CPA'
 
   function usarModelo() {
@@ -39,7 +42,7 @@ export default function FormPlano({ perfil, base, escopo, tipo = 'curso', cursoI
   async function enviar(e) {
     e.preventDefault()
     if (salvando) return
-    if (!f.titulo.trim() || !f.descricao.trim() || !f.prazo) return setMsg({ t: 'Preencha ao menos o título, a descrição e o prazo de entrega.', c: 'erro' })
+    if (!f.titulo.trim() || !f.descricao.trim() || !f.prazo) return setMsg({ t: 'Preencha ao menos o título, a descrição e o prazo do plano.', c: 'erro' })
     if (tipo === 'curso' && !cursoAtual) return setMsg({ t: 'Escolha o curso do plano.', c: 'erro' })
     if (f.externa && !f.queixa_aluno.trim())
       return setMsg({ t: 'Descreva a queixa do aluno relacionada a este problema, para ajudar o setor responsável a entender a demanda.', c: 'erro' })
@@ -48,6 +51,7 @@ export default function FormPlano({ perfil, base, escopo, tipo = 'curso', cursoI
     try {
       const novo = await criarPlano(perfil, {
         ...f,
+        area,
         tipo,
         curso_id: cursoAtual,
         setor_id: perfil.setor,
@@ -131,8 +135,9 @@ export default function FormPlano({ perfil, base, escopo, tipo = 'curso', cursoI
           </select>
         </div>
         <div className="campo">
-          <label htmlFor="fp-prazo">Prazo de entrega</label>
-          <input id="fp-prazo" type="date" value={f.prazo} onChange={set('prazo')} />
+          <label htmlFor="fp-prazo">Prazo do plano (o seu)</label>
+          <input id="fp-prazo" type="date" value={f.prazo} onChange={set('prazo')} aria-describedby="fp-prazo-ajuda" />
+          <span id="fp-prazo-ajuda" className="small muted">Data em que você se compromete a entregar esta ação.</span>
         </div>
       </div>
 
@@ -140,14 +145,14 @@ export default function FormPlano({ perfil, base, escopo, tipo = 'curso', cursoI
         <>
           <label className="small" style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 600 }}>
             <input type="checkbox" checked={f.externa} onChange={set('externa')} />
-            Esta ação depende de outra área (não está sob minha gestão direta)
+            Esta ação depende de outro setor (não está sob minha gestão direta)
           </label>
           {f.externa && (
             <div className="card" style={{ background: 'var(--paper-2)', gap: 12, padding: 16 }}>
               <div className="campo">
-                <label htmlFor="fp-area">Área responsável</label>
-                <select id="fp-area" value={f.area} onChange={set('area')}>
-                  {AREAS.map((a) => <option key={a.v} value={a.v}>{a.t}</option>)}
+                <label htmlFor="fp-area">Setor responsável</label>
+                <select id="fp-area" value={area} onChange={set('area')}>
+                  {areas.map((a) => <option key={a.v} value={a.v}>{a.t}</option>)}
                 </select>
               </div>
               <div className="campo">
@@ -155,8 +160,11 @@ export default function FormPlano({ perfil, base, escopo, tipo = 'curso', cursoI
                 <textarea id="fp-queixa" className="input" rows={3} value={f.queixa_aluno} onChange={set('queixa_aluno')} style={{ height: 'auto', padding: 12 }} placeholder="O que os alunos relataram sobre isso, para o setor entender a demanda" />
               </div>
               <div className="campo">
-                <label htmlFor="fp-pe">Prazo estimado pela área (não vinculante)</label>
-                <input id="fp-pe" type="date" value={f.prazo_estimado} onChange={set('prazo_estimado')} />
+                <label htmlFor="fp-pe">Prazo estimado pelo setor (se já souber)</label>
+                <input id="fp-pe" type="date" value={f.prazo_estimado} onChange={set('prazo_estimado')} aria-describedby="fp-pe-ajuda" />
+                <span id="fp-pe-ajuda" className="small muted">
+                  Estimativa do setor {nomeArea(area, base.setores) || 'responsável'}, não vinculante. O prazo do plano continua sendo o seu, informado acima.
+                </span>
               </div>
             </div>
           )}

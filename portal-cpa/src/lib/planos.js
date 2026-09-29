@@ -1,6 +1,7 @@
 // Plano de ação: criar, editar e mover pelo trilho, com as mesmas regras do sistema anterior.
 // Criar é direto na tabela (a regra do banco só deixa criar em nome próprio); editar, mover e excluir
 // passam pela função do servidor `plano-acao-escrever`, que confere o papel de quem pede.
+import { useEffect, useState } from 'react'
 import { sb } from './dados.js'
 import { DIMENSOES, SATISFACAO, ROLE_LABELS } from './config.js'
 
@@ -10,23 +11,29 @@ export const ESCREVE_PLANO = ['coordenador', 'professor_auxiliar', 'diretor_nucl
 export const CATEGORIAS_PLANO = [...DIMENSOES, SATISFACAO]
 export const PRIORIDADES = ['Alta', 'Média', 'Baixa']
 
-// Áreas para "esta ação depende de outra área" (mesmas opções do sistema anterior)
-export const AREAS = [
-  { v: 'nead', t: 'AVA / NEAD' },
-  { v: 'ti', t: 'T.I. / Infraestrutura' },
-  { v: 'biblioteca', t: 'Biblioteca' },
-  { v: 'manutencao', t: 'Manutenção' },
-  { v: 'limpeza', t: 'Limpeza' },
+// Áreas para "esta ação depende de outro setor": os setores cadastrados no banco (base.setores)
+// mais duas opções que não são setores com responsável próprio.
+export const AREAS_EXTRAS = [
   { v: 'polos', t: 'Polos (feedback geral sobre os polos EAD/Semipresencial)' },
   { v: 'outro', t: 'Financeiro / Outra (não roteado a um setor específico)' },
 ]
+export function areasDisponiveis(setores = []) {
+  const doBanco = [...setores]
+    .filter((s) => s.id && !AREAS_EXTRAS.some((a) => a.v === s.id))
+    .sort((a, b) => String(a.nome || a.id).localeCompare(String(b.nome || b.id), 'pt-BR'))
+    .map((s) => ({ v: s.id, t: s.nome || s.id }))
+  return [...doBanco, ...AREAS_EXTRAS]
+}
 
+// Nome por extenso do setor de quem a ação depende
+const NOMES_RESERVA = { nead: 'NEAD / AVA (Ambiente Virtual de Aprendizagem)', ti: 'Tecnologia da Informação (T.I.)', biblioteca: 'Biblioteca', manutencao: 'Manutenção', limpeza: 'Limpeza' }
 export function nomeArea(area, setores = []) {
   if (!area) return ''
   const s = setores.find((x) => x.id === area)
   if (s) return s.nome
   if (area === 'polos') return 'Polos (EAD/Semipresencial)'
-  return AREAS.find((a) => a.v === area)?.t || 'Financeiro / Outra'
+  if (area === 'outro') return 'Financeiro / Outra área'
+  return NOMES_RESERVA[area] || area
 }
 
 // Modelos prontos por dimensão ("usar modelo"), com o mesmo texto do sistema anterior
@@ -94,13 +101,40 @@ export function diasAtePrazo(data) {
   return Math.round((new Date(data + 'T00:00:00') - hoje) / 86400000)
 }
 
-// Selo do prazo, como no sistema anterior
-export function seloPrazo(p) {
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`
+
+// Situação do PRAZO DO PLANO (o prazo que o autor definiu). null quando já foi aprovado/concluído.
+export function situacaoPrazo(p) {
   if (!p.prazo || ['aprovado', 'concluido'].includes(p.status)) return null
   const d = diasAtePrazo(p.prazo)
-  if (d < 0) return { t: `Atrasado há ${-d} ${d === -1 ? 'dia' : 'dias'}`, c: 'laranja' }
-  if (d <= 7) return { t: `Vence em ${d} ${d === 1 ? 'dia' : 'dias'}`, c: 'laranja' }
-  return { t: `Em dia · ${d} dias restantes`, c: 'verde' }
+  if (d < 0) return { t: `atrasado há ${plural(-d, 'dia', 'dias')}`, c: 'laranja', d }
+  if (d === 0) return { t: 'vence hoje', c: 'laranja', d }
+  if (d <= 7) return { t: `vence em ${plural(d, 'dia', 'dias')}`, c: 'laranja', d }
+  return { t: `em dia · vence em ${plural(d, 'dia', 'dias')}`, c: 'verde', d }
+}
+
+// Selo de urgência: sempre diz que se refere ao prazo do plano
+export function seloPrazo(p) {
+  const s = situacaoPrazo(p)
+  return s && { t: `Prazo do plano: ${s.t}`, c: s.c }
+}
+
+// "Prazo do plano (definido por Fulano): 30/11/2026 · vence em 12 dias"
+export function partesPrazoPlano(p, autor) {
+  const rotulo = `Prazo do plano${autor?.nome ? ` (definido por ${autor.nome})` : ''}`
+  if (!p.prazo) return { rotulo, valor: 'não informado' }
+  const s = situacaoPrazo(p)
+  return { rotulo, valor: `${fmtData(p.prazo)}${s ? ' · ' + s.t : ''}` }
+}
+export function textoPrazoPlano(p, autor) {
+  const { rotulo, valor } = partesPrazoPlano(p, autor)
+  return `${rotulo}: ${valor}`
+}
+
+// "Prazo estimado pelo setor NEAD / AVA (não vinculante): 15/12/2026"
+export function textoPrazoSetor(p, setores = []) {
+  if (!p.externa) return null
+  return `Prazo estimado pelo setor ${nomeArea(p.area, setores) || 'responsável'} (não vinculante): ${fmtData(p.prazo_estimado) || 'ainda não informado'}`
 }
 
 // 0 atrasado · 1 vence em 7 dias · 2 em dia · 3 aprovado · 4 concluído
@@ -172,18 +206,34 @@ export const excluirPlano = (itemId) => escrever({ acao: 'delete', itemId })
 export const acoes = {
   editar: (id, c) =>
     atualizarPlano(id, { titulo: c.titulo.trim(), descricao: c.descricao.trim(), indicador: c.indicador?.trim() || '', prioridade: c.prioridade, prazo: c.prazo }),
-  validarCPA: (id, perfil) =>
-    atualizarPlano(id, { status: 'aguardando_pro_reitoria', comentario_revisor: null, revisado_em: new Date().toISOString(), validado_por: perfil.nome }),
+  validarCPA: (id, perfil, consideracoes) =>
+    atualizarPlano(id, {
+      status: 'aguardando_pro_reitoria',
+      comentario_revisor: null,
+      revisado_em: new Date().toISOString(),
+      validado_por: perfil.nome,
+      consideracoes_cpa: consideracoes?.trim() || null,
+    }),
+  // Só as considerações da CPA, enquanto o plano está com a Pró-Reitoria
+  editarConsideracoes: (id, texto) => atualizarPlano(id, { consideracoes_cpa: texto?.trim() || null }),
+  // Corrige o comentário de uma devolução já feita
+  editarComentario: (id, texto) => atualizarPlano(id, { comentario_revisor: texto.trim() }),
   aprovar: (id, perfil) =>
     atualizarPlano(id, { status: 'aprovado', comentario_revisor: null, revisado_em: new Date().toISOString(), revisado_por: perfil.nome }),
-  devolver: (id, perfil, comentario) =>
-    atualizarPlano(id, { status: 'devolvido', comentario_revisor: comentario.trim(), revisado_por: perfil.nome, revisado_em: new Date().toISOString() }),
+  // Plano de professor auxiliar devolvido pela CPA/Pró-Reitoria volta para o coordenador do curso
+  devolver: (id, perfil, comentario, { paraCoordenador = false } = {}) =>
+    atualizarPlano(id, {
+      status: paraCoordenador ? 'aguardando_coordenador' : 'devolvido',
+      comentario_revisor: comentario.trim(),
+      revisado_por: perfil.nome,
+      revisado_em: new Date().toISOString(),
+    }),
   reenviar: (id) => atualizarPlano(id, { status: 'enviado' }),
   concluir: (id) => atualizarPlano(id, { status: 'concluido' }),
   jaResolvi: (id, perfil, data) =>
     atualizarPlano(id, { status: 'concluido', data_conclusao: data, revisado_por: perfil.nome + ' (autoaprovação)', revisado_em: new Date().toISOString() }),
   enviarParaValidacao: (id) => atualizarPlano(id, { status: 'enviado' }),
-  puxarParaRevisao: (id) => atualizarPlano(id, { status: 'aguardando_coordenador' }),
+  puxarParaRevisao: (id) => atualizarPlano(id, { status: 'aguardando_coordenador', comentario_revisor: null }),
   atendidoPeloSetor: (id, valor) => atualizarPlano(id, { atendido_pelo_setor: valor }),
 }
 
@@ -193,6 +243,10 @@ export function botoesDoPlano(p, perfil, { coordenaAutor } = {}) {
   const dono = p.usuario_id === perfil.id
   const r = perfil.role
   const st = p.status === 'rascunho' ? 'enviado' : p.status
+  // Quem devolveu (CPA, Pró-Reitoria ou admin) corrige o comentário enquanto o plano não voltou para análise
+  if (p.comentario_revisor && ['devolvido', 'aguardando_coordenador'].includes(st) && (r === 'admin' || (['diretor_cpa', 'pro_reitoria'].includes(r) && (!p.revisado_por || p.revisado_por === perfil.nome))))
+    b.push('editarComentario')
+  if (st === 'aguardando_pro_reitoria' && (r === 'diretor_cpa' || r === 'admin')) b.push('editarConsideracoes')
   if (!dono) {
     if (st === 'enviado') {
       if (r === 'diretor_cpa') b.push('validarCPA', 'devolver')
@@ -202,6 +256,7 @@ export function botoesDoPlano(p, perfil, { coordenaAutor } = {}) {
     if (r === 'coordenador' && coordenaAutor) {
       if (st === 'aguardando_coordenador') b.push('enviarParaValidacao', 'editar', 'excluir')
       if (st === 'enviado') b.push('editar', 'excluir', 'puxarParaRevisao')
+      if (st === 'devolvido') b.push('editar')
     }
     if (r === 'setor' && p.externa && p.area && p.area === perfil.setor) b.push('atendidoPeloSetor')
     if (r === 'admin' && !b.includes('excluir')) b.push('excluir')
@@ -245,6 +300,74 @@ export function fmtData(d) {
 export function coordenaAutor(perfil, p, base) {
   if (perfil.role !== 'coordenador' || !p.curso_id || !perfil.cursos.includes(p.curso_id)) return false
   return base.usuarios.find((u) => u.id === p.usuario_id)?.role === 'professor_auxiliar'
+}
+
+// Plano devolvido pela CPA/Pró-Reitoria que voltou para o coordenador (autor professor auxiliar)
+export function devolvidoAoCoordenador(p) {
+  return p.status === 'aguardando_coordenador' && !!p.comentario_revisor
+}
+
+export function ehAuxiliar(p, base) {
+  return base.usuarios.find((u) => u.id === p.usuario_id)?.role === 'professor_auxiliar'
+}
+
+// Situação de cada plano, para os contadores (conta pelo status real; rascunho conta como aguardando a CPA)
+export const SITUACOES = [
+  { k: 'enviado', t: 'Aguardando validação da CPA', curto: 'aguardando', c: 'escuro' },
+  { k: 'aguardando_coordenador', t: 'Com o coordenador (equipe)', curto: 'com o coordenador', c: 'laranja' },
+  { k: 'devolvido', t: 'Devolvidos para ajuste', curto: 'devolvidos', c: 'laranja' },
+  { k: 'aguardando_pro_reitoria', t: 'Com a Pró-Reitoria', curto: 'com a Pró-Reitoria', c: 'azul' },
+  { k: 'aprovado', t: 'Aprovados', curto: 'aprovados', c: 'azul' },
+  { k: 'concluido', t: 'Concluídos', curto: 'concluídos', c: 'verde' },
+]
+export const situacaoDe = (p) => (p.status === 'rascunho' ? 'enviado' : p.status)
+export function contarSituacoes(planos) {
+  const c = Object.fromEntries(SITUACOES.map((s) => [s.k, 0]))
+  for (const p of planos) {
+    const k = situacaoDe(p)
+    if (c[k] != null) c[k]++
+  }
+  return c
+}
+
+// Vínculos pessoa → cursos (usuario_cursos), carregados uma vez por sessão
+let vinculosCache = null
+export function carregarVinculos(forcar = false) {
+  if (!vinculosCache || forcar) {
+    vinculosCache = sb
+      .from('usuario_cursos')
+      .select('usuario_id, curso_id')
+      .then(({ data, error }) => {
+        if (error) throw new Error(traduzir(error))
+        return data || []
+      })
+      .catch((e) => {
+        vinculosCache = null
+        throw e
+      })
+  }
+  return vinculosCache
+}
+
+export function useVinculos() {
+  const [v, setV] = useState({ lista: null, erro: null })
+  useEffect(() => {
+    let vivo = true
+    carregarVinculos()
+      .then((lista) => vivo && setV({ lista, erro: null }))
+      .catch((e) => vivo && setV({ lista: [], erro: e.message }))
+    return () => {
+      vivo = false
+    }
+  }, [])
+  return v
+}
+
+// Coordenadores (role coordenador) vinculados a um curso
+export function coordenadoresDoCurso(cursoId, vinculos, base) {
+  if (!cursoId || !vinculos) return []
+  const ids = new Set(vinculos.filter((v) => v.curso_id === cursoId).map((v) => v.usuario_id))
+  return base.usuarios.filter((u) => ids.has(u.id) && u.role === 'coordenador')
 }
 
 export function autorRotulo(u) {

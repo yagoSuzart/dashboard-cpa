@@ -97,12 +97,14 @@ export async function carregarProposta() {
   if (error) throw error
   const [questionarios] = await Promise.all([lerTudo(() => sb.from('cpa_questionarios').select('*').order('ordem'))])
   const proposta = props[0] || null
-  if (!proposta) return { proposta: null, itens: [], questionarios, historico: [] }
-  const [itens, historico] = await Promise.all([
+  if (!proposta) return { proposta: null, itens: [], questionarios, historico: [], prefixos: [] }
+  const [itens, historico, prefixos] = await Promise.all([
     lerTudo(() => sb.from('cpa_proposta_itens').select('*').eq('proposta_id', proposta.id).order('posicao')),
     lerTudo(() => sb.from('cpa_proposta_historico').select('*').eq('proposta_id', proposta.id).order('em', { ascending: false }).limit(200)),
+    // Se a tabela de prefixos ainda não responder, segue com os prefixos do instrumento
+    lerTudo(() => sb.from('cpa_proposta_prefixos').select('*').eq('proposta_id', proposta.id)).catch(() => []),
   ])
-  return { proposta, itens, questionarios, historico }
+  return { proposta, itens, questionarios, historico, prefixos }
 }
 
 // Começa a proposta com o instrumento de hoje: todas as perguntas atuais entram como "mantida"
@@ -167,4 +169,234 @@ export async function mudarStatus(proposta, patch) {
   const { data, error } = await sb.from('cpa_propostas').update(patch).eq('id', proposta.id).select('*').single()
   if (error) throw error
   return data
+}
+
+/* ---------------- eixo e dimensão ---------------- */
+export const EIXO_POR_N = Object.fromEntries(EIXOS.map((e) => [e.n, e]))
+export function rotuloEixo(n) {
+  return n && EIXO_POR_N[n] ? `Eixo ${n} · ${EIXO_POR_N[n].nome}` : null
+}
+export function rotuloDim(d) {
+  return d && DIMS[d] ? `D${d} · ${DIMS[d]}` : null
+}
+// Eixo e dimensão de uma pergunta do instrumento pelo id `${survey_id}:${pergunta_posicao}`
+export function eixoDimDoId(id) {
+  const a = ATUAL_POR_ID[id]
+  if (!a) return null
+  return { eixo: a.eixo || (a.dimensao ? EIXO_DA_DIM[a.dimensao] : null), dimensao: a.dimensao || null }
+}
+// Eixos e dimensões (com quantas perguntas) que um conjunto de questionários cobre hoje
+export function coberturaDosQuestionarios(ids) {
+  const m = new Map()
+  for (const a of ATUAIS) {
+    if (!ids.includes(a.questionario_id) || !a.dimensao) continue
+    const k = a.dimensao
+    const g = m.get(k) || { eixo: a.eixo || EIXO_DA_DIM[a.dimensao], dimensao: a.dimensao, perguntas: 0 }
+    g.perguntas++
+    m.set(k, g)
+  }
+  return [...m.values()].sort((x, y) => x.eixo - y.eixo || x.dimensao - y.dimensao)
+}
+
+/* ---------------- escala (critério avaliativo) ---------------- */
+export const ESCALAS = {
+  likert_5: { t: '1 a 5', d: '1 Muito insatisfeito … 5 Muito satisfeito', valores: ['1', '2', '3', '4', '5'], ancoras: { 1: 'Muito insatisfeito', 5: 'Muito satisfeito' } },
+  likert_5_na: { t: '1 a 5 + Não sei / Não utilizo', d: '1 Muito insatisfeito … 5 Muito satisfeito, e “Não sei / Não utilizo” (fora da média)', valores: ['1', '2', '3', '4', '5'], ancoras: { 1: 'Muito insatisfeito', 5: 'Muito satisfeito' }, na: true },
+  nps_0_10: { t: '0 a 10', d: 'Notas de 0 a 10', valores: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], ancoras: {} },
+  aberta: { t: 'Resposta aberta', d: 'O aluno escreve um texto livre', valores: [], ancoras: {} },
+}
+const ESCALA_DO_TIPO = { nota_1a5: 'likert_5', nota_0a10: 'nps_0_10', aberta: 'aberta' }
+const TIPO_DA_ESCALA = { likert_5: 'nota_1a5', likert_5_na: 'nota_1a5', nps_0_10: 'nota_0a10', aberta: 'aberta' }
+export function tipoDaEscala(esc, tipoAtual) {
+  if (!esc || tipoAtual === 'multipla' || tipoAtual === 'outro') return tipoAtual
+  return TIPO_DA_ESCALA[esc] || tipoAtual
+}
+// Escala do instrumento para a pergunta atual naquela modalidade (sem a troca feita na proposta)
+export function escalaOriginal(item, mod) {
+  const a = item.atual_id ? ATUAL_POR_ID[item.atual_id] : null
+  if (a) {
+    if (a.escalas?.[mod]) return a.escalas[mod]
+    const outras = Object.values(a.escalas || {})
+    if (outras.length) return outras[0]
+    if (a.tipo === 'aberta') return 'aberta'
+  }
+  return ESCALA_DO_TIPO[item.tipo] || null
+}
+// Escala que vale na proposta (a trocada na proposta vale para todas as modalidades)
+export function escalaDoItem(item, mod) {
+  if (item.escala) return item.escala
+  return escalaOriginal(item, mod)
+}
+export function escalaMudou(item) {
+  return !!item.escala && item.modalidades.some((m) => escalaOriginal(item, m) !== item.escala)
+}
+
+/* ---------------- prefixos (enunciado antes das perguntas) ---------------- */
+export const PREFIXOS_INSTRUMENTO = instrumento.prefixos || {}
+export function prefixoOriginal(qid, mod) {
+  const p = PREFIXOS_INSTRUMENTO[qid]
+  if (!p) return ''
+  return p[mod] || Object.values(p)[0] || ''
+}
+export function linhaPrefixo(prefixos, qid, mod) {
+  return (prefixos || []).find((r) => r.questionario_id === qid && r.modalidade === mod) || null
+}
+export function prefixoDe(prefixos, qid, mod) {
+  const r = linhaPrefixo(prefixos, qid, mod)
+  return r ? r.texto || '' : prefixoOriginal(qid, mod)
+}
+// A pergunta lida junto com o enunciado ("Qual o seu grau de satisfação com relação a: <pergunta>")
+export function comPrefixo(prefixo, texto) {
+  if (!prefixo) return texto
+  const t = String(texto || '')
+  return `${prefixo.trim()} ${t.charAt(0).toLowerCase() + t.slice(1)}`
+}
+export function sugestoesPrefixo(qid) {
+  if (qid === 'satisfacao_geral')
+    return ['Em uma escala de 0 a 10, o quanto você recomendaria ou avaliaria:', 'De 0 a 10, considerando este semestre, qual nota você dá para:']
+  return ['Considerando este semestre, avalie de 1 a 5 a sua satisfação com:', 'De 1 a 5, quanto você está satisfeito(a) com:']
+}
+export function prefixosAlterados(prefixos) {
+  return (prefixos || []).filter((r) => (r.texto || '') !== (r.texto_original ?? prefixoOriginal(r.questionario_id, r.modalidade)))
+}
+export async function salvarPrefixo(propostaId, prefixos, qid, mod, texto, usuarioId) {
+  const atual = linhaPrefixo(prefixos, qid, mod)
+  const agora = new Date().toISOString()
+  if (atual?.id) {
+    const { data, error } = await sb.from('cpa_proposta_prefixos').update({ texto, atualizado_por: usuarioId, atualizado_em: agora }).eq('id', atual.id).select('*').single()
+    if (error) throw error
+    return data
+  }
+  const { data, error } = await sb
+    .from('cpa_proposta_prefixos')
+    .insert({ proposta_id: propostaId, questionario_id: qid, modalidade: mod, texto, texto_original: prefixoOriginal(qid, mod), atualizado_por: usuarioId, atualizado_em: agora })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data
+}
+
+/* ---------------- resultados da planilha importada (por modalidade) ---------------- */
+export const LIMITE_NAO_UTILIZO = 0.2 // 20% de "Não sei / Não utilizo"
+export const LIMITE_POUCAS = 0.25 // menos de 25% dos alunos daquela modalidade que responderam a Satisfação Geral
+export const MIN_RESPOSTAS = 30
+
+export async function carregarResultadosModalidade() {
+  const { data: imps, error } = await sb.from('cpa_importacoes').select('ciclo, importado_em, status').eq('status', 'concluida').order('importado_em', { ascending: false }).limit(1)
+  if (error) throw error
+  const imp = imps?.[0]
+  if (!imp) return null
+  const linhas = await lerTudo(() => sb.from('cpa_resultado_modalidade').select('survey_id, pergunta_posicao, pergunta, modalidade, n, nao_utilizo, escala').eq('ciclo', imp.ciclo).order('survey_id').order('pergunta_posicao'))
+  const porId = {}
+  for (const r of linhas) {
+    const id = `${r.survey_id}:${r.pergunta_posicao}`
+    const g = (porId[id] ||= {})
+    const x = (g[r.modalidade] ||= { n: 0, nu: 0 })
+    x.n += Number(r.n) || 0
+    x.nu += Number(r.nao_utilizo) || 0
+  }
+  // Referência de alunos por modalidade: a Satisfação Geral, que todos respondem
+  const ref = {}
+  for (const [id, g] of Object.entries(porId)) {
+    if (ATUAL_POR_ID[id]?.questionario_id !== 'satisfacao_geral') continue
+    for (const [m, x] of Object.entries(g)) ref[m] = Math.max(ref[m] || 0, x.n + x.nu)
+  }
+  // Infraestrutura respondida por EAD/Semi
+  const infra = { n: 0, nu: 0 }
+  for (const [id, g] of Object.entries(porId)) {
+    if (ATUAL_POR_ID[id]?.questionario_id !== 'infraestrutura_e_atendimento') continue
+    for (const m of ['EAD', 'SEMIPRESENCIAL']) if (g[m]) { infra.n += g[m].n; infra.nu += g[m].nu }
+  }
+  return { ciclo: imp.ciclo, porId, ref, infra }
+}
+
+export function ehInfra(item) {
+  return item.dimensao === 7 || item.questionario_id === 'infraestrutura_e_atendimento'
+}
+const pct = (x) => (x.n + x.nu ? x.nu / (x.n + x.nu) : 0)
+export const fmtPct = (v) => (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'
+
+// Marcador gravado em `observacao` quando a CPA analisa uma sugestão e decide manter
+export const MARCA_MANTIDA = 'Mantida após análise'
+export function foiAnalisada(item) {
+  return (item.observacao || '').startsWith(MARCA_MANTIDA)
+}
+
+const VAZIAS = new Set('a o e de da do das dos em no na nos nas para por com sua seu suas seus sobre ao aos as os um uma entre pela pelo pelos pelas que se voce unifecaf curso'.split(' '))
+function palavras(t) {
+  return new Set(String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !VAZIAS.has(w)))
+}
+export function parecido(a, b) {
+  const A = palavras(a)
+  const B = palavras(b)
+  if (!A.size || !B.size) return 0
+  let c = 0
+  for (const w of A) if (B.has(w)) c++
+  return c < 2 ? 0 : (2 * c) / (A.size + B.size)
+}
+export const LIMITE_PARECIDO = 0.55
+
+// Perguntas que talvez possam sair, com os motivos e os números da planilha importada
+export function candidatasRetirada(itens, res, questionarios = []) {
+  const nomeQ = Object.fromEntries(questionarios.map((q) => [q.id, q.nome]))
+  const out = []
+  const ativas = itens.filter(entra)
+  for (const it of ativas) {
+    const motivos = []
+    const g = it.atual_id && res ? res.porId[it.atual_id] : null
+    if (g) {
+      for (const m of it.modalidades) {
+        const x = g[m]
+        if (!x) continue
+        const tot = x.n + x.nu
+        if (tot >= MIN_RESPOSTAS && pct(x) >= LIMITE_NAO_UTILIZO)
+          motivos.push({ tipo: 'nao_utilizo', mod: m, t: `${fmtPct(pct(x))} responderam “Não sei / Não utilizo” no ${MOD_CURTO[m]}`, n: tot, nu: x.nu })
+      }
+      if (ehInfra(it)) {
+        const ms = it.modalidades.filter((m) => m === 'EAD' || m === 'SEMIPRESENCIAL')
+        if (ms.length) {
+          const soma = ms.reduce((a, m) => ({ n: a.n + (g[m]?.n || 0), nu: a.nu + (g[m]?.nu || 0) }), { n: 0, nu: 0 })
+          motivos.push({ tipo: 'infra_ead', mods: ms, t: `Infraestrutura física aberta para ${ms.map((m) => MOD_CURTO[m]).join(' e ')}: ${soma.n.toLocaleString('pt-BR')} notas e ${soma.nu.toLocaleString('pt-BR')} “não utilizo” (${fmtPct(pct(soma))})`, n: soma.n + soma.nu, nu: soma.nu })
+        }
+      }
+      for (const m of it.modalidades) {
+        const x = g[m]
+        const ref = res.ref[m]
+        const tot = x ? x.n + x.nu : 0
+        if (it.tipo === 'aberta' || !ref) continue
+        if (tot < MIN_RESPOSTAS || tot < ref * LIMITE_POUCAS)
+          motivos.push({ tipo: 'poucas', mod: m, t: tot ? `Poucas respostas no ${MOD_CURTO[m]}: ${tot.toLocaleString('pt-BR')} (${fmtPct(tot / ref)} dos ${ref.toLocaleString('pt-BR')} alunos que responderam a Satisfação Geral)` : `Nenhuma resposta no ${MOD_CURTO[m]} na última pesquisa`, n: tot })
+      }
+    } else if (ehInfra(it)) {
+      const ms = it.modalidades.filter((m) => m === 'EAD' || m === 'SEMIPRESENCIAL')
+      if (ms.length) motivos.push({ tipo: 'infra_ead', mods: ms, t: `Infraestrutura física aberta para ${ms.map((m) => MOD_CURTO[m]).join(' e ')} (o aluno EAD normalmente não usa a estrutura física)` })
+    }
+    if (it.tipo !== 'aberta') {
+      for (const o of ativas) {
+        if (o === it || o.tipo === 'aberta' || (o.questionario_id || '') === (it.questionario_id || '')) continue
+        const s = parecido(it.texto, o.texto)
+        if (s >= LIMITE_PARECIDO) motivos.push({ tipo: 'duplicada', outro: o.id, t: `Texto parecido (${Math.round(s * 100)}%) com “${o.texto}” em ${nomeQ[o.questionario_id] || 'outro questionário'}` })
+      }
+    }
+    if (motivos.length) out.push({ item: it, motivos, analisada: foiAnalisada(it) })
+  }
+  return out
+}
+
+/* ---------------- resumo das mudanças (para a Pró-Reitoria e para revisar antes de enviar) ---------------- */
+export function modalidadesMudaram(item) {
+  const a = item.atual_id ? ATUAL_POR_ID[item.atual_id] : null
+  if (!a) return false
+  return MODALIDADES.filter((m) => a.modalidades.includes(m)).join() !== MODALIDADES.filter((m) => item.modalidades.includes(m)).join()
+}
+export function resumoMudancas(itens, prefixos) {
+  const r = { mantidas: [], reescritas: [], novas: [], retiradas: [], prefixos: prefixosAlterados(prefixos), formato: [] }
+  for (const it of itens) {
+    if (!it.incluida) r.retiradas.push(it)
+    else if (it.origem !== 'atual') r.novas.push(it)
+    else if (it.texto !== it.texto_original) r.reescritas.push(it)
+    else r.mantidas.push(it)
+    if (it.incluida && it.origem === 'atual' && (modalidadesMudaram(it) || escalaMudou(it))) r.formato.push(it)
+  }
+  return r
 }
