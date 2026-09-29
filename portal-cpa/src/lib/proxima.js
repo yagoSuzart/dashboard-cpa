@@ -464,3 +464,20 @@ export function gruposPrefixo(prefixos, qid, mods) {
   return [...m.entries()]
 }
 
+
+/* ---------------- perguntas atuais: a decisão sobre cada uma ---------------- */
+export const DECISOES = {
+  decidir: { t: 'A decidir', c: 'laranja' },
+  mantida: { t: 'Mantida', c: 'verde' },
+  reescrita: { t: 'Reescrita', c: 'azul' },
+  retirada: { t: 'Retirada', c: 'cinza' },
+}
+
+export function decisaoDe(item) {
+  if (!item.incluida) return 'retirada'
+  if (item.texto !== item.texto_original) return 'reescrita'
+  if (foiAnalisada(item)) return 'mantida'
+  return 'decidir'
+}
+
+export const atuaisDe = (itens) => itens.filter((i) => i.origem === 'atual')

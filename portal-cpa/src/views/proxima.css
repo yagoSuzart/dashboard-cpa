@@ -83,3 +83,21 @@
 @media print {
   .px-leitura { background: none; border-left-width: 2px; }
 }
+
+/* aba "Perguntas atuais" */
+.px-atuais { gap: 14px; }
+.px-dec { display: flex; flex-wrap: wrap; gap: 8px; }
+.px-dec button { display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 700; color: var(--ink-2); cursor: pointer; }
+.px-dec button b { font-family: var(--f-title); font-size: 20px; color: var(--navy); }
+.px-dec button.laranja b { color: var(--ember-ink); }
+.px-dec button.verde b { color: var(--green-ink); }
+.px-dec button.azul b { color: var(--blue-ink); }
+.px-dec button[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+.px-dec button[aria-pressed="true"] b { color: #fff; }
+.px-atual { display: flex; flex-direction: column; border-radius: 18px; border-left: 5px solid var(--line); }
+.px-atual.decidir { border-left-color: var(--ember); }
+.px-atual.mantida { border-left-color: var(--green); }
+.px-atual.reescrita { border-left-color: var(--blue); }
+.px-atual-faixa { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 16px 6px; }
+.px-atual > .card { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.px-nu-alto { color: var(--ember-ink); font-weight: 700; }

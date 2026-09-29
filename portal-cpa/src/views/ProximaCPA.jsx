@@ -4,7 +4,7 @@ import {
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
   ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
-  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim,
+  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
@@ -12,6 +12,7 @@ import { SelosEixoDim, Alternativas, EscalaResumo } from '../components/ProximaS
 import ProximaPrefixo from '../components/ProximaPrefixo.jsx'
 import ProximaAtencao from '../components/ProximaAtencao.jsx'
 import ProximaResumo from '../components/ProximaResumo.jsx'
+import ProximaAtuais from '../components/ProximaAtuais.jsx'
 import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
@@ -114,6 +115,7 @@ export default function ProximaCPA({ perfil, base }) {
         {[
           ...(ehPr ? [['resumo', 'Resumo das mudanças']] : []),
           ['montar', modo === 'pr' ? 'Analisar as perguntas' : 'Montar a proposta'],
+          ['atuais', `Perguntas atuais (${atuaisDe(dados.itens).length})`],
           ...(!ehPr ? [['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças']] : []),
           ['previa', 'Prévia por modalidade'],
           ['documento', 'Documento para o T.I'],
@@ -124,6 +126,7 @@ export default function ProximaCPA({ perfil, base }) {
       </div>
       {aba === 'resumo' && <ProximaResumo ctx={ctx} titulo={ehPr ? 'Para a sua análise' : 'Revisar antes de enviar'} />}
       {aba === 'montar' && <Montar ctx={ctx} />}
+      {aba === 'atuais' && <ProximaAtuais ctx={ctx} Detalhe={ItemCard} />}
       {aba === 'previa' && <Previa ctx={ctx} />}
       {aba === 'documento' && <Documento ctx={ctx} />}
       {aba === 'historico' && <Historico ctx={ctx} />}
@@ -144,6 +147,7 @@ function BarraStatus({ ctx }) {
   const { perfil, dados, recarregar, setAviso, nomes, candidatas, irPara } = ctx
   const { proposta, itens } = dados
   const pendentes = candidatas.filter((c) => !c.analisada).length
+  const aDecidir = atuaisDe(itens).filter((i) => decisaoDe(i) === 'decidir').length
   const [confirmar, setConfirmar] = useState(null)
   const [coment, setComent] = useState('')
   const ehCpa = EDITA_CPA.includes(perfil.role)
@@ -185,6 +189,7 @@ function BarraStatus({ ctx }) {
             <button type="button" className={'px-pend' + (pendentes ? '' : ' ok')} onClick={() => { irPara('montar'); setTimeout(() => document.getElementById('px-atencao')?.scrollIntoView({ behavior: 'smooth' }), 60) }}>
               {pendentes ? `${pendentes} ${pendentes === 1 ? 'pergunta sugerida' : 'perguntas sugeridas'} para revisão ainda não ${pendentes === 1 ? 'analisada' : 'analisadas'}` : 'Todas as sugestões de revisão foram analisadas'}
             </button>
+            <button className="btn" onClick={() => irPara('atuais')}>Perguntas atuais{aDecidir ? ` · ${aDecidir} a decidir` : ' · todas decididas'}</button>
             <button className="btn" onClick={() => irPara('resumo')}>Revisar antes de enviar</button>
             <button className="btn escuro" onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
           </>
@@ -330,7 +335,7 @@ function Montar({ ctx }) {
   )
 }
 
-function ItemCard({ ctx, item, vizinhos, mod }) {
+function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
   const { perfil, dados, modo, setDados, setAviso, nomes, res, candPorItem } = ctx
   const [verEscala, setVerEscala] = useState(false)
   const [editando, setEditando] = useState(false)
@@ -417,7 +422,7 @@ function ItemCard({ ctx, item, vizinhos, mod }) {
             </p>
           ))}
           <div className="chips" style={{ gap: 6 }}>
-            <span className={'selo ' + s.c}>{s.t}</span>
+            {!semSituacao && <span className={'selo ' + s.c}>{s.t}</span>}
             <span className="selo cinza">{TIPOS[item.tipo] || item.tipo}</span>
             {item.origem === 'banco' && <span className="selo cinza">do banco</span>}
             {item.editada_pr && <span className="selo azul">editada pela Pró-Reitoria</span>}
