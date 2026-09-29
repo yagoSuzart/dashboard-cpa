@@ -41,6 +41,12 @@ function useGerar() {
       setAviso({ tipo: 'ok', texto: msg })
     } catch (e) {
       console.error('Erro ao gerar PDF:', e)
+      // Portal atualizado com esta aba aberta: os arquivos antigos saíram do ar. Recarrega a página.
+      if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(e?.message || '')) {
+        setAviso({ tipo: '', texto: 'O Portal foi atualizado. Recarregando a página… depois é só clicar de novo.' })
+        setTimeout(() => location.reload(), 1200)
+        return
+      }
       setAviso({ tipo: 'erro', texto: e?.message || 'Não foi possível gerar o PDF agora.' })
     } finally {
       setOcupado('')
