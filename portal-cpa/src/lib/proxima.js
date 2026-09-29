@@ -251,6 +251,20 @@ export function comPrefixo(prefixo, texto) {
   const t = String(texto || '')
   return `${prefixo.trim()} ${t.charAt(0).toLowerCase() + t.slice(1)}`
 }
+// Pergunta escrita como pergunta completa ("Como você avalia a clareza...?") vira item que combina com o
+// prefixo ("Qual o seu grau de satisfação com relação a: clareza..."). Devolve null se não souber adaptar.
+export function textoParaPrefixo(texto) {
+  const t = String(texto || '').trim()
+  if (!/\?$/.test(t) && !/^(como|você|voce|qual|quanto|o quanto)\b/i.test(t)) return null
+  let r = t.replace(/\?+$/, '').trim()
+  r = r.replace(/^(como|o quanto|quanto)\s+(você|voce)\s+(avalia|considera|percebe|classifica)\s+/i, '')
+  r = r.replace(/^(você|voce)\s+(sente|acha|considera|percebe)\s+que\s+/i, 'o quanto ')
+  r = r.replace(/^(você|voce)\s+(sabe|conhece)\s+(que|se)?\s*/i, 'Conhecimento de que ')
+  r = r.replace(/^(você|voce)\s+/i, '')
+  if (!r || r === t) return null
+  return r.charAt(0).toUpperCase() + r.slice(1)
+}
+
 export function sugestoesPrefixo(qid) {
   if (qid === 'satisfacao_geral')
     return ['Em uma escala de 0 a 10, o quanto você recomendaria ou avaliaria:', 'De 0 a 10, considerando este semestre, qual nota você dá para:']

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import {
   BANCO, DIMS, EIXO_DA_DIM, MODALIDADES, MOD_CURTO, ESCALAS, cobertura, entra, fmtPct, ehInfra, modsDoQuestionario,
   LIMITE_NAO_UTILIZO, LIMITE_POUCAS, MIN_RESPOSTAS, MARCA_MANTIDA, MARCA_RETIRADA, MARCA_CONFIRMADA, marcar, motivoDe,
-  retiradaConfirmada, tipoDaEscala,
+  retiradaConfirmada, tipoDaEscala, gruposPrefixo, textoParaPrefixo,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { SelosEixoDim } from './ProximaSelos.jsx'
@@ -111,6 +111,9 @@ function PropostaEditavel({ ctx, b }) {
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
   const editavel = modo !== 'leitura'
   const id = 'pe-' + b.id
+  // A pergunta como o aluno vai ler, com o prefixo do questionário escolhido em cada modalidade
+  const leituras = f.escala === 'aberta' || !f.q ? [] : gruposPrefixo(dados.prefixos, f.q, f.mods).filter(([t]) => t)
+  const adaptada = textoParaPrefixo(f.texto)
   const acrescentar = async () => {
     setOcupado(true)
     const pos = Math.max(0, ...dados.itens.filter((i) => (i.questionario_id || '') === f.q).map((i) => i.posicao || 0)) + 1
@@ -130,6 +133,20 @@ function PropostaEditavel({ ctx, b }) {
       <label className="sr-only" htmlFor={id + '-t'}>Texto da pergunta proposta</label>
       <textarea id={id + '-t'} className="input" rows={2} style={{ height: 'auto', padding: 10, fontSize: 15, fontWeight: 600 }} value={f.texto} disabled={!editavel} onChange={(e) => set('texto', e.target.value)} />
       {b.observacao && <span className="small muted">Por que foi proposta: {b.observacao}</span>}
+      {leituras.map(([t, ms]) => (
+        <p key={t} className="px-leitura">
+          <span className="mods">Como o aluno vai ler{leituras.length > 1 ? ' · ' + ms.map((m) => MOD_CURTO[m]).join(', ') : ''}</span>
+          <span className="pref">{t}</span> {f.texto}
+        </p>
+      ))}
+      {f.escala !== 'aberta' && !f.q && <span className="small muted">Escolha o questionário para ver a pergunta junto com o prefixo dele.</span>}
+      {leituras.length > 0 && adaptada && adaptada !== f.texto && (
+        <div className="aviso" style={{ flexDirection: 'column', gap: 6 }}>
+          <span className="small">Esta pergunta está escrita como pergunta completa e, depois do prefixo, pode ficar repetida. Sugestão para combinar com o prefixo:</span>
+          <b className="small">“{adaptada}”</b>
+          {editavel && <button type="button" className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => set('texto', adaptada)}>Usar esta versão</button>}
+        </div>
+      )}
       {editavel && (
         <div className="filtros" style={{ gap: 8 }}>
           <label className="sr-only" htmlFor={id + '-q'}>Questionário</label>
