@@ -17,7 +17,8 @@ const PAPEIS_AUTONOMOS_PLANO = ['diretor_nucleo', 'coordenador', 'setor']
 // Campos de conteúdo do plano — só o autor pode alterá-los, e só eles (sem status).
 // Exceção: o coordenador do curso revisa (e pode editar) os itens dos professores
 // auxiliares enquanto eles ainda não foram aprovados.
-const CAMPOS_CONTEUDO = ['titulo', 'descricao', 'indicador', 'prioridade', 'prazo']
+// (e, quando a ação depende de outro setor: qual setor, a queixa do aluno e o prazo estimado pelo setor)
+const CAMPOS_CONTEUDO = ['titulo', 'descricao', 'indicador', 'prioridade', 'prazo', 'externa', 'area', 'queixa_aluno', 'prazo_estimado']
 
 // Campos permitidos numa transição de status. revisado_por/validado_por, mesmo
 // quando presentes, são sempre recalculados a partir de quem está autenticado —
