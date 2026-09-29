@@ -203,7 +203,7 @@ function UmCurso({ curso, perfil, base, escopo, planos, professores, irmaos, rec
           <div className="rolagem">
             <table className="tabela">
               <thead>
-                <tr><th>Professor(a)</th><th>Disciplina</th><th style={{ textAlign: 'right' }}>Respondentes</th><th style={{ textAlign: 'right' }}>Nota</th><th style={{ width: 140 }}></th></tr>
+                <tr><th>Professor(a)</th><th>Disciplina</th><th style={{ textAlign: 'right' }}>Respostas</th><th style={{ textAlign: 'right' }}>Nota</th><th style={{ width: 140 }}></th></tr>
               </thead>
               <tbody>
                 {profs.map((p, i) => (

@@ -75,11 +75,17 @@ export function cursosCriticos(notas, ids, n = 10) {
     })
 }
 
+// Rankings de professor só com quem teve pelo menos 3 alunos: o questionário Docente tem
+// 9 perguntas de nota, então 27 respostas. Com 1 ou 2 alunos a nota ainda é muito instável.
+export const MIN_RESPOSTAS_RANKING_PROF = 27
+export const TEXTO_MIN_RANKING_PROF = 'Entram no ranking professores avaliados por pelo menos 3 alunos (27 respostas).'
+export const entraNoRankingProf = (p) => (Number(p.respondentes) || 0) >= MIN_RESPOSTAS_RANKING_PROF
+
 // Os 10 professores com menor nota (empate: quem teve mais respondentes primeiro)
 export function professoresCriticos(professores, ids, n = 10) {
   const set = new Set(ids)
   return professores
-    .filter((p) => set.has(p.curso_id) && p.nota != null)
+    .filter((p) => set.has(p.curso_id) && p.nota != null && entraNoRankingProf(p))
     .map((p) => ({ ...p, nota: Number(p.nota) }))
     .sort((a, b) => a.nota - b.nota || (b.respondentes || 0) - (a.respondentes || 0))
     .slice(0, n)

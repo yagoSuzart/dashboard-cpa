@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MODALIDADE_LABEL } from '../lib/config.js'
 import { fmtNota, fmtInt, textoComentario } from '../lib/cpa.js'
-import { cursosOrdenados, comentariosDosProfessores } from '../lib/criticos.js'
+import { cursosOrdenados, comentariosDosProfessores, entraNoRankingProf, TEXTO_MIN_RANKING_PROF } from '../lib/criticos.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import { Carregando, Erro, Vazio, Paginacao } from '../components/ui.jsx'
 import { ciclosImportados, resultadosProfessores } from '../lib/dados.js'
@@ -30,7 +30,7 @@ export default function Professores({ perfil, base: base0, escopo, param }) {
     }
   }, [])
   const base = useMemo(() => {
-    if (!importado?.linhas?.length) return { ...base0, unidadeProf: 'respondentes' }
+    if (!importado?.linhas?.length) return { ...base0, unidadeProf: 'respostas' }
     const professores = importado.linhas.filter((l) => l.n > 0).map((l) => ({ curso_id: l.curso_id, nome: l.professor, disciplina: l.disciplina, nota: Number(l.soma) / l.n, respondentes: l.n }))
     return { ...base0, professores, unidadeProf: 'respostas', cicloProf: importado.ciclo }
   }, [base0, importado])
@@ -94,7 +94,7 @@ function UmCurso({ curso, base }) {
     return m
   }, [coment])
 
-  const piores = [...profs].sort((a, b) => a.nota - b.nota).slice(0, 2)
+  const piores = profs.filter(entraNoRankingProf).sort((a, b) => a.nota - b.nota).slice(0, 2)
   const termo = busca.trim().toLowerCase()
   const lista = (termo ? profs.filter((p) => p.nome.toLowerCase().includes(termo)) : profs).slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
   const tamanho = verTodos ? Math.max(1, lista.length) : POR_PAGINA
@@ -148,6 +148,7 @@ function UmCurso({ curso, base }) {
                 </div>
               ))}
             </div>
+            <p className="small muted">{TEXTO_MIN_RANKING_PROF}</p>
           </section>
 
           <section className="card">

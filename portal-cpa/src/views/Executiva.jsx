@@ -8,6 +8,7 @@ import {
   dimensoesOrdenadas,
   cursosCriticos,
   professoresCriticos,
+  TEXTO_MIN_RANKING_PROF,
   comentariosCriticos,
   contarComentariosCursos,
   cursosOrdenados,
@@ -288,11 +289,12 @@ function ProfessoresCriticos({ professores, sel, porId }) {
           <div>
             <div className="cabeca"><b>{p.nome}</b><span className="num">{fmtNota(p.nota)}</span></div>
             <div className="frag">
-              {rotuloCurso(porId[p.curso_id])}{p.disciplina ? ' · ' + p.disciplina : ''} · {fmtInt(p.respondentes || 0)} aluno(s) responderam
+              {rotuloCurso(porId[p.curso_id])}{p.disciplina ? ' · ' + p.disciplina : ''} · {fmtInt(p.respondentes || 0)} respostas
             </div>
           </div>
         </div>
       ))}
+      <p className="small muted" style={{ marginTop: 8 }}>{TEXTO_MIN_RANKING_PROF}</p>
     </div>
   )
 }
