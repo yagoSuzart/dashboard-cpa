@@ -1,7 +1,7 @@
 // Página pública (sem login) da CPA para o corpo docente e o corpo técnico-administrativo.
 // Anônima: não pede nome, e-mail nem matrícula. O rascunho fica só no aparelho de quem responde.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ESCALAS_COLAB, NAO_SEI, PUBLICOS, TEXTO_COMENTARIO, aparelhoJaRespondeu, blocosDo, campanhaPublica, comentarioDoBloco, enviarAvaliacao, instrumentoDe, marcaDoAparelho } from '../lib/colaboradores.js'
+import { ESCALAS_COLAB, NAO_SEI, PUBLICOS, TEXTO_COMENTARIO, blocosDo, campanhaPublica, comentarioDoBloco, enviarAvaliacao, instrumentoDe } from '../lib/colaboradores.js'
 import './avaliar.css'
 
 const ler = (k) => {
@@ -20,12 +20,6 @@ const gravar = (k, v) => {
   }
 }
 
-// Segunda trava no aparelho (além do armazenamento do navegador): um cookie de 1 ano
-const lerCookie = (k) => document.cookie.split('; ').some((c) => c === k + '=1')
-const gravarCookie = (k, sim) => {
-  document.cookie = `${k}=${sim ? '1' : ''}; max-age=${sim ? 31536000 : 0}; path=/; SameSite=Lax`
-}
-
 const VAZIO = { publico: '', notas: {}, abertas: {}, passo: 0 }
 
 // "previa": a CPA vê exatamente o que a pessoa vê, sem gravar nada ("previa.<código>" usa o questionário daquele período)
@@ -38,10 +32,7 @@ export default function AvaliarColaborador({ codigo }) {
   const chave = 'cpa-colab-' + codigo
   const chaveFim = 'cpa-colab-enviado-' + codigo
   const [r, setR] = useState(() => ({ ...VAZIO, ...(codigo.startsWith('previa') ? {} : ler(chave) || {}) }))
-  const chaveCookie = 'cpa_colab_' + codigo.replace(/[^a-z0-9]/gi, '')
-  const [enviado, setEnviado] = useState(() => !codigo.startsWith('previa') && (!!ler(chaveFim) || lerCookie(chaveCookie)))
-  const [aparelho, setAparelho] = useState(null)
-  const [jaRespondeu, setJaRespondeu] = useState(false)
+  const [enviado, setEnviado] = useState(() => !codigo.startsWith('previa') && !!ler(chaveFim))
   const [faltando, setFaltando] = useState([])
   const [ocupado, setOcupado] = useState(false)
   const topo = useRef(null)
@@ -52,18 +43,6 @@ export default function AvaliarColaborador({ codigo }) {
     campanhaPublica(previa ? codigo.slice(7) : codigo)
       .then((c) => vivo && setCamp(c && previa ? { ...c, aberta: true, titulo: 'Prévia · ' + c.titulo + ' · nada do que você marcar aqui é gravado' } : c))
       .catch((e) => vivo && setErro(e))
-    return () => {
-      vivo = false
-    }
-  }, [codigo, previa])
-  useEffect(() => {
-    if (previa) return
-    let vivo = true
-    marcaDoAparelho(codigo).then((h) => {
-      if (!vivo) return
-      setAparelho(h)
-      aparelhoJaRespondeu(codigo, h).then((x) => vivo && setJaRespondeu(x))
-    })
     return () => {
       vivo = false
     }
@@ -114,8 +93,7 @@ export default function AvaliarColaborador({ codigo }) {
       const notas = Object.fromEntries(Object.entries(r.notas).filter(([k]) => ids.has(k)))
       const abertas = Object.fromEntries(Object.entries(r.abertas).map(([k, v]) => [k, String(v || '').trim().slice(0, 4000)]).filter(([, v]) => v))
       if (!previa) {
-        await enviarAvaliacao(codigo, r.publico, {}, notas, abertas, aparelho)
-        gravarCookie(chaveCookie, true)
+        await enviarAvaliacao(codigo, r.publico, {}, notas, abertas)
         gravar(chave, null)
         gravar(chaveFim, { em: new Date().toISOString() })
       }
@@ -164,7 +142,7 @@ export default function AvaliarColaborador({ codigo }) {
         <div className="av-check" aria-hidden="true">✓</div>
         <h1>Obrigado por participar!</h1>
         <p>Suas respostas foram enviadas de forma anônima. Elas ajudam a CPA e a gestão a planejar as melhorias da UniFECAF.</p>
-        <button className="btn" onClick={() => { gravar(chaveFim, null); gravarCookie(chaveCookie, false); setR(VAZIO); setEnviado(false) }}>Outra pessoa vai responder neste aparelho</button>
+        <button className="btn" onClick={() => { gravar(chaveFim, null); setR(VAZIO); setEnviado(false) }}>Outra pessoa vai responder neste aparelho</button>
       </section>,
     )
 
@@ -185,11 +163,6 @@ export default function AvaliarColaborador({ codigo }) {
           <span className="eyebrow">{camp.titulo}</span>
           <h1>Autoavaliação institucional</h1>
           <p>Esta pesquisa é <b>anônima</b>: não pedimos nome, e-mail, matrícula nem setor. A única coisa que perguntamos é se você é do corpo docente ou do corpo técnico-administrativo. Leva cerca de 10 minutos.</p>
-          {jaRespondeu && (
-            <div className="aviso" role="note">
-              Este aparelho já enviou uma resposta neste período. Se você já respondeu, obrigado, não precisa responder de novo. Se é outra pessoa usando o mesmo aparelho, pode continuar normalmente.
-            </div>
-          )}
           <p className="small">Pedimos que cada pessoa responda <b>uma única vez</b>.</p>
           <fieldset className="av-publico">
             <legend>Para começar, você é:</legend>
