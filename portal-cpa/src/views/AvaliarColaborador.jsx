@@ -149,6 +149,46 @@ export default function AvaliarColaborador({ codigo }) {
   const passo = r.passo
   const progresso = r.publico ? Math.round((passo / totalPassos) * 100) : 0
 
+  // Tela inicial: a foto do campus (a mesma da entrada do Plano de Ação) e a escolha do público
+  if (passo === 0)
+    return (
+      <div className="av-hero" ref={topo}>
+        <div className="av-hero-foto">
+          <img className="bg" src="/campus.jpg" alt="" />
+          <div className="dentro">
+            <img src="/logo-unifecaf-branco.png" alt="UniFECAF" className="av-hero-logo" />
+            <div className="av-hero-txt">
+              <div className="eyebrow" style={{ color: 'var(--mint)' }}>Comissão Própria de Avaliação</div>
+              <h1>A voz de quem faz a UniFECAF.</h1>
+              <p>{camp.titulo}</p>
+              <div className="av-hero-stats">
+                <div><b>Anônima</b><span>sem nome, e-mail, matrícula ou setor</span></div>
+                <div><b>10 minutos</b><span>em média, no celular ou no computador</span></div>
+                <div><b>1 vez</b><span>cada pessoa responde uma única vez</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="av-hero-form">
+          <div className="av-hero-caixa">
+            <div className="eyebrow">Autoavaliação institucional</div>
+            <h2>Para começar, você é:</h2>
+            <p className="muted">É a única informação que pedimos. Cada grupo vê as perguntas que fazem sentido para o seu dia a dia.</p>
+            <div className="av-publico" role="radiogroup" aria-label="Você é">
+              {Object.entries(PUBLICOS).map(([k, p]) => (
+                <button key={k} type="button" role="radio" className="av-opcao" aria-checked={r.publico === k} aria-pressed={r.publico === k} onClick={() => setR((x) => ({ ...x, publico: k }))}>
+                  <b>{k === 'docente' ? 'Docente' : 'Técnico-administrativo'}</b>
+                  <span className="small muted">{p.t}</span>
+                </button>
+              ))}
+            </div>
+            <button className="btn escuro av-hero-btn" disabled={!r.publico} onClick={() => irPara(1)}>Começar a avaliação</button>
+            <p className="small muted">Suas respostas são analisadas somente em conjunto, pela Comissão Própria de Avaliação.</p>
+          </div>
+        </div>
+      </div>
+    )
+
   return casca(
     <>
       {r.publico && (
@@ -156,28 +196,6 @@ export default function AvaliarColaborador({ codigo }) {
           <div className="av-prog-barra"><span style={{ width: progresso + '%' }} /></div>
           <span className="small muted">Etapa {passo + 1} de {totalPassos + 1}</span>
         </div>
-      )}
-
-      {passo === 0 && (
-        <section className="av-card">
-          <span className="eyebrow">{camp.titulo}</span>
-          <h1>Autoavaliação institucional</h1>
-          <p>Esta pesquisa é <b>anônima</b>: não pedimos nome, e-mail, matrícula nem setor. A única coisa que perguntamos é se você é do corpo docente ou do corpo técnico-administrativo. Leva cerca de 10 minutos.</p>
-          <p className="small">Pedimos que cada pessoa responda <b>uma única vez</b>.</p>
-          <fieldset className="av-publico">
-            <legend>Para começar, você é:</legend>
-            {Object.entries(PUBLICOS).map(([k, p]) => (
-              <button key={k} type="button" className="av-opcao" aria-pressed={r.publico === k} onClick={() => setR((x) => ({ ...x, publico: k }))}>
-                <b>{p.eu}</b>
-                <span className="small muted">{p.t}</span>
-              </button>
-            ))}
-          </fieldset>
-          <div className="av-acoes">
-            <span />
-            <button className="btn escuro" disabled={!r.publico} onClick={() => irPara(1)}>Começar</button>
-          </div>
-        </section>
       )}
 
       {passo >= 1 && passo <= blocos.length && (() => {
