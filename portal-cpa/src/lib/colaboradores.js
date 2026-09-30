@@ -13,7 +13,7 @@ export const PUBLICOS = {
 }
 
 export const NAO_SEI = 6
-export const MIN_GRUPO = 5 // grupos menores não aparecem nos resultados, para ninguém ser identificado
+export const MIN_GRUPO = 5 // com menos respostas que isso, o grupo pode ser reconhecido: a tela avisa
 
 const SATISFACAO = 'Qual o seu grau de satisfação com relação a:'
 const CONHECIMENTO = 'Qual o seu nível de conhecimento sobre:'
@@ -106,10 +106,10 @@ export const BLOCOS = [
     ],
   },
   {
-    id: 'e5', eixo: 5, titulo: 'Infraestrutura Física e Tecnológica',
+    id: 'e5', eixo: 5, titulo: 'Infraestrutura Física',
     grupos: [
       {
-        prefixo: SATISFACAO, escala: 'satisfacao', subtitulo: 'Infraestrutura física',
+        prefixo: SATISFACAO, escala: 'satisfacao',
         perguntas: [
           q('e5_biblioteca', 'A estrutura física da biblioteca (segurança, mobiliário, ambiente)', 7),
           q('e5_acervo', 'O acervo da biblioteca (livros, revistas e demais materiais)', 7),
@@ -121,8 +121,13 @@ export const BLOCOS = [
           q('e5_acessibilidade', 'A acessibilidade das instalações', 7),
         ],
       },
+    ],
+  },
+  {
+    id: 'e5t', eixo: 5, titulo: 'Infraestrutura Tecnológica',
+    grupos: [
       {
-        prefixo: SATISFACAO, escala: 'satisfacao', subtitulo: 'Infraestrutura tecnológica',
+        prefixo: SATISFACAO, escala: 'satisfacao',
         perguntas: [
           q('e5_equipamentos', 'A qualidade e a quantidade dos equipamentos (computadores, chromebooks)', 7),
           q('e5_internet', 'A qualidade da internet (Wi-Fi e rede)', 7),
@@ -146,12 +151,8 @@ export const FINAL = {
 
 export const comentarioDoBloco = (b) => 'c_' + b.id
 
-// Perfil opcional e amplo (nada que identifique a pessoa)
-export const PERFIL = {
-  tempo: { t: 'Há quanto tempo você trabalha na UniFECAF?', opcoes: ['Menos de 1 ano', 'De 1 a 3 anos', 'De 3 a 5 anos', 'Mais de 5 anos'] },
-  docente: { campo: 'modalidade', t: 'Em qual modalidade você mais leciona?', opcoes: ['Presencial', 'EAD', 'Semipresencial', 'Mais de uma'] },
-  tecnico: { campo: 'area', t: 'Em que tipo de área você atua?', opcoes: ['Acadêmica (secretaria, coordenação, biblioteca, laboratórios)', 'Administrativa (financeiro, RH, compras, jurídico)', 'Atendimento e relacionamento com o aluno', 'Tecnologia, infraestrutura e manutenção', 'Comercial e marketing', 'Outra'] },
-}
+// Pergunta aberta de cada seção, como no instrumento anterior
+export const TEXTO_COMENTARIO = 'Deixe seu comentário, sugestão ou reclamação.'
 
 export function blocosDo(publico) {
   return BLOCOS.map((b) => ({
@@ -243,7 +244,7 @@ export function mediaDeGrupo(respostas, perguntas) {
 export function csvRespostas(respostas) {
   const fech = perguntasFechadas()
   const abertas = [...BLOCOS.map((b) => ({ id: comentarioDoBloco(b), texto: 'Comentário · ' + b.titulo })), ...FINAL.abertas]
-  const cab = ['publico', 'enviado_em', 'tempo_de_casa', 'modalidade_ou_area', ...fech.map((p) => p.id), FINAL.nps.id, ...abertas.map((a) => a.id)]
+  const cab = ['publico', 'enviado_em', ...fech.map((p) => p.id), FINAL.nps.id, ...abertas.map((a) => a.id)]
   const esc = (v) => {
     const s = v == null ? '' : String(v)
     return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
@@ -251,8 +252,6 @@ export function csvRespostas(respostas) {
   const linhas = respostas.map((r) => [
     PUBLICOS[r.publico]?.t || r.publico,
     new Date(r.criado_em).toLocaleDateString('pt-BR'),
-    r.perfil?.tempo || '',
-    r.perfil?.modalidade || r.perfil?.area || '',
     ...fech.map((p) => r.notas?.[p.id] ?? ''),
     r.notas?.[FINAL.nps.id] ?? '',
     ...abertas.map((a) => r.abertas?.[a.id] || ''),

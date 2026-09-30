@@ -101,3 +101,12 @@
 .px-atual-faixa { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 16px 6px; }
 .px-atual > .card { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 .px-nu-alto { color: var(--ember-ink); font-weight: 700; }
+
+/* adaptar perguntas para outra modalidade */
+.px-adaptada { border-left: 3px solid var(--green); padding-left: 10px; }
+.px-adapt-barra { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--green-soft); color: var(--green-ink); }
+.px-adapt-lista { display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow: auto; padding-right: 4px; }
+.px-adapt { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); }
+.px-adapt.on { border-color: var(--blue); background: #f5f9fe; }
+.px-adapt-cab { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; }
+.px-adapt-cab input { margin-top: 3px; }

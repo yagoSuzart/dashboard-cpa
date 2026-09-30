@@ -2,7 +2,7 @@
 // Só Gestor(a) Técnico(a), Coordenação da CPA e Pró-Reitoria veem (o banco também garante isso).
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  BLOCOS, ESCALAS_COLAB, FINAL, GERE_COLAB, MIN_GRUPO, PERFIL, PUBLICOS, atualizarCampanha, blocosDo, carregarRespostas,
+  BLOCOS, ESCALAS_COLAB, FINAL, GERE_COLAB, MIN_GRUPO, PUBLICOS, TEXTO_COMENTARIO, atualizarCampanha, blocosDo, carregarRespostas,
   comentarioDoBloco, criarCampanha, csvRespostas, linkDaCampanha, listarCampanhas, mediaDeGrupo, perguntasFechadas, resumoPergunta,
 } from '../lib/colaboradores.js'
 import { fmtInt, fmtNota, textoComentario } from '../lib/cpa.js'
@@ -130,7 +130,6 @@ function Resultados({ camp }) {
         <>
           {lista.length < MIN_GRUPO && <div className="aviso">Ainda são {lista.length} {lista.length === 1 ? 'resposta' : 'respostas'}. Com menos de {MIN_GRUPO}, os números mudam muito e a pessoa pode ser reconhecida: leia com cuidado.</div>}
           <PorEixo lista={lista} resp={resp} pub={pub} />
-          <PorPerfil lista={lista} pub={pub} />
           {BLOCOS.map((b) => (
             <BlocoResultado key={b.id} bloco={b} lista={lista} pub={pub} />
           ))}
@@ -167,43 +166,6 @@ function PorEixo({ lista, resp, pub }) {
           )
         })}
       </div>
-    </section>
-  )
-}
-
-function PorPerfil({ lista, pub }) {
-  const campos = [['tempo', PERFIL.tempo.t, PERFIL.tempo.opcoes]]
-  if (pub) campos.push([PERFIL[pub].campo, PERFIL[pub].t, PERFIL[pub].opcoes])
-  const perg = perguntasFechadas(pub || undefined).filter((p) => p.escala === 'satisfacao')
-  return (
-    <section className="card">
-      <div className="card-h"><div className="t"><h2>Por perfil</h2><p className="muted small">Só aparecem grupos com pelo menos {MIN_GRUPO} respostas, para preservar o anonimato.{!pub ? ' Escolha Docentes ou Técnico-administrativos para ver também a modalidade ou a área.' : ''}</p></div></div>
-      {campos.map(([campo, titulo, opcoes]) => {
-        const grupos = opcoes.map((o) => {
-          const g = lista.filter((r) => r.perfil?.[campo] === o)
-          return { o, n: g.length, v: g.length >= MIN_GRUPO ? mediaDeGrupo(g, perg) : null, nps: g.length >= MIN_GRUPO ? resumoPergunta(g, FINAL.nps.id, true).media : null }
-        })
-        const semInfo = lista.filter((r) => !r.perfil?.[campo]).length
-        return (
-          <div key={campo} className="cb-perfil">
-            <h3>{titulo}</h3>
-            <table className="cb-tabela">
-              <thead><tr><th>Grupo</th><th className="n">Respostas</th><th className="n">Satisfação (1 a 5)</th><th className="n">Geral (0 a 10)</th></tr></thead>
-              <tbody>
-                {grupos.map((g) => (
-                  <tr key={g.o}>
-                    <td>{g.o}</td>
-                    <td className="n">{g.n < MIN_GRUPO && g.n > 0 ? `menos de ${MIN_GRUPO}` : fmtInt(g.n)}</td>
-                    <td className="n num">{g.v == null ? '—' : fmtNota(g.v)}</td>
-                    <td className="n num">{g.nps == null ? '—' : fmtNota(g.nps, 1)}</td>
-                  </tr>
-                ))}
-                {semInfo > 0 && <tr><td className="muted">Preferiu não informar</td><td className="n">{fmtInt(semInfo)}</td><td /><td /></tr>}
-              </tbody>
-            </table>
-          </div>
-        )
-      })}
     </section>
   )
 }
@@ -289,7 +251,7 @@ function Questionario() {
         <div className="seg" role="group" aria-label="Público">
           {Object.entries(PUBLICOS).map(([k, p]) => <button key={k} aria-pressed={pub === k} onClick={() => setPub(k)}>{p.t}</button>)}
         </div>
-        <span className="small muted">{n} perguntas fechadas + satisfação geral (0 a 10) + {BLOCOS.length + FINAL.abertas.length} abertas (opcionais)</span>
+        <span className="small muted">{n} perguntas fechadas + satisfação geral (0 a 10) + {BLOCOS.length + FINAL.abertas.length} abertas (opcionais) · a pessoa só informa se é docente ou técnico-administrativo</span>
         <span style={{ flex: 1 }} />
         <a className="btn sm" href="#/avaliar/previa" target="_blank" rel="noreferrer">Ver como a pessoa responde ↗</a>
       </div>
@@ -314,7 +276,7 @@ function Questionario() {
               </ol>
             </div>
           ))}
-          <p className="small"><b>Aberta (opcional):</b> Quer deixar um comentário, sugestão ou reclamação sobre {b.titulo.toLowerCase()}?</p>
+          <p className="small"><b>Aberta (opcional):</b> {TEXTO_COMENTARIO}</p>
         </section>
       ))}
       <section className="card">

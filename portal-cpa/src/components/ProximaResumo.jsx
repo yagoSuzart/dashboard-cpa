@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import {
   ATUAL_POR_ID, MODALIDADES, MOD_CURTO, BANCO_POR_ID, resumoMudancas, modalidadesMudaram, escalaMudou, escalaOriginal,
-  nomeEscala, prefixoOriginal, motivoDe, salvarPrefixo, registrar, MARCA_PR_VOLTA, marcar,
+  nomeEscala, prefixoOriginal, motivoDe, salvarPrefixo, registrar, MARCA_PR_VOLTA, marcar, adaptadaDe,
 } from '../lib/proxima.js'
 import { SelosEixoDim } from './ProximaSelos.jsx'
 
@@ -64,11 +64,12 @@ export default function ProximaResumo({ ctx, titulo }) {
 
       <Grupo id="novas" titulo="Novas" n={r.novas.length} vazio="Nenhuma pergunta nova.">
         {r.novas.map((it) => (
-          <Mudanca key={it.id} ctx={ctx} item={it} nomeQ={nomeQ} extra={<span className="selo verde">{it.origem === 'banco' ? 'do banco de perguntas' : 'escrita pela ' + (it.adicionada_pr ? 'Pró-Reitoria' : 'CPA')}</span>}>
+          <Mudanca key={it.id} ctx={ctx} item={it} nomeQ={nomeQ} extra={<span className="selo verde">{it.origem === 'banco' ? 'do banco de perguntas' : adaptadaDe(it) ? 'adaptada de outra modalidade' : 'escrita pela ' + (it.adicionada_pr ? 'Pró-Reitoria' : 'CPA')}</span>}>
             <div className="px-antes-depois">
               <ins>{it.texto}</ins>
               {it.origem === 'banco' && it.texto_original && it.texto !== it.texto_original && <span className="small muted">Texto proposto no banco: <del>{it.texto_original}</del></span>}
               {it.banco_id && BANCO_POR_ID[it.banco_id]?.observacao && <span className="small muted">Por que foi proposta: {BANCO_POR_ID[it.banco_id].observacao}</span>}
+              {adaptadaDe(it) && <span className="small muted">{adaptadaDe(it)}</span>}
             </div>
           </Mudanca>
         ))}

@@ -481,3 +481,7 @@ export function decisaoDe(item) {
 }
 
 export const atuaisDe = (itens) => itens.filter((i) => i.origem === 'atual')
+
+/* ---------------- perguntas adaptadas de outra modalidade ---------------- */
+export const MARCA_ADAPTADA = 'Adaptada de'
+export const adaptadaDe = (item) => (item.origem !== 'atual' && (item.observacao || '').startsWith(MARCA_ADAPTADA) ? item.observacao : null)

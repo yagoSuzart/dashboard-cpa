@@ -4,7 +4,7 @@ import {
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
   ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
-  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe,
+  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
@@ -13,6 +13,7 @@ import ProximaPrefixo from '../components/ProximaPrefixo.jsx'
 import ProximaAtencao from '../components/ProximaAtencao.jsx'
 import ProximaResumo from '../components/ProximaResumo.jsx'
 import ProximaAtuais from '../components/ProximaAtuais.jsx'
+import ProximaAdaptar from '../components/ProximaAdaptar.jsx'
 import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
@@ -281,6 +282,7 @@ function Montar({ ctx }) {
     .filter((i) => verRetiradas || entra(i))
     .sort((a, b) => (a.posicao ?? 999) - (b.posicao ?? 999))
   const semQuest = itens.filter((i) => !i.questionario_id)
+  const adaptaveis = itens.filter((i) => i.questionario_id === q && i.incluida && i.tipo !== 'aberta' && i.modalidades.length < MODALIDADES.length).sort((a, b) => (a.posicao ?? 999) - (b.posicao ?? 999))
 
   return (
     <>
@@ -308,6 +310,12 @@ function Montar({ ctx }) {
           </label>
         </div>
         {q && <ProximaPrefixo key={q} ctx={ctx} qid={q} nomeQ={nomeQ} />}
+        {modo !== 'leitura' && adaptaveis.length > 0 && (
+          <div className="px-adapt-barra">
+            <span className="small">{nomeQ} hoje não é respondido por <b>{MODALIDADES.filter((m) => !adaptaveis.every((i) => i.modalidades.includes(m))).map((m) => MOD_CURTO[m]).join(' e ')}</b> em todas as perguntas.</span>
+            <button className="btn sm" onClick={() => setModal('adaptar')}>Adaptar perguntas deste questionário para outra modalidade</button>
+          </div>
+        )}
         {!lista.length && <Vazio>Nenhuma pergunta neste questionário{mod ? ' para ' + MOD_CURTO[mod] : ''}.</Vazio>}
         {lista.map((it, i) => (
           <ItemCard key={it.id} ctx={ctx} item={it} mod={mod} vizinhos={[lista[i - 1], lista[i + 1]]} />
@@ -329,6 +337,7 @@ function Montar({ ctx }) {
         )}
       </div>
       {modal === 'banco' && <ModalBanco ctx={ctx} questionarioId={q} onFechar={() => setModal(null)} />}
+      {modal === 'adaptar' && <ProximaAdaptar ctx={ctx} itens={adaptaveis} preMarcadas={false} onFechar={() => setModal(null)} />}
       {modal === 'nova' && <ModalNova ctx={ctx} questionarioId={q} dimInicial={dimNova} onFechar={() => setModal(null)} />}
     </section>
     </>
@@ -338,6 +347,7 @@ function Montar({ ctx }) {
 function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
   const { perfil, dados, modo, setDados, setAviso, nomes, res, candPorItem } = ctx
   const [verEscala, setVerEscala] = useState(false)
+  const [adaptar, setAdaptar] = useState(false)
   const [editando, setEditando] = useState(false)
   const [texto, setTexto] = useState(item.texto)
   const [ocupado, setOcupado] = useState(false)
@@ -408,6 +418,7 @@ function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
           {item.texto_original && item.texto !== item.texto_original && !editando && (
             <p className="small muted">Texto de hoje: “{item.texto_original}”</p>
           )}
+          {adaptadaDe(item) && <p className="small muted px-adaptada">{adaptadaDe(item)}</p>}
           {variantes.length > 0 && item.texto === item.texto_original && (
             <p className="small muted">Hoje aparece diferente em: {variantes.map(([m, t]) => `${MOD_CURTO[m]} (“${t}”)`).join(', ')}</p>
           )}
@@ -496,6 +507,9 @@ function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
             <button className="btn sm" aria-label="Subir" disabled={ocupado || !vizinhos[0]} onClick={() => trocarPosicao(vizinhos[0])}>↑</button>
             <button className="btn sm" aria-label="Descer" disabled={ocupado || !vizinhos[1]} onClick={() => trocarPosicao(vizinhos[1])}>↓</button>
             {!editando && <button className="btn sm" onClick={() => setEditando(true)}>Editar texto</button>}
+            {item.incluida && item.modalidades.length < MODALIDADES.length && item.tipo !== 'aberta' && (
+              <button className="btn sm" onClick={() => setAdaptar(true)}>Adaptar para outra modalidade</button>
+            )}
           </>
         )}
         <div style={{ flex: 1 }} />
@@ -517,6 +531,7 @@ function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
         )}
       </div>
       {item.atualizado_por && <span className="small muted">Última alteração: {nomes[item.atualizado_por] || '—'} · {new Date(item.atualizado_em).toLocaleString('pt-BR')}</span>}
+      {adaptar && <ProximaAdaptar ctx={ctx} itens={[item]} onFechar={() => setAdaptar(false)} />}
     </div>
   )
 }

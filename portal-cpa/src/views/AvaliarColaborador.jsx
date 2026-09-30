@@ -1,7 +1,7 @@
 // Página pública (sem login) da CPA para o corpo docente e o corpo técnico-administrativo.
 // Anônima: não pede nome, e-mail nem matrícula. O rascunho fica só no aparelho de quem responde.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ESCALAS_COLAB, FINAL, NAO_SEI, PERFIL, PUBLICOS, blocosDo, campanhaPublica, comentarioDoBloco, enviarAvaliacao } from '../lib/colaboradores.js'
+import { ESCALAS_COLAB, FINAL, NAO_SEI, PUBLICOS, TEXTO_COMENTARIO, blocosDo, campanhaPublica, comentarioDoBloco, enviarAvaliacao } from '../lib/colaboradores.js'
 import './avaliar.css'
 
 const ler = (k) => {
@@ -20,7 +20,7 @@ const gravar = (k, v) => {
   }
 }
 
-const VAZIO = { publico: '', perfil: {}, notas: {}, abertas: {}, passo: 0 }
+const VAZIO = { publico: '', notas: {}, abertas: {}, passo: 0 }
 
 // "previa": a CPA vê exatamente o que a pessoa vê, sem gravar nada
 const PREVIA = { titulo: 'Prévia · nada do que você marcar aqui é gravado', ciclo: '', aberta: true }
@@ -89,7 +89,7 @@ export default function AvaliarColaborador({ codigo }) {
       const notas = Object.fromEntries(Object.entries(r.notas).filter(([k]) => ids.has(k)))
       const abertas = Object.fromEntries(Object.entries(r.abertas).map(([k, v]) => [k, String(v || '').trim().slice(0, 4000)]).filter(([, v]) => v))
       if (!previa) {
-        await enviarAvaliacao(codigo, r.publico, r.perfil, notas, abertas)
+        await enviarAvaliacao(codigo, r.publico, {}, notas, abertas)
         gravar(chave, null)
         gravar(chaveFim, { em: new Date().toISOString() })
       }
@@ -158,23 +158,16 @@ export default function AvaliarColaborador({ codigo }) {
         <section className="av-card">
           <span className="eyebrow">{camp.titulo}</span>
           <h1>Autoavaliação institucional</h1>
-          <p>Esta pesquisa é <b>anônima</b>: não pedimos nome, e-mail nem matrícula. Leva cerca de 10 minutos. Responda pensando no seu dia a dia na UniFECAF.</p>
+          <p>Esta pesquisa é <b>anônima</b>: não pedimos nome, e-mail, matrícula nem setor. A única coisa que perguntamos é se você é do corpo docente ou do corpo técnico-administrativo. Leva cerca de 10 minutos.</p>
           <fieldset className="av-publico">
             <legend>Para começar, você é:</legend>
             {Object.entries(PUBLICOS).map(([k, p]) => (
-              <button key={k} type="button" className="av-opcao" aria-pressed={r.publico === k} onClick={() => setR((x) => ({ ...x, publico: k, perfil: {} }))}>
+              <button key={k} type="button" className="av-opcao" aria-pressed={r.publico === k} onClick={() => setR((x) => ({ ...x, publico: k }))}>
                 <b>{p.eu}</b>
                 <span className="small muted">{p.t}</span>
               </button>
             ))}
           </fieldset>
-          {r.publico && (
-            <div className="av-perfil">
-              <p className="small muted">Estas duas perguntas são opcionais e só servem para comparar grupos grandes. Grupos com menos de 5 respostas não aparecem nos resultados.</p>
-              <Selecao rotulo={PERFIL.tempo.t} id="pf-tempo" opcoes={PERFIL.tempo.opcoes} valor={r.perfil.tempo} onChange={(v) => setR((x) => ({ ...x, perfil: { ...x.perfil, tempo: v } }))} />
-              <Selecao rotulo={PERFIL[r.publico].t} id="pf-2" opcoes={PERFIL[r.publico].opcoes} valor={r.perfil[PERFIL[r.publico].campo]} onChange={(v) => setR((x) => ({ ...x, perfil: { ...x.perfil, [PERFIL[r.publico].campo]: v } }))} />
-            </div>
-          )}
           <div className="av-acoes">
             <span />
             <button className="btn escuro" disabled={!r.publico} onClick={() => irPara(1)}>Começar</button>
@@ -199,7 +192,7 @@ export default function AvaliarColaborador({ codigo }) {
               </div>
             ))}
             <label className="av-coment" htmlFor={'c-' + b.id}>
-              <span>Quer deixar um comentário, sugestão ou reclamação sobre {b.titulo.toLowerCase()}? <span className="muted">(opcional)</span></span>
+              <span>{TEXTO_COMENTARIO} <span className="muted">(opcional)</span></span>
               <textarea id={'c-' + b.id} className="input" rows={3} maxLength={4000} value={r.abertas[comentarioDoBloco(b)] || ''} onChange={(e) => aberta(comentarioDoBloco(b), e.target.value)} />
             </label>
             {faltando.length > 0 && <div className="aviso erro" role="alert">Faltou responder {faltando.length === 1 ? '1 pergunta' : faltando.length + ' perguntas'} (marcadas em laranja). Se não souber, use “{ESCALAS_COLAB[b.grupos[0].escala].na}”.</div>}
@@ -239,18 +232,6 @@ export default function AvaliarColaborador({ codigo }) {
         </section>
       )}
     </>,
-  )
-}
-
-function Selecao({ rotulo, id, opcoes, valor, onChange }) {
-  return (
-    <label className="av-sel" htmlFor={id}>
-      <span>{rotulo}</span>
-      <select id={id} className="input" value={valor || ''} onChange={(e) => onChange(e.target.value || undefined)}>
-        <option value="">Prefiro não informar</option>
-        {opcoes.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </label>
   )
 }
 
