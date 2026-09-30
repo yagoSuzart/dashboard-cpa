@@ -1,7 +1,7 @@
 // Página pública (sem login) da CPA para o corpo docente e o corpo técnico-administrativo.
 // Anônima: não pede nome, e-mail nem matrícula. O rascunho fica só no aparelho de quem responde.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ESCALAS_COLAB, FINAL, NAO_SEI, PUBLICOS, TEXTO_COMENTARIO, blocosDo, campanhaPublica, comentarioDoBloco, enviarAvaliacao } from '../lib/colaboradores.js'
+import { ESCALAS_COLAB, NAO_SEI, PUBLICOS, TEXTO_COMENTARIO, blocosDo, campanhaPublica, comentarioDoBloco, enviarAvaliacao, instrumentoDe } from '../lib/colaboradores.js'
 import './avaliar.css'
 
 const ler = (k) => {
@@ -22,25 +22,27 @@ const gravar = (k, v) => {
 
 const VAZIO = { publico: '', notas: {}, abertas: {}, passo: 0 }
 
-// "previa": a CPA vê exatamente o que a pessoa vê, sem gravar nada
+// "previa": a CPA vê exatamente o que a pessoa vê, sem gravar nada ("previa.<código>" usa o questionário daquele período)
 const PREVIA = { titulo: 'Prévia · nada do que você marcar aqui é gravado', ciclo: '', aberta: true }
 
 export default function AvaliarColaborador({ codigo }) {
-  const previa = codigo === 'previa'
-  const [camp, setCamp] = useState(previa ? PREVIA : undefined)
+  const previa = codigo === 'previa' || codigo.startsWith('previa.')
+  const [camp, setCamp] = useState(codigo === 'previa' ? PREVIA : undefined)
   const [erro, setErro] = useState(null)
   const chave = 'cpa-colab-' + codigo
   const chaveFim = 'cpa-colab-enviado-' + codigo
-  const [r, setR] = useState(() => ({ ...VAZIO, ...(codigo === 'previa' ? {} : ler(chave) || {}) }))
-  const [enviado, setEnviado] = useState(() => codigo !== 'previa' && !!ler(chaveFim))
+  const [r, setR] = useState(() => ({ ...VAZIO, ...(codigo.startsWith('previa') ? {} : ler(chave) || {}) }))
+  const [enviado, setEnviado] = useState(() => !codigo.startsWith('previa') && !!ler(chaveFim))
   const [faltando, setFaltando] = useState([])
   const [ocupado, setOcupado] = useState(false)
   const topo = useRef(null)
 
   useEffect(() => {
-    if (previa) return
+    if (codigo === 'previa') return
     let vivo = true
-    campanhaPublica(codigo).then((c) => vivo && setCamp(c)).catch((e) => vivo && setErro(e))
+    campanhaPublica(previa ? codigo.slice(7) : codigo)
+      .then((c) => vivo && setCamp(c && previa ? { ...c, aberta: true, titulo: 'Prévia · ' + c.titulo + ' · nada do que você marcar aqui é gravado' } : c))
+      .catch((e) => vivo && setErro(e))
     return () => {
       vivo = false
     }
@@ -49,7 +51,9 @@ export default function AvaliarColaborador({ codigo }) {
     if (!enviado && !previa) gravar(chave, r)
   }, [r, chave, enviado, previa])
 
-  const blocos = useMemo(() => (r.publico ? blocosDo(r.publico) : []), [r.publico])
+  const inst = instrumentoDe(camp)
+  const FINAL = inst.final
+  const blocos = useMemo(() => (r.publico && camp ? blocosDo(instrumentoDe(camp), r.publico) : []), [r.publico, camp])
   const totalPassos = blocos.length + 2 // perfil + blocos + fechamento
   const irPara = (p) => {
     setFaltando([])

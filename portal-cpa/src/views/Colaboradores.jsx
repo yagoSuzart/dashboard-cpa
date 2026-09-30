@@ -2,12 +2,12 @@
 // Só Gestor(a) Técnico(a), Coordenação da CPA e Pró-Reitoria veem (o banco também garante isso).
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  BLOCOS, ESCALAS_COLAB, FINAL, GERE_COLAB, MIN_GRUPO, PUBLICOS, TEXTO_COMENTARIO, atualizarCampanha, blocosDo, carregarRespostas,
+  GERE_COLAB, MIN_GRUPO, PUBLICOS, atualizarCampanha, carregarRespostas, instrumentoDe,
   comentarioDoBloco, criarCampanha, csvRespostas, linkDaCampanha, listarCampanhas, mediaDeGrupo, perguntasFechadas, resumoPergunta,
 } from '../lib/colaboradores.js'
 import { fmtInt, fmtNota, textoComentario } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
-import { SelosEixoDim } from '../components/ProximaSelos.jsx'
+import ColabEditor from '../components/ColabEditor.jsx'
 import './colaboradores.css'
 
 export default function Colaboradores({ perfil }) {
@@ -43,7 +43,7 @@ export default function Colaboradores({ perfil }) {
           <button key={k} role="tab" aria-pressed={aba === k} onClick={() => setAba(k)}>{t}</button>
         ))}
       </div>
-      {aba !== 'questionario' && campanhas.length > 1 && (
+      {campanhas.length > 1 && (
         <div className="filtros">
           <label className="small" htmlFor="cb-camp" style={{ fontWeight: 700 }}>Período</label>
           <select id="cb-camp" className="input" style={{ height: 38, fontSize: 14, maxWidth: 420 }} value={selId} onChange={(e) => setSelId(e.target.value)}>
@@ -52,7 +52,9 @@ export default function Colaboradores({ perfil }) {
         </div>
       )}
       {aba === 'resultados' && (sel ? <Resultados key={sel.id} camp={sel} /> : <SemCampanha gere={gere} onIr={() => setAba('link')} />)}
-      {aba === 'questionario' && <Questionario />}
+      {aba === 'questionario' && (sel
+        ? <ColabEditor key={sel.id} camp={sel} perfil={perfil} gere={gere} onSalvo={(c) => setCampanhas((l) => l.map((x) => (x.id === c.id ? c : x)))} />
+        : <SemCampanha gere={gere} onIr={() => setAba('link')} />)}
       {aba === 'link' && <Links campanhas={campanhas} perfil={perfil} gere={gere} onMudou={recarregar} onSel={setSelId} />}
     </>
   )
@@ -89,12 +91,13 @@ function Resultados({ camp }) {
 
   const nDoc = resp.filter((r) => r.publico === 'docente').length
   const nTec = resp.filter((r) => r.publico === 'tecnico').length
-  const fech = perguntasFechadas(pub || undefined)
-  const nps = resumoPergunta(lista, FINAL.nps.id, true)
+  const inst = instrumentoDe(camp)
+  const fech = perguntasFechadas(inst, pub || undefined)
+  const nps = resumoPergunta(lista, inst.final.nps.id, true)
   const geral = mediaDeGrupo(lista, fech.filter((p) => p.escala === 'satisfacao'))
 
   const baixar = () => {
-    const url = URL.createObjectURL(new Blob([csvRespostas(lista)], { type: 'text/csv;charset=utf-8' }))
+    const url = URL.createObjectURL(new Blob([csvRespostas(inst, lista)], { type: 'text/csv;charset=utf-8' }))
     const a = document.createElement('a')
     a.href = url
     a.download = `cpa-colaboradores-${camp.ciclo}${pub ? '-' + pub : ''}.csv`
@@ -129,18 +132,18 @@ function Resultados({ camp }) {
       ) : (
         <>
           {lista.length < MIN_GRUPO && <div className="aviso">Ainda são {lista.length} {lista.length === 1 ? 'resposta' : 'respostas'}. Com menos de {MIN_GRUPO}, os números mudam muito e a pessoa pode ser reconhecida: leia com cuidado.</div>}
-          <PorEixo lista={lista} resp={resp} pub={pub} />
-          {BLOCOS.map((b) => (
-            <BlocoResultado key={b.id} bloco={b} lista={lista} pub={pub} />
+          <PorEixo inst={inst} lista={lista} resp={resp} pub={pub} />
+          {inst.blocos.map((b) => (
+            <BlocoResultado key={b.id} inst={inst} bloco={b} lista={lista} pub={pub} />
           ))}
-          <Comentarios lista={lista} filtro={verComent} setFiltro={setVerComent} />
+          <Comentarios inst={inst} lista={lista} filtro={verComent} setFiltro={setVerComent} />
         </>
       )}
     </>
   )
 }
 
-function PorEixo({ lista, resp, pub }) {
+function PorEixo({ inst, lista, resp, pub }) {
   const doc = resp.filter((r) => r.publico === 'docente')
   const tec = resp.filter((r) => r.publico === 'tecnico')
   const comparar = !pub && doc.length >= MIN_GRUPO && tec.length >= MIN_GRUPO
@@ -148,8 +151,8 @@ function PorEixo({ lista, resp, pub }) {
     <section className="card">
       <div className="card-h"><div className="t"><h2>Por eixo</h2><p className="muted small">Média de 1 a 5, sem contar “Não sei / Não se aplica”.{comparar ? ' Ao lado, docentes e técnico-administrativos separados.' : ''}</p></div></div>
       <div className="cb-eixos">
-        {BLOCOS.map((b) => {
-          const perg = perguntasFechadas(pub || undefined).filter((p) => p.bloco.id === b.id && p.escala === 'satisfacao')
+        {inst.blocos.map((b) => {
+          const perg = perguntasFechadas(inst, pub || undefined).filter((p) => p.bloco.id === b.id && p.escala === 'satisfacao')
           const v = mediaDeGrupo(lista, perg)
           return (
             <div key={b.id} className="cb-eixo">
@@ -158,8 +161,8 @@ function PorEixo({ lista, resp, pub }) {
               <span className="num cb-grande">{fmtNota(v)}</span>
               {comparar && (
                 <span className="small muted">
-                  Docentes {fmtNota(mediaDeGrupo(doc, perguntasFechadas('docente').filter((p) => p.bloco.id === b.id && p.escala === 'satisfacao')))} ·
-                  Técnicos {fmtNota(mediaDeGrupo(tec, perguntasFechadas('tecnico').filter((p) => p.bloco.id === b.id && p.escala === 'satisfacao')))}
+                  Docentes {fmtNota(mediaDeGrupo(doc, perguntasFechadas(inst, 'docente').filter((p) => p.bloco.id === b.id && p.escala === 'satisfacao')))} ·
+                  Técnicos {fmtNota(mediaDeGrupo(tec, perguntasFechadas(inst, 'tecnico').filter((p) => p.bloco.id === b.id && p.escala === 'satisfacao')))}
                 </span>
               )}
             </div>
@@ -181,8 +184,8 @@ function Distrib({ dist, n }) {
   )
 }
 
-function BlocoResultado({ bloco, lista, pub }) {
-  const perg = perguntasFechadas(pub || undefined).filter((p) => p.bloco.id === bloco.id)
+function BlocoResultado({ inst, bloco, lista, pub }) {
+  const perg = perguntasFechadas(inst, pub || undefined).filter((p) => p.bloco.id === bloco.id)
   return (
     <section className="card">
       <div className="card-h"><div className="t"><span className="eyebrow">Eixo {bloco.eixo}</span><h2>{bloco.titulo}</h2></div></div>
@@ -211,8 +214,8 @@ function BlocoResultado({ bloco, lista, pub }) {
   )
 }
 
-function Comentarios({ lista, filtro, setFiltro }) {
-  const fontes = [...BLOCOS.map((b) => ({ id: comentarioDoBloco(b), t: 'Eixo ' + b.eixo + ' · ' + b.titulo })), ...FINAL.abertas.map((a) => ({ id: a.id, t: a.texto }))]
+function Comentarios({ inst, lista, filtro, setFiltro }) {
+  const fontes = [...inst.blocos.map((b) => ({ id: comentarioDoBloco(b), t: 'Eixo ' + b.eixo + ' · ' + b.titulo })), ...inst.final.abertas.map((a) => ({ id: a.id, t: a.texto }))]
   const todos = []
   for (const r of lista) for (const f of fontes) if (r.abertas?.[f.id]) todos.push({ r, f, texto: r.abertas[f.id] })
   const vis = filtro ? todos.filter((x) => x.f.id === filtro) : todos
@@ -240,68 +243,21 @@ function Comentarios({ lista, filtro, setFiltro }) {
   )
 }
 
-/* ---------------- questionário (prévia) ---------------- */
-function Questionario() {
-  const [pub, setPub] = useState('docente')
-  const blocos = blocosDo(pub)
-  const n = perguntasFechadas(pub).length
-  return (
-    <>
-      <div className="filtros">
-        <div className="seg" role="group" aria-label="Público">
-          {Object.entries(PUBLICOS).map(([k, p]) => <button key={k} aria-pressed={pub === k} onClick={() => setPub(k)}>{p.t}</button>)}
-        </div>
-        <span className="small muted">{n} perguntas fechadas + satisfação geral (0 a 10) + {BLOCOS.length + FINAL.abertas.length} abertas (opcionais) · a pessoa só informa se é docente ou técnico-administrativo</span>
-        <span style={{ flex: 1 }} />
-        <a className="btn sm" href="#/avaliar/previa" target="_blank" rel="noreferrer">Ver como a pessoa responde ↗</a>
-      </div>
-      {blocos.map((b) => (
-        <section key={b.id} className="card">
-          <div className="card-h"><div className="t"><span className="eyebrow">Eixo {b.eixo}</span><h2>{b.titulo}</h2></div></div>
-          {b.grupos.map((g, gi) => (
-            <div key={gi} className="cb-grupo">
-              {g.subtitulo && <h3>{g.subtitulo}</h3>}
-              <p className="cb-prefixo">{g.prefixo}</p>
-              <p className="small muted">Escala: 1 = {ESCALAS_COLAB[g.escala].ancoras[0]} · 5 = {ESCALAS_COLAB[g.escala].ancoras[1]} · e “{ESCALAS_COLAB[g.escala].na}” (fora da média)</p>
-              <ol className="cb-lista">
-                {g.perguntas.map((p) => (
-                  <li key={p.id}>
-                    <span>{p.texto}</span>
-                    <span className="chips" style={{ gap: 6 }}>
-                      <SelosEixoDim eixo={b.eixo} dimensao={p.dim} />
-                      {p.p !== 'ambos' && <span className="selo cinza">só {PUBLICOS[p.p].curto.toLowerCase()}</span>}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ))}
-          <p className="small"><b>Aberta (opcional):</b> {TEXTO_COMENTARIO}</p>
-        </section>
-      ))}
-      <section className="card">
-        <div className="card-h"><div className="t"><span className="eyebrow">Para fechar</span><h2>Satisfação geral</h2></div></div>
-        <p>{FINAL.nps.texto} <span className="muted small">(0 a 10)</span></p>
-        {FINAL.abertas.map((a) => <p key={a.id}><b>Aberta (opcional):</b> {a.texto}</p>)}
-      </section>
-    </>
-  )
-}
-
 /* ---------------- link e período ---------------- */
 function Links({ campanhas, perfil, gere, onMudou, onSel }) {
   const ano = new Date().getFullYear()
-  const [f, setF] = useState({ titulo: `CPA ${ano} · Docentes e técnico-administrativos`, ciclo: `${ano}.${new Date().getMonth() < 6 ? 1 : 2}`, fecha: '' })
+  const [f, setF] = useState({ titulo: `CPA ${ano} · Docentes e técnico-administrativos`, ciclo: `${ano}.${new Date().getMonth() < 6 ? 1 : 2}`, fecha: '', copiar: true })
   const [msg, setMsg] = useState(null)
   const [ocupado, setOcupado] = useState(false)
 
   const criar = async () => {
     setOcupado(true)
     try {
-      const c = await criarCampanha(f.titulo.trim(), f.ciclo.trim(), f.fecha, perfil.id)
+      const base = f.copiar && campanhas[0] ? JSON.parse(JSON.stringify(instrumentoDe(campanhas[0]))) : undefined
+      const c = await criarCampanha(f.titulo.trim(), f.ciclo.trim(), f.fecha, perfil.id, base)
       await onMudou()
       onSel(c.id)
-      setMsg({ tipo: 'ok', txt: 'Período criado. Ele começa fechado: confira o questionário e clique em “Abrir para respostas”.' })
+      setMsg({ tipo: 'ok', txt: 'Período criado. Ele começa fechado: ajuste o questionário na aba “Questionário” e depois clique em “Abrir para respostas”.' })
     } catch (e) {
       setMsg({ tipo: 'erro', txt: e.message })
     } finally {
@@ -369,6 +325,12 @@ function Links({ campanhas, perfil, gere, onMudou, onSel }) {
             <label htmlFor="nc-c"><span>Ciclo</span><input id="nc-c" className="input" value={f.ciclo} onChange={(e) => setF({ ...f, ciclo: e.target.value })} /></label>
             <label htmlFor="nc-f"><span>Fecha em (opcional)</span><input id="nc-f" type="date" className="input" value={f.fecha} onChange={(e) => setF({ ...f, fecha: e.target.value })} /></label>
           </div>
+          {campanhas.length > 0 && (
+            <label className="small" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input type="checkbox" checked={f.copiar} onChange={(e) => setF({ ...f, copiar: e.target.checked })} />
+              Começar com o questionário de “{campanhas[0].titulo}” (desmarcado: questionário padrão)
+            </label>
+          )}
           <div><button className="btn escuro" disabled={ocupado || !f.titulo.trim() || !f.ciclo.trim()} onClick={criar}>Criar período (começa fechado)</button></div>
         </section>
       )}

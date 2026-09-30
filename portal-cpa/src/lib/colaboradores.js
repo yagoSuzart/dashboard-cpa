@@ -154,20 +154,29 @@ export const comentarioDoBloco = (b) => 'c_' + b.id
 // Pergunta aberta de cada seção, como no instrumento anterior
 export const TEXTO_COMENTARIO = 'Deixe seu comentário, sugestão ou reclamação.'
 
-export function blocosDo(publico) {
-  return BLOCOS.map((b) => ({
+// Questionário padrão (ponto de partida de cada período novo). Cada período guarda uma cópia editável.
+export const INSTRUMENTO_PADRAO = { blocos: BLOCOS, final: FINAL }
+const copia = (x) => JSON.parse(JSON.stringify(x))
+export const novoInstrumento = () => copia(INSTRUMENTO_PADRAO)
+export const instrumentoDe = (camp) => (camp?.instrumento?.blocos?.length ? camp.instrumento : INSTRUMENTO_PADRAO)
+
+export function blocosDo(inst, publico) {
+  return inst.blocos.map((b) => ({
     ...b,
     grupos: b.grupos.map((g) => ({ ...g, perguntas: g.perguntas.filter((x) => x.p === 'ambos' || x.p === publico) })).filter((g) => g.perguntas.length),
-  }))
+  })).filter((b) => b.grupos.length)
 }
 
-export function perguntasFechadas(publico) {
+export function perguntasFechadas(inst, publico) {
   const out = []
-  for (const b of BLOCOS) for (const g of b.grupos) for (const x of g.perguntas) if (!publico || x.p === 'ambos' || x.p === publico) out.push({ ...x, bloco: b, prefixo: g.prefixo, escala: g.escala })
+  for (const b of inst.blocos) for (const g of b.grupos) for (const x of g.perguntas) if (!publico || x.p === 'ambos' || x.p === publico) out.push({ ...x, bloco: b, prefixo: g.prefixo, escala: g.escala })
   return out
 }
 
-export const TOTAL_PERGUNTAS = (publico) => perguntasFechadas(publico).length + 1 + BLOCOS.length + FINAL.abertas.length
+// Identificador de pergunta nova (o banco aceita só letras minúsculas, números e _)
+export function novoId(prefixo = 'n') {
+  return prefixo + '_' + Math.random().toString(36).slice(2, 8)
+}
 
 /* ---------------- envio (público, anônimo) ---------------- */
 export async function campanhaPublica(codigo) {
@@ -188,8 +197,8 @@ export async function listarCampanhas() {
   return data
 }
 
-export async function criarCampanha(titulo, ciclo, fechaEm, usuarioId) {
-  const { data, error } = await sb.from('cpa_colab_campanhas').insert({ titulo, ciclo, fecha_em: fechaEm || null, criado_por: usuarioId }).select('*').single()
+export async function criarCampanha(titulo, ciclo, fechaEm, usuarioId, instrumento) {
+  const { data, error } = await sb.from('cpa_colab_campanhas').insert({ titulo, ciclo, fecha_em: fechaEm || null, criado_por: usuarioId, instrumento: instrumento || novoInstrumento() }).select('*').single()
   if (error) throw error
   return data
 }
@@ -198,6 +207,16 @@ export async function atualizarCampanha(id, patch) {
   const { data, error } = await sb.from('cpa_colab_campanhas').update(patch).eq('id', id).select('*').single()
   if (error) throw error
   return data
+}
+
+export async function salvarInstrumento(id, instrumento, usuarioId) {
+  return atualizarCampanha(id, { instrumento, instrumento_atualizado_por: usuarioId, instrumento_atualizado_em: new Date().toISOString() })
+}
+
+export async function contarRespostas(campanhaId) {
+  const { count, error } = await sb.from('cpa_colab_respostas').select('id', { count: 'exact', head: true }).eq('campanha_id', campanhaId)
+  if (error) throw error
+  return count || 0
 }
 
 export async function carregarRespostas(campanhaId) {
@@ -241,10 +260,10 @@ export function mediaDeGrupo(respostas, perguntas) {
 }
 
 // CSV anônimo para a CPA (uma linha por resposta)
-export function csvRespostas(respostas) {
-  const fech = perguntasFechadas()
-  const abertas = [...BLOCOS.map((b) => ({ id: comentarioDoBloco(b), texto: 'Comentário · ' + b.titulo })), ...FINAL.abertas]
-  const cab = ['publico', 'enviado_em', ...fech.map((p) => p.id), FINAL.nps.id, ...abertas.map((a) => a.id)]
+export function csvRespostas(inst, respostas) {
+  const fech = perguntasFechadas(inst)
+  const abertas = [...inst.blocos.map((b) => ({ id: comentarioDoBloco(b), texto: 'Comentário · ' + b.titulo })), ...inst.final.abertas]
+  const cab = ['publico', 'enviado_em', ...fech.map((p) => p.id), inst.final.nps.id, ...abertas.map((a) => a.id)]
   const esc = (v) => {
     const s = v == null ? '' : String(v)
     return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
@@ -253,7 +272,7 @@ export function csvRespostas(respostas) {
     PUBLICOS[r.publico]?.t || r.publico,
     new Date(r.criado_em).toLocaleDateString('pt-BR'),
     ...fech.map((p) => r.notas?.[p.id] ?? ''),
-    r.notas?.[FINAL.nps.id] ?? '',
+    r.notas?.[inst.final.nps.id] ?? '',
     ...abertas.map((a) => r.abertas?.[a.id] || ''),
   ])
   return '﻿' + [cab, ...linhas].map((l) => l.map(esc).join(';')).join('\n')

@@ -41,3 +41,23 @@
   .cb-tabela td:first-child, .cb-tabela td:last-child { grid-column: 1 / -1; }
   .cb-tabela .n { text-align: left; }
 }
+
+/* editor do questionário */
+.ce-bloco { gap: 14px; }
+.ce-grupo { display: flex; flex-direction: column; gap: 10px; }
+.ce-grupo-cab { display: flex; flex-direction: column; gap: 6px; }
+.ce-lista { display: flex; flex-direction: column; gap: 4px; padding-left: 22px; }
+.ce-q { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line-2); }
+.ce-txt { display: flex; gap: 10px; align-items: flex-start; }
+.ce-txt > h2, .ce-txt > p { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ce-txt-p { font-size: 15px; font-weight: 600; line-height: 1.45; }
+.ce-edit { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.ce-edit textarea, .ce-nova textarea { height: auto; padding: 10px; font-size: 14px; }
+.ce-sel { height: 34px; font-size: 13px; max-width: 280px; }
+.ce-acoes { gap: 6px; }
+.ce-confirma { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 8px; border-radius: 10px; background: var(--ember-soft); }
+.ce-nova { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; border: 1px dashed var(--blue); background: #f5f9fe; }
+@media (max-width: 700px) {
+  .ce-txt { flex-direction: column; }
+  .ce-sel { max-width: 100%; flex: 1 1 100%; }
+}
