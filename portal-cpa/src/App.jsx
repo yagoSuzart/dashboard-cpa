@@ -23,8 +23,11 @@ import Feedback from './views/Feedback.jsx'
 import Importar from './views/Importar.jsx'
 import Admin from './views/Admin.jsx'
 import ProximaCPA from './views/ProximaCPA.jsx'
+import Colaboradores from './views/Colaboradores.jsx'
+import AvaliarColaborador from './views/AvaliarColaborador.jsx'
 import FormPlano from './components/FormPlano.jsx'
 import { LE_PROPOSTA } from './lib/proxima.js'
+import { VE_COLAB } from './lib/colaboradores.js'
 import { podeVerAgenda, verificarCumprimentoEntrega } from './lib/agenda.js'
 import { ESCREVE_PLANO } from './lib/planos.js'
 
@@ -93,6 +96,8 @@ export default function App() {
   const escopoIds = useMemo(() => (perfil && base && !perfil.semPerfil ? cursosDoEscopo(perfil, base.cursos) : []), [perfil, base])
   const planos = useMemo(() => (perfil && base && !perfil.semPerfil ? planosDoEscopo(perfil, base.planos, escopoIds) : []), [perfil, base, escopoIds])
 
+  // Link público da CPA dos professores e do corpo técnico-administrativo (não precisa de login)
+  if (rota.rota === 'avaliar') return <AvaliarColaborador key={rota.param} codigo={rota.param} />
   if (sessao === undefined) return <Carregando texto="Abrindo o Portal…" />
   if (recuperando) return <TrocarSenha onFim={() => setRecuperando(false)} />
   if (!sessao) return pedindo ? <SolicitarAcesso onVoltar={() => setPedindo(false)} /> : <Login onSolicitar={() => setPedindo(true)} />
@@ -160,6 +165,7 @@ export default function App() {
           g: 'CPA',
           itens: [
             ...(LE_PROPOSTA.includes(r) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
+            ...(VE_COLAB.includes(r) ? [{ k: 'colaboradores', t: 'CPA Docentes e Técnicos' }] : []),
             ...(podeImportar ? [{ k: 'importar', t: 'Importar respostas' }] : []),
             ...(r === 'admin' ? [{ k: 'admin', t: 'Administração' }] : []),
           ],
@@ -233,6 +239,7 @@ export default function App() {
         {atual === 'importar' && <Importar {...props} />}
         {atual === 'admin' && <Admin {...props} />}
         {atual === 'proxima' && <ProximaCPA {...props} />}
+        {atual === 'colaboradores' && <Colaboradores {...props} />}
       </main>
     </>
   )
