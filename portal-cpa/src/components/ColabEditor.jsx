@@ -13,7 +13,7 @@ const copia = (x) => JSON.parse(JSON.stringify(x))
 const PUB_OPCOES = [['ambos', 'Docentes e técnicos'], ['docente', 'Só docentes'], ['tecnico', 'Só técnico-administrativos']]
 const PREFIXOS = ['Qual o seu grau de satisfação com relação a:', 'Qual o seu nível de conhecimento sobre:']
 
-export default function ColabEditor({ camp, perfil, gere, onSalvo }) {
+export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = false }) {
   const [inst, setInst] = useState(() => copia(instrumentoDe(camp)))
   const [nResp, setNResp] = useState(null)
   const [ver, setVer] = useState('')
@@ -22,14 +22,15 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo }) {
   const [confirmaPadrao, setConfirmaPadrao] = useState(false)
 
   useEffect(() => {
+    if (leitura) return
     let vivo = true
     contarRespostas(camp.id).then((n) => vivo && setNResp(n)).catch(() => vivo && setNResp(0))
     return () => {
       vivo = false
     }
-  }, [camp.id])
+  }, [camp.id, leitura])
 
-  const travado = !gere || nResp == null || nResp > 0
+  const travado = leitura || !gere || nResp == null || nResp > 0
   const salvar = async (novo, txt) => {
     const antes = inst
     setInst(novo)
@@ -87,12 +88,12 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo }) {
         </div>
         <span className="small muted">Docentes: {nDoc} fechadas · Técnicos: {nTec} fechadas · + satisfação geral (0 a 10) e {abertasTotal} abertas (opcionais)</span>
         <span style={{ flex: 1 }} />
-        <a className="btn sm" href={'#/avaliar/previa.' + camp.codigo} target="_blank" rel="noreferrer">Ver como a pessoa responde ↗</a>
+        <a className="btn sm" href={leitura ? '#/avaliar/previa' : '#/avaliar/previa.' + camp.codigo} target="_blank" rel="noreferrer">Ver como a pessoa responde ↗</a>
         <button className="btn sm" onClick={baixar}>Baixar para revisar (CSV)</button>
       </div>
 
       {nResp > 0 && <div className="aviso">Este período já tem {nResp} {nResp === 1 ? 'resposta' : 'respostas'}: o questionário ficou travado para não misturar resultados. Para mudar, crie um novo período em “Link e período”.</div>}
-      {!gere && <div className="aviso">Só a Coordenação da CPA edita o questionário. Aqui você vê a versão deste período.</div>}
+      {!gere && !leitura && <div className="aviso">Só a Coordenação da CPA edita o questionário. Aqui você vê a versão deste período.</div>}
       {!travado && <div className="aviso ok">Você pode editar à vontade enquanto ninguém respondeu. Cada mudança é salva na hora{salvando ? '… salvando' : '.'}</div>}
       {msg && <div className={'aviso ' + msg.tipo} role="status">{msg.txt}</div>}
 

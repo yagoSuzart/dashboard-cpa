@@ -54,7 +54,7 @@ export default function Colaboradores({ perfil }) {
       {aba === 'resultados' && (sel ? <Resultados key={sel.id} camp={sel} /> : <SemCampanha gere={gere} onIr={() => setAba('link')} />)}
       {aba === 'questionario' && (sel
         ? <ColabEditor key={sel.id} camp={sel} perfil={perfil} gere={gere} onSalvo={(c) => setCampanhas((l) => l.map((x) => (x.id === c.id ? c : x)))} />
-        : <SemCampanha gere={gere} onIr={() => setAba('link')} />)}
+        : <QuestionarioSemPeriodo perfil={perfil} gere={gere} onCriado={async (c) => { await recarregar(); setSelId(c.id) }} />)}
       {aba === 'link' && <Links campanhas={campanhas} perfil={perfil} gere={gere} onMudou={recarregar} onSel={setSelId} />}
     </>
   )
@@ -67,6 +67,36 @@ function SemCampanha({ gere, onIr }) {
       <p className="muted">{gere ? 'Crie o período em “Link e período” para gerar o link que vai para os professores e para o corpo técnico-administrativo.' : 'A Coordenação da CPA abre o período e gera o link.'}</p>
       {gere && <button className="btn escuro" onClick={onIr}>Criar o período</button>}
     </div>
+  )
+}
+
+// Sem período ainda: mostra o questionário padrão e cria o período ali mesmo para começar a editar
+function QuestionarioSemPeriodo({ perfil, gere, onCriado }) {
+  const [ocupado, setOcupado] = useState(false)
+  const [erro, setErro] = useState(null)
+  const criar = async () => {
+    setOcupado(true)
+    setErro(null)
+    try {
+      const ano = new Date().getFullYear()
+      const c = await criarCampanha(`CPA ${ano} · Docentes e técnico-administrativos`, `${ano}.${new Date().getMonth() < 6 ? 1 : 2}`, '', perfil.id)
+      await onCriado(c)
+    } catch (e) {
+      setErro(e)
+    } finally {
+      setOcupado(false)
+    }
+  }
+  return (
+    <>
+      <div className="card" style={{ alignItems: 'flex-start', gap: 10 }}>
+        <h2>Este é o questionário padrão.</h2>
+        <p className="muted">{gere ? 'Para editar, excluir ou acrescentar perguntas, crie o período: ele começa fechado (ninguém responde ainda) e recebe uma cópia deste questionário para você ajustar. Título, ciclo e data de encerramento podem ser mudados depois em “Link e período”.' : 'A Coordenação da CPA cria o período e ajusta o questionário.'}</p>
+        {gere && <button className="btn escuro" disabled={ocupado} onClick={criar}>{ocupado ? 'Criando…' : 'Criar o período e editar o questionário'}</button>}
+        {erro && <div className="aviso erro">Não foi possível criar: {erro.message || String(erro)}</div>}
+      </div>
+      <ColabEditor camp={{ id: 'padrao', codigo: '', ciclo: 'padrao', instrumento: null }} perfil={perfil} gere={false} leitura />
+    </>
   )
 }
 
