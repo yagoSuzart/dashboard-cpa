@@ -185,9 +185,45 @@ export async function campanhaPublica(codigo) {
   return data?.[0] || null
 }
 
-export async function enviarAvaliacao(codigo, publico, perfil, notas, abertas) {
-  const { error } = await sb.rpc('colab_enviar', { p_codigo: codigo, p_publico: publico, p_perfil: perfil, p_notas: notas, p_abertas: abertas })
+export async function enviarAvaliacao(codigo, publico, perfil, notas, abertas, aparelho) {
+  const { error } = await sb.rpc('colab_enviar', { p_codigo: codigo, p_publico: publico, p_perfil: perfil, p_notas: notas, p_abertas: abertas, p_aparelho: aparelho || null })
   if (error) throw error
+}
+
+// Marca técnica do aparelho: características do navegador e da tela, embaralhadas (SHA-256) junto com o
+// código do período. Não identifica a pessoa e muda de um período para outro; serve só para perceber
+// que o mesmo aparelho já respondeu. Aparelhos idênticos (ex.: computadores iguais de um laboratório) podem coincidir.
+export async function marcaDoAparelho(codigo) {
+  try {
+    const n = navigator
+    const partes = [
+      codigo, n.userAgent, n.language, (n.languages || []).join(','), n.platform, n.hardwareConcurrency, n.deviceMemory, n.maxTouchPoints,
+      screen.width, screen.height, screen.colorDepth, window.devicePixelRatio, Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ].join('|')
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(partes))
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  } catch {
+    return null
+  }
+}
+
+export async function aparelhoJaRespondeu(codigo, aparelho) {
+  if (!aparelho) return false
+  const { data, error } = await sb.rpc('colab_aparelho_ja_respondeu', { p_codigo: codigo, p_aparelho: aparelho })
+  if (error) return false
+  return !!data
+}
+
+// Respostas além da primeira de cada aparelho (possíveis duplicadas)
+export function duplicadasPorAparelho(respostas) {
+  const vistos = new Set()
+  const extras = new Set()
+  for (const r of [...respostas].sort((a, b) => String(a.criado_em).localeCompare(String(b.criado_em)))) {
+    if (!r.aparelho) continue
+    if (vistos.has(r.aparelho)) extras.add(r.id)
+    else vistos.add(r.aparelho)
+  }
+  return extras
 }
 
 /* ---------------- gestão e resultados (Portal) ---------------- */
@@ -222,7 +258,7 @@ export async function contarRespostas(campanhaId) {
 export async function carregarRespostas(campanhaId) {
   const out = []
   for (let de = 0; ; de += 1000) {
-    const { data, error } = await sb.from('cpa_colab_respostas').select('id, publico, perfil, notas, abertas, criado_em').eq('campanha_id', campanhaId).order('criado_em').range(de, de + 999)
+    const { data, error } = await sb.from('cpa_colab_respostas').select('id, publico, perfil, notas, abertas, aparelho, criado_em').eq('campanha_id', campanhaId).order('criado_em').range(de, de + 999)
     if (error) throw error
     out.push(...data)
     if (data.length < 1000) break

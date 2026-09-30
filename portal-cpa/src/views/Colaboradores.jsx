@@ -2,7 +2,7 @@
 // Só Gestor(a) Técnico(a), Coordenação da CPA e Pró-Reitoria veem (o banco também garante isso).
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  GERE_COLAB, MIN_GRUPO, PUBLICOS, atualizarCampanha, carregarRespostas, instrumentoDe,
+  GERE_COLAB, MIN_GRUPO, PUBLICOS, atualizarCampanha, carregarRespostas, duplicadasPorAparelho, instrumentoDe,
   comentarioDoBloco, criarCampanha, csvRespostas, linkDaCampanha, listarCampanhas, mediaDeGrupo, perguntasFechadas, resumoPergunta,
 } from '../lib/colaboradores.js'
 import { fmtInt, fmtNota, textoComentario } from '../lib/cpa.js'
@@ -115,12 +115,15 @@ function Resultados({ camp }) {
     }
   }, [camp.id])
 
-  const lista = useMemo(() => (resp || []).filter((r) => !pub || r.publico === pub), [resp, pub])
+  const [soPrimeira, setSoPrimeira] = useState(false)
+  const extras = useMemo(() => duplicadasPorAparelho(resp || []), [resp])
+  const lista = useMemo(() => (resp || []).filter((r) => (!pub || r.publico === pub) && !(soPrimeira && extras.has(r.id))), [resp, pub, soPrimeira, extras])
   if (erro) return <Erro erro={erro} />
   if (!resp) return <Carregando texto="Carregando as respostas…" />
 
-  const nDoc = resp.filter((r) => r.publico === 'docente').length
-  const nTec = resp.filter((r) => r.publico === 'tecnico').length
+  const validas = soPrimeira ? resp.filter((r) => !extras.has(r.id)) : resp
+  const nDoc = validas.filter((r) => r.publico === 'docente').length
+  const nTec = validas.filter((r) => r.publico === 'tecnico').length
   const inst = instrumentoDe(camp)
   const fech = perguntasFechadas(inst, pub || undefined)
   const nps = resumoPergunta(lista, inst.final.nps.id, true)
@@ -149,8 +152,16 @@ function Resultados({ camp }) {
         {lista.length > 0 && <button className="btn sm" onClick={baixar}>Baixar respostas (CSV, anônimo)</button>}
       </div>
 
+      {extras.size > 0 && (
+        <div className="aviso" role="note" style={{ flexWrap: 'wrap' }}>
+          <span><b>{extras.size} {extras.size === 1 ? 'resposta veio' : 'respostas vieram'} de um aparelho que já tinha respondido</b> (possíveis duplicadas). Pode ser a mesma pessoa respondendo de novo, ou pessoas diferentes num computador compartilhado.</span>
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontWeight: 700 }}>
+            <input type="checkbox" checked={soPrimeira} onChange={(e) => setSoPrimeira(e.target.checked)} /> Contar só a primeira resposta de cada aparelho
+          </label>
+        </div>
+      )}
       <section className="cb-kpis">
-        <div className="card kpi"><span className="v">{fmtInt(resp.length)}</span><span className="l">respostas no total</span></div>
+        <div className="card kpi"><span className="v">{fmtInt(validas.length)}</span><span className="l">respostas no total{soPrimeira ? ' (sem as duplicadas)' : ''}</span></div>
         <div className="card kpi"><span className="v">{fmtInt(nDoc)}</span><span className="l">{PUBLICOS.docente.t}</span></div>
         <div className="card kpi"><span className="v">{fmtInt(nTec)}</span><span className="l">{PUBLICOS.tecnico.t}</span></div>
         <div className="card kpi"><span className="v">{fmtNota(nps.media, 1)}</span><span className="l">Satisfação geral (0 a 10){pub ? ' · ' + PUBLICOS[pub].curto : ''}</span></div>
@@ -162,7 +173,7 @@ function Resultados({ camp }) {
       ) : (
         <>
           {lista.length < MIN_GRUPO && <div className="aviso">Ainda são {lista.length} {lista.length === 1 ? 'resposta' : 'respostas'}. Com menos de {MIN_GRUPO}, os números mudam muito e a pessoa pode ser reconhecida: leia com cuidado.</div>}
-          <PorEixo inst={inst} lista={lista} resp={resp} pub={pub} />
+          <PorEixo inst={inst} lista={lista} resp={validas} pub={pub} />
           {inst.blocos.map((b) => (
             <BlocoResultado key={b.id} inst={inst} bloco={b} lista={lista} pub={pub} />
           ))}
