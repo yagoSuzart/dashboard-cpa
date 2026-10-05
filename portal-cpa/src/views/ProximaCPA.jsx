@@ -14,12 +14,13 @@ import ProximaAtencao from '../components/ProximaAtencao.jsx'
 import ProximaResumo from '../components/ProximaResumo.jsx'
 import ProximaAtuais from '../components/ProximaAtuais.jsx'
 import ProximaAdaptar from '../components/ProximaAdaptar.jsx'
+import ProximaPublicada from '../components/ProximaPublicada.jsx'
 import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState(null)
-  const [aba, setAba] = useState(perfil.role === 'pro_reitoria' ? 'resumo' : 'montar')
+  const [aba, setAba] = useState(perfil.role === 'pro_reitoria' ? 'previa' : 'montar')
   const [aviso, setAviso] = useState(null)
   // Resultados da planilha importada, por pergunta e modalidade (undefined = carregando, null = sem importação)
   const [res, setRes] = useState(undefined)
@@ -114,11 +115,11 @@ export default function ProximaCPA({ perfil, base }) {
       {aviso && <div className={'aviso ' + (aviso.tipo || '')} role="status">{aviso.txt}</div>}
       <div className="seg" role="tablist" aria-label="Seções da Próxima CPA">
         {[
-          ...(ehPr ? [['resumo', 'Resumo das mudanças']] : []),
+          ...(ehPr ? [['previa', 'Como vai ficar'], ['resumo', 'Resumo das mudanças']] : []),
           ['montar', modo === 'pr' ? 'Analisar as perguntas' : 'Montar a proposta'],
           ['atuais', `Perguntas atuais (${atuaisDe(dados.itens).length})`],
           ...(!ehPr ? [['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças']] : []),
-          ['previa', 'Prévia por modalidade'],
+          ...(!ehPr ? [['previa', 'Como vai ficar']] : []),
           ['documento', 'Documento para o T.I'],
           ['historico', 'Histórico'],
         ].map(([k, t]) => (
@@ -128,7 +129,7 @@ export default function ProximaCPA({ perfil, base }) {
       {aba === 'resumo' && <ProximaResumo ctx={ctx} titulo={ehPr ? 'Para a sua análise' : 'Revisar antes de enviar'} />}
       {aba === 'montar' && <Montar ctx={ctx} />}
       {aba === 'atuais' && <ProximaAtuais ctx={ctx} Detalhe={ItemCard} />}
-      {aba === 'previa' && <Previa ctx={ctx} />}
+      {aba === 'previa' && <ProximaPublicada ctx={ctx} Gabarito={Gabarito} Resposta={Resposta} />}
       {aba === 'documento' && <Documento ctx={ctx} />}
       {aba === 'historico' && <Historico ctx={ctx} />}
     </>
@@ -721,45 +722,6 @@ function ModalNova({ ctx, questionarioId, dimInicial = '', onFechar }) {
 }
 
 /* ---------------- prévia por modalidade ---------------- */
-function Previa({ ctx }) {
-  const { dados } = ctx
-  const { itens, questionarios } = dados
-  const [q, setQ] = useState(questionarios[0]?.id || '')
-  const doQ = itens.filter((i) => i.questionario_id === q && entra(i)).sort((a, b) => (a.posicao ?? 999) - (b.posicao ?? 999))
-  const nome = questionarios.find((x) => x.id === q)?.nome
-  return (
-    <>
-      <div className="chips" role="tablist" aria-label="Questionários">
-        {questionarios.map((x) => (
-          <button key={x.id} role="tab" className="chip-btn" aria-selected={q === x.id} onClick={() => setQ(x.id)}>{x.nome}</button>
-        ))}
-      </div>
-      <p className="small muted">Como o aluno de cada modalidade vai ver o questionário “{nome}”, com o enunciado e as alternativas. É uma aproximação: a tela real é a da plataforma da pesquisa.</p>
-      <div className="grid3" style={{ alignItems: 'start' }}>
-        {MODALIDADES.map((m) => {
-          const lista = doQ.filter((i) => i.modalidades.includes(m))
-          const pref = prefixoDe(dados.prefixos, q, m)
-          return (
-            <div key={m} className="card" style={{ padding: 20, gap: 14 }}>
-              <div className="card-h"><div className="t"><span className="eyebrow">{MOD_CURTO[m]}</span><h3>{nome}</h3></div><div className="spacer" /><span className="selo cinza">{lista.length}</span></div>
-              {lista.length > 0 && pref && <p className="px-leitura"><span className="mods">Enunciado</span><span className="pref">{pref}</span></p>}
-              {!lista.length && <Vazio>Este questionário não aparece para {MOD_CURTO[m]}.</Vazio>}
-              {lista.map((it, i) => (
-                <div key={it.id} style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 12, borderTop: '1px solid var(--line-2)' }}>
-                  {pref && it.tipo !== 'aberta' && <span className="small" style={{ color: 'var(--blue-ink)' }}>{pref}</span>}
-                  <p style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.45 }}>{i + 1}. {textoNaModalidade(it, m)}</p>
-                  <Resposta item={it} mod={m} />
-                  <div className="px-selos"><SelosEixoDim eixo={it.eixo} dimensao={it.dimensao} /></div>
-                </div>
-              ))}
-            </div>
-          )
-        })}
-      </div>
-    </>
-  )
-}
-
 function Resposta({ item, mod }) {
   if (item.tipo === 'multipla' || item.tipo === 'outro')
     return (

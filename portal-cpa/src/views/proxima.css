@@ -110,3 +110,31 @@
 .px-adapt.on { border-color: var(--blue); background: #f5f9fe; }
 .px-adapt-cab { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; }
 .px-adapt-cab input { margin-top: 3px; }
+
+/* "Como vai ficar": questionário montado, com aprovação da Pró-Reitoria */
+.px-pub { gap: 0; padding: 0; overflow: hidden; }
+.px-pub-cab { padding: 22px 24px 16px; background: var(--navy); color: #fff; display: flex; flex-direction: column; gap: 6px; }
+.px-pub-cab .eyebrow { color: var(--mint); }
+.px-pub-cab h2 { color: #fff; border: 0; padding: 0; }
+.px-pub-pref { margin: 18px 24px 6px; padding: 12px 16px; border-left: 4px solid var(--blue); background: var(--paper-2); border-radius: 0 12px 12px 0; font-family: var(--f-title); font-size: 18px; color: var(--blue-ink); }
+.px-pub-pref .mods { display: block; font-family: var(--f-ui); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.px-pub > p.muted { padding: 18px 24px; }
+.px-pub > .filtros { padding: 14px 24px 20px; }
+.px-pub-q { display: flex; flex-direction: column; gap: 10px; padding: 18px 24px; border-top: 1px solid var(--line-2); }
+.px-pub-q.aprovada { background: linear-gradient(90deg, var(--green-soft), transparent 40%); }
+.px-pub-q.excluida { opacity: 0.55; }
+.px-pub-q.excluida .px-pub-t { text-decoration: line-through; }
+.px-pub-linha { display: flex; gap: 14px; align-items: flex-start; }
+.px-pub-num { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: #fff; font-weight: 800; font-size: 14px; }
+.px-pub-num.aberta { background: var(--track); color: var(--ink-2); }
+.px-pub-corpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.px-pub-t { font-size: 16px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.px-pub-alt { display: flex; flex-direction: column; gap: 6px; }
+.px-pub-coment { height: 64px; border-radius: 12px; border: 1.5px dashed var(--line); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
+.px-pub-acoes { gap: 8px; padding-left: 44px; }
+.px-confirma { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 8px; border-radius: 10px; background: var(--ember-soft); }
+@media (max-width: 700px) {
+  .px-pub-q, .px-pub-cab { padding-left: 16px; padding-right: 16px; }
+  .px-pub-pref { margin-left: 16px; margin-right: 16px; }
+  .px-pub-acoes { padding-left: 0; }
+}
