@@ -15,6 +15,7 @@ import ProximaResumo from '../components/ProximaResumo.jsx'
 import ProximaAtuais from '../components/ProximaAtuais.jsx'
 import ProximaAdaptar from '../components/ProximaAdaptar.jsx'
 import ProximaPublicada from '../components/ProximaPublicada.jsx'
+import ProximaParaTI from '../components/ProximaParaTI.jsx'
 import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
@@ -120,6 +121,7 @@ export default function ProximaCPA({ perfil, base }) {
           ['atuais', `Perguntas atuais (${atuaisDe(dados.itens).length})`],
           ...(!ehPr ? [['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças']] : []),
           ...(!ehPr ? [['previa', 'Como vai ficar']] : []),
+          ...(ehCpa ? [['ti', 'Para o T.I (entra, sai, muda)']] : []),
           ['documento', 'Documento para o T.I'],
           ['historico', 'Histórico'],
         ].map(([k, t]) => (
@@ -130,6 +132,7 @@ export default function ProximaCPA({ perfil, base }) {
       {aba === 'montar' && <Montar ctx={ctx} />}
       {aba === 'atuais' && <ProximaAtuais ctx={ctx} Detalhe={ItemCard} />}
       {aba === 'previa' && <ProximaPublicada ctx={ctx} Gabarito={Gabarito} Resposta={Resposta} />}
+      {aba === 'ti' && <ProximaParaTI ctx={ctx} />}
       {aba === 'documento' && <Documento ctx={ctx} />}
       {aba === 'historico' && <Historico ctx={ctx} />}
     </>
