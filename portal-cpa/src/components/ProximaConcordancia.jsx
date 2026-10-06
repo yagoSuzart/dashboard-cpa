@@ -3,7 +3,7 @@
 // como o aluno vai ler, com o artigo sugerido; a pessoa troca o artigo com um clique e aplica tudo de uma vez.
 import { useState } from 'react'
 import { MOD_CURTO, registrar, salvarPrefixo, textoNaModalidade } from '../lib/proxima.js'
-import { ARTIGOS_DO_ESTILO, ENUNCIADOS_QUE_ENCAIXAM, artigoInicial, estiloDoPrefixo, inferirArtigo, leitura, naoEncaixa, textoNoEstilo } from '../lib/concordancia.js'
+import { ARTIGOS_DO_ESTILO, ENUNCIADOS_QUE_ENCAIXAM, artigoInicial, ehPerguntaCompleta, estiloDoPrefixo, inferirArtigo, leitura, naoEncaixa, textoNoEstilo } from '../lib/concordancia.js'
 
 export default function ProximaConcordancia({ ctx, qid, nomeQ, mods, prefixoAtual, onFechar }) {
   const { perfil, dados, modo, setDados, setAviso, salvarIt } = ctx
@@ -18,7 +18,7 @@ export default function ProximaConcordancia({ ctx, qid, nomeQ, mods, prefixoAtua
     .sort((a, b) => (a.posicao ?? 999) - (b.posicao ?? 999))
   const base = (it) => textoNaModalidade(it, it.modalidades.find((m) => mods.includes(m)))
   const artigoDe = (it) => artigoInicial(base(it))?.artigo || inferirArtigo(base(it))
-  const [linhas, setLinhas] = useState(() => Object.fromEntries(itens.map((it) => [it.id, { marcada: true, artigo: artigoDe(it), texto: null }])))
+  const [linhas, setLinhas] = useState(() => Object.fromEntries(itens.map((it) => [it.id, { marcada: !ehPerguntaCompleta(base(it)), artigo: artigoDe(it), texto: null }])))
   const [ocupado, setOcupado] = useState(false)
 
   const novoTexto = (it) => {
@@ -78,6 +78,7 @@ export default function ProximaConcordancia({ ctx, qid, nomeQ, mods, prefixoAtua
                   <input type="checkbox" checked={l.marcada} onChange={(e) => muda(it.id, { marcada: e.target.checked })} />
                   <span className="small muted">Hoje: {it.texto}</span>
                 </label>
+                {ehPerguntaCompleta(base(it)) && <span className="small" style={{ color: 'var(--ember-ink)' }}>É uma pergunta completa: não dá para pôr artigo. Marque e reescreva como item (ex.: “a sustentabilidade financeira da instituição”).</span>}
                 {l.marcada && (
                   <>
                     <div className="filtros" style={{ gap: 6 }}>

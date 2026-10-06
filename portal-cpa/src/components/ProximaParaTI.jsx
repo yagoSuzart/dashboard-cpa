@@ -2,7 +2,7 @@
 // da Pró-Reitoria (só leitura). Pode ser baixado (CSV) ou impresso para enviar ao T.I.
 import { useState } from 'react'
 import {
-  ATUAL_POR_ID, ESCALAS, MODALIDADES, MOD_CURTO, STATUS, adaptadaDe, escalaDoItem, escalaMudou, escalaOriginal,
+  ATUAL_POR_ID, MODALIDADES, MOD_CURTO, STATUS, adaptadaDe, escalaDoItem, escalaMudou, escalaOriginal,
   modalidadesMudaram, motivoDe, nomeEscala, prefixoOriginal, prefixosAlterados, rotuloDim, rotuloEixo, EIXO_DA_DIM, textoNaModalidade,
 } from '../lib/proxima.js'
 
@@ -187,7 +187,7 @@ export default function ProximaParaTI({ ctx }) {
                           {k === 'muda' && <div className="small muted">Muda: {oQueMuda(it)}</div>}
                         </td>
                         {k === 'muda' && <td className="small muted">{it.texto !== it.texto_original ? <del>{it.texto_original}</del> : 'mesmo texto'}</td>}
-                        <td className="small">{it.tipo === 'aberta' ? 'Resposta aberta' : nomeEscala(esc)}{esc && ESCALAS[esc]?.na ? ' · com “Não sei / Não utilizo”' : ''}</td>
+                        <td className="small">{it.tipo === 'aberta' ? 'Resposta aberta' : nomeEscala(esc)}</td>
                         <td className="small">{it.dimensao ? <>{rotuloEixo(it.eixo || EIXO_DA_DIM[it.dimensao])}<br />{rotuloDim(it.dimensao)}</> : '—'}</td>
                         <td className="small">{k === 'sai' ? motivoSaida(it) : decisao(it)}</td>
                       </tr>

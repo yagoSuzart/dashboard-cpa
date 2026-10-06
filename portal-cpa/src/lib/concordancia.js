@@ -46,8 +46,15 @@ export function estiloDoPrefixo(prefixo) {
   return 'livre' // "o quanto você:", "De 0 a 10…": a pergunta segue sem artigo
 }
 
+// Pergunta escrita como frase completa ("Como você avalia…?"): não leva artigo; precisa ser reescrita como item
+export function ehPerguntaCompleta(texto) {
+  const t = String(texto || '').trim()
+  return /\?\s*$/.test(t) || /^(como|qual|quais|quanto|o quanto|você|voce|em que|de que|por que)\b/i.test(t)
+}
+
 // Monta a pergunta no formato que o estilo pede (ex.: "ao dinamismo das aulas")
 export function textoNoEstilo(texto, estilo, artigo) {
+  if (ehPerguntaCompleta(texto)) return String(texto || '').trim()
   const ini = artigoInicial(texto)
   const resto = ini ? ini.resto : String(texto || '').trim()
   const art = artigo || (ini ? ini.artigo : inferirArtigo(resto))
