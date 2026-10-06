@@ -500,3 +500,33 @@ export function contarDesencaixes(dados, qid, mods) {
   }
   return n
 }
+
+/* ---------------- para o T.I: o que entra, sai, muda e se mantém ---------------- */
+export function classificarTI(it) {
+  if (!it.incluida) return 'sai'
+  if (it.decisao_pr === 'reprovada') return 'sai'
+  if (it.origem !== 'atual') return 'entra'
+  if (it.texto !== it.texto_original || modalidadesMudaram(it) || escalaMudou(it)) return 'muda'
+  return 'mantem'
+}
+
+export const GRUPOS_TI = {
+  entra: { t: 'Entram', d: 'Perguntas novas no instrumento', c: 'verde' },
+  sai: { t: 'Saem', d: 'Retiradas pela CPA ou excluídas pela Pró-Reitoria', c: 'laranja' },
+  muda: { t: 'Mudam', d: 'Texto, modalidades ou escala diferentes de hoje', c: 'azul' },
+  mantem: { t: 'Mantidas', d: 'Seguem exatamente como hoje', c: 'cinza' },
+}
+
+export function decisaoPr(it) {
+  if (it.decisao_pr === 'aprovada') return it.editada_pr ? 'Aprovada (editada pela Pró-Reitoria)' : 'Aprovada'
+  if (it.decisao_pr === 'reprovada') return 'Excluída pela Pró-Reitoria'
+  if (it.adicionada_pr) return 'Incluída pela Pró-Reitoria'
+  return 'Sem marcação (segue a proposta da CPA)'
+}
+
+export function motivoSaida(it) {
+  if (it.decisao_pr === 'reprovada') return 'Excluída pela Pró-Reitoria'
+  const m = motivoDe(it)
+  return 'Retirada pela CPA' + (m ? ': ' + m : '')
+}
+

@@ -4,7 +4,7 @@ import {
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
   ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
-  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe, desencaixa,
+  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe, desencaixa, classificarTI, GRUPOS_TI, decisaoPr, motivoSaida,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
@@ -740,7 +740,7 @@ function Resposta({ item, mod }) {
 
 /* ---------------- documento para o T.I ---------------- */
 function Documento({ ctx }) {
-  const { dados, nomes } = ctx
+  const { dados, nomes, irPara, perfil } = ctx
   const { itens, questionarios, proposta } = dados
   const semQ = itens.filter((i) => !i.questionario_id && entra(i))
   const prefMud = prefixosAlterados(dados.prefixos)
@@ -765,6 +765,20 @@ function Documento({ ctx }) {
         </p>
         <p className="small muted" style={{ marginTop: 6 }}>Escalas: {Object.values(ESCALAS).map((e) => `${e.t} (${e.d})`).join(' · ')}.</p>
       </div>
+      {(() => {
+        const cont = { entra: 0, sai: 0, muda: 0, mantem: 0 }
+        for (const it of itens) cont[classificarTI(it)]++
+        const decididas = itens.filter((i) => i.incluida && i.decisao_pr).length
+        return (
+          <div className="px-ti-cont">
+            {Object.entries(GRUPOS_TI).map(([k, g]) => (
+              <div key={k} className={'px-ti-n ' + g.c}><b>{cont[k]}</b><span>{g.t}</span></div>
+            ))}
+            <div className="px-ti-n roxo"><b>{decididas}</b><span>marcadas pela Pró-Reitoria</span></div>
+          </div>
+        )
+      })()}
+      {EDITA_CPA.includes(perfil.role) && <div className="no-print"><button className="btn sm" onClick={() => irPara('ti')}>Ver a comparação completa (entra, sai, muda) e baixar a planilha</button></div>}
       {semQ.length > 0 && <div className="aviso">{semQ.length} pergunta(s) ainda sem questionário definido.</div>}
       {prefMud.length > 0 && (
         <div className="aviso">
@@ -788,7 +802,7 @@ function Documento({ ctx }) {
                   <p className="small"><b>{MOD_CURTO[m]} · enunciado antes das perguntas de nota:</b> {pref ? `“${pref}”` : '(sem enunciado)'}</p>
                   <div className="rolagem">
                     <table className="tabela">
-                      <thead><tr><th style={{ width: 36 }}>Nº</th><th>{MOD_CURTO[m]} · pergunta (texto literal)</th><th style={{ width: 170 }}>Critério avaliativo (escala)</th><th style={{ width: 190 }}>Eixo e dimensão</th><th style={{ width: 120 }}>Situação</th></tr></thead>
+                      <thead><tr><th style={{ width: 36 }}>Nº</th><th>{MOD_CURTO[m]} · pergunta (texto literal)</th><th style={{ width: 170 }}>Critério avaliativo (escala)</th><th style={{ width: 190 }}>Eixo e dimensão</th><th style={{ width: 110 }}>Situação</th><th style={{ width: 150 }}>Pró-Reitoria</th></tr></thead>
                       <tbody>
                         {lista.map((it, i) => {
                           const esc = escalaDoItem(it, m)
@@ -799,6 +813,7 @@ function Documento({ ctx }) {
                               <td>{it.tipo === 'multipla' || it.tipo === 'outro' ? TIPOS[it.tipo] : nomeEscala(esc)}{esc && ESCALAS[esc] && esc !== 'aberta' ? <div className="small muted">{ESCALAS[esc].d}</div> : null}</td>
                               <td className="small">{it.dimensao ? <>{rotuloEixo(it.eixo || EIXO_DA_DIM[it.dimensao])}<br />{rotuloDim(it.dimensao)}</> : '—'}</td>
                               <td>{situacao(it).t}</td>
+                              <td className="small">{decisaoPr(it)}</td>
                             </tr>
                           )
                         })}
@@ -809,7 +824,23 @@ function Documento({ ctx }) {
               )
             })}
             {saem.length > 0 && (
-              <p className="small muted">Saem deste questionário: {saem.map((i) => `“${i.texto}”`).join('; ')}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p className="small" style={{ color: 'var(--ember-ink)' }}><b>Saem de “{q.nome}” ({saem.length}):</b></p>
+                <div className="rolagem">
+                  <table className="tabela">
+                    <thead><tr><th>Pergunta que sai</th><th style={{ width: 180 }}>Modalidades</th><th style={{ width: 260 }}>Motivo</th></tr></thead>
+                    <tbody>
+                      {saem.map((it) => (
+                        <tr key={it.id}>
+                          <td><del>{it.texto}</del></td>
+                          <td className="small">{MODALIDADES.filter((m) => it.modalidades.includes(m)).map((m) => MOD_CURTO[m]).join(', ')}</td>
+                          <td className="small">{motivoSaida(it)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
         )

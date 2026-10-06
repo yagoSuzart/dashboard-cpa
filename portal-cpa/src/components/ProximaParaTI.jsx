@@ -2,33 +2,11 @@
 // da Pró-Reitoria (só leitura). Pode ser baixado (CSV) ou impresso para enviar ao T.I.
 import { useState } from 'react'
 import {
-  ATUAL_POR_ID, MODALIDADES, MOD_CURTO, STATUS, adaptadaDe, escalaDoItem, escalaMudou, escalaOriginal,
-  modalidadesMudaram, motivoDe, nomeEscala, prefixoOriginal, prefixosAlterados, rotuloDim, rotuloEixo, EIXO_DA_DIM, textoNaModalidade,
+  ATUAL_POR_ID, MODALIDADES, MOD_CURTO, STATUS, adaptadaDe, classificarTI as classificar, GRUPOS_TI as GRUPOS, decisaoPr as decisao, motivoSaida, escalaDoItem, escalaMudou, escalaOriginal,
+  modalidadesMudaram, nomeEscala, prefixoOriginal, prefixosAlterados, rotuloDim, rotuloEixo, EIXO_DA_DIM, textoNaModalidade,
 } from '../lib/proxima.js'
 
 const mods = (l) => MODALIDADES.filter((m) => l.includes(m)).map((m) => MOD_CURTO[m]).join(', ')
-
-function classificar(it) {
-  if (!it.incluida) return 'sai'
-  if (it.decisao_pr === 'reprovada') return 'sai'
-  if (it.origem !== 'atual') return 'entra'
-  if (it.texto !== it.texto_original || modalidadesMudaram(it) || escalaMudou(it)) return 'muda'
-  return 'mantem'
-}
-
-const GRUPOS = {
-  entra: { t: 'Entram', d: 'Perguntas novas no instrumento', c: 'verde' },
-  sai: { t: 'Saem', d: 'Retiradas pela CPA ou excluídas pela Pró-Reitoria', c: 'laranja' },
-  muda: { t: 'Mudam', d: 'Texto, modalidades ou escala diferentes de hoje', c: 'azul' },
-  mantem: { t: 'Mantidas', d: 'Seguem exatamente como hoje', c: 'cinza' },
-}
-
-function decisao(it) {
-  if (it.decisao_pr === 'aprovada') return it.editada_pr ? 'Aprovada (editada pela Pró-Reitoria)' : 'Aprovada'
-  if (it.decisao_pr === 'reprovada') return 'Excluída pela Pró-Reitoria'
-  if (it.adicionada_pr) return 'Incluída pela Pró-Reitoria'
-  return 'Sem marcação (segue a proposta da CPA)'
-}
 
 function origemDe(it) {
   if (it.adicionada_pr) return 'Escrita pela Pró-Reitoria'
@@ -36,12 +14,6 @@ function origemDe(it) {
   if (it.origem === 'banco') return 'Do banco de perguntas'
   if (it.origem === 'nova') return 'Escrita pela CPA'
   return ''
-}
-
-function motivoSaida(it) {
-  if (it.decisao_pr === 'reprovada') return 'Excluída pela Pró-Reitoria'
-  const m = motivoDe(it)
-  return 'Retirada pela CPA' + (m ? ': ' + m : '')
 }
 
 function oQueMuda(it) {
@@ -56,7 +28,7 @@ export default function ProximaParaTI({ ctx }) {
   const { dados, nomes } = ctx
   const { itens, questionarios, proposta } = dados
   const [q, setQ] = useState('')
-  const [abertos, setAbertos] = useState({ entra: true, sai: true, muda: true, mantem: false })
+  const [abertos, setAbertos] = useState({ entra: true, sai: true, muda: true, mantem: true })
   const nomeQ = Object.fromEntries(questionarios.map((x) => [x.id, x.nome]))
   const ordemQ = Object.fromEntries(questionarios.map((x, i) => [x.id, i]))
   const lista = itens
