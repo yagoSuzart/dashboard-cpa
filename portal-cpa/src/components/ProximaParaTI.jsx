@@ -1,6 +1,7 @@
 // "Para o T.I": o que entra, o que sai, o que muda e o que se mantém no instrumento, já com as decisões
 // da Pró-Reitoria (só leitura). Pode ser baixado (CSV) ou impresso para enviar ao T.I.
 import { useState } from 'react'
+import { baixarPlanilhaTI } from '../lib/planilhaTI.js'
 import {
   ATUAL_POR_ID, MODALIDADES, MOD_CURTO, STATUS, adaptadaDe, classificarTI as classificar, GRUPOS_TI as GRUPOS, decisaoPr as decisao, motivoSaida, escalaDoItem, escalaMudou, escalaOriginal,
   modalidadesMudaram, nomeEscala, prefixoOriginal, prefixosAlterados, rotuloDim, rotuloEixo, EIXO_DA_DIM, textoNaModalidade,
@@ -41,35 +42,6 @@ export default function ProximaParaTI({ ctx }) {
   const decididas = incluidas.filter((i) => i.decisao_pr).length
   const aprovada = ['aprovada', 'enviada_ti'].includes(proposta.status)
 
-  const baixar = () => {
-    const cab = ['Situação', 'Questionário', 'Modalidades', 'Pergunta (texto final)', 'Texto de hoje', 'O que muda', 'Critério avaliativo (escala)', 'Eixo', 'Dimensão', 'Decisão da Pró-Reitoria', 'Origem / motivo']
-    const linhas = []
-    for (const k of ['entra', 'sai', 'muda', 'mantem']) {
-      for (const it of por[k]) {
-        const esc = escalaDoItem(it, it.modalidades[0])
-        linhas.push([
-          GRUPOS[k].t, nomeQ[it.questionario_id] || 'A definir', mods(it.modalidades),
-          k === 'sai' ? '' : textoNaModalidade(it, it.modalidades[0]),
-          it.origem === 'atual' ? it.texto_original : '',
-          k === 'muda' ? oQueMuda(it) : '',
-          it.tipo === 'aberta' ? 'Resposta aberta' : nomeEscala(esc),
-          rotuloEixo(it.eixo || EIXO_DA_DIM[it.dimensao]) || '', rotuloDim(it.dimensao) || '',
-          decisao(it), k === 'sai' ? motivoSaida(it) : origemDe(it),
-        ])
-      }
-    }
-    for (const r of prefMud) linhas.push(['Enunciado muda', nomeQ[r.questionario_id] || r.questionario_id, MOD_CURTO[r.modalidade], r.texto, r.texto_original ?? prefixoOriginal(r.questionario_id, r.modalidade), 'enunciado (prefixo)', '', '', '', '', ''])
-    const esc = (v) => { const s = v == null ? '' : String(v); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s }
-    const url = URL.createObjectURL(new Blob(['﻿' + [cab, ...linhas].map((l) => l.map(esc).join(';')).join('\n')], { type: 'text/csv;charset=utf-8' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `proxima-cpa-para-o-ti${q ? '-' + q : ''}.csv`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
-  }
-
   return (
     <div className="coluna px-ti">
       <section className="card" style={{ gap: 14 }}>
@@ -81,7 +53,7 @@ export default function ProximaParaTI({ ctx }) {
           </div>
           <div className="spacer" />
           <div className="filtros no-print" style={{ gap: 8 }}>
-            <button className="btn" onClick={baixar}>Baixar planilha (CSV)</button>
+            <button className="btn" onClick={() => baixarPlanilhaTI(dados, nomes)}>Baixar Excel (com abas)</button>
             <button className="btn escuro" onClick={() => window.print()}>Imprimir / PDF</button>
           </div>
         </div>

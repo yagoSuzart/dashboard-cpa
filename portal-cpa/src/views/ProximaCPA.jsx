@@ -16,6 +16,7 @@ import ProximaAtuais from '../components/ProximaAtuais.jsx'
 import ProximaAdaptar from '../components/ProximaAdaptar.jsx'
 import ProximaPublicada from '../components/ProximaPublicada.jsx'
 import ProximaParaTI from '../components/ProximaParaTI.jsx'
+import { baixarPlanilhaTI } from '../lib/planilhaTI.js'
 import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
@@ -752,7 +753,10 @@ function Documento({ ctx }) {
           <p className="muted small">Textos literais, questionário por questionário e modalidade por modalidade, com o enunciado, a escala e o eixo/dimensão de cada pergunta. Use “Imprimir / PDF” para enviar.</p>
         </div>
         <div className="spacer" />
-        <button className="btn escuro" onClick={() => window.print()}>Imprimir / PDF</button>
+        <div className="filtros" style={{ gap: 8 }}>
+          <button className="btn" onClick={() => baixarPlanilhaTI(dados, nomes)}>Baixar Excel (com abas)</button>
+          <button className="btn escuro" onClick={() => window.print()}>Imprimir / PDF</button>
+        </div>
       </div>
       {proposta.status !== 'aprovada' && proposta.status !== 'enviada_ti' && (
         <div className="aviso no-print">Prévia do documento: a proposta ainda não foi aprovada pela Pró-Reitoria.</div>
@@ -778,7 +782,7 @@ function Documento({ ctx }) {
           </div>
         )
       })()}
-      {EDITA_CPA.includes(perfil.role) && <div className="no-print"><button className="btn sm" onClick={() => irPara('ti')}>Ver a comparação completa (entra, sai, muda) e baixar a planilha</button></div>}
+      {EDITA_CPA.includes(perfil.role) && <div className="no-print"><button className="btn sm" onClick={() => irPara('ti')}>Ver a comparação completa (entra, sai, muda)</button></div>}
       {semQ.length > 0 && <div className="aviso">{semQ.length} pergunta(s) ainda sem questionário definido.</div>}
       {prefMud.length > 0 && (
         <div className="aviso">
