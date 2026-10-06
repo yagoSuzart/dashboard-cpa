@@ -138,3 +138,15 @@
   .px-pub-pref { margin-left: 16px; margin-right: 16px; }
   .px-pub-acoes { padding-left: 0; }
 }
+
+/* concordância enunciado + pergunta */
+.px-pub-ajuste { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 4px 24px 10px; padding: 10px 14px; border-radius: 12px; background: var(--ember-soft); color: var(--ember-ink); }
+.px-pub-lido { color: var(--blue-ink); }
+.px-cc-ops { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.px-cc-op { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); cursor: pointer; }
+.px-cc-op.on { border-color: var(--blue); background: #f5f9fe; }
+.px-cc-lista { display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow: auto; padding-right: 4px; }
+.px-cc { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); }
+.px-cc.on { border-color: #cfe0f1; }
+.px-cc-cab { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.px-cc-ruim { border-left-color: var(--ember) !important; }

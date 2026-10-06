@@ -2,7 +2,8 @@
 // critério avaliativo e o espaço de comentário), com eixo e dimensão de cada pergunta e o gabarito SINAES ao lado.
 // A Pró-Reitoria aprova, edita ou exclui cada pergunta aqui mesmo.
 import { useState } from 'react'
-import { MODALIDADES, MOD_CURTO, adaptadaDe, entra, prefixoDe, situacao, textoNaModalidade } from '../lib/proxima.js'
+import { MODALIDADES, MOD_CURTO, adaptadaDe, comPrefixo, contarDesencaixes, desencaixa, entra, prefixoDe, situacao, textoNaModalidade } from '../lib/proxima.js'
+import ProximaConcordancia from './ProximaConcordancia.jsx'
 import { SelosEixoDim } from './ProximaSelos.jsx'
 
 const ordem = (a, b) => (a.tipo === 'aberta') - (b.tipo === 'aberta') || (a.posicao ?? 999) - (b.posicao ?? 999)
@@ -17,6 +18,7 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
   const [soMudou, setSoMudou] = useState(false)
   const [lote, setLote] = useState(false)
   const [ocupado, setOcupado] = useState(false)
+  const [ajustar, setAjustar] = useState(false)
 
   const escolherQ = (id) => {
     setQ(id)
@@ -75,6 +77,16 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
             {pref && lista.some((i) => i.tipo !== 'aberta') && (
               <div className="px-pub-pref"><span className="mods">Enunciado</span>{pref}</div>
             )}
+            {(() => {
+              const nd = pref ? contarDesencaixes(dados, q, [mod]) : 0
+              if (!nd && !(modo !== 'leitura' && pref)) return null
+              return (
+                <div className="px-pub-ajuste">
+                  {nd > 0 && <span className="small"><b>{nd} {nd === 1 ? 'pergunta não encaixa' : 'perguntas não encaixam'}</b> na leitura com o enunciado.</span>}
+                  {modo !== 'leitura' && pref && <button className="btn sm" onClick={() => setAjustar(true)}>Ajustar o português</button>}
+                </div>
+              )
+            })()}
             {!lista.length && <p className="muted">{soMudou ? 'Nada mudou neste questionário para ' + MOD_CURTO[mod] + '.' : 'Este questionário não aparece para ' + MOD_CURTO[mod] + '.'}</p>}
             {lista.map((it) => (
               <PerguntaPublicada key={it.id} ctx={ctx} item={it} mod={mod} num={it.tipo === 'aberta' ? null : ++n} Resposta={Resposta} />
@@ -93,6 +105,7 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
               </div>
             )}
           </article>
+          {ajustar && <ProximaConcordancia ctx={ctx} qid={q} nomeQ={nome} mods={[mod]} prefixoAtual={pref} onFechar={() => setAjustar(false)} />}
         </div>
         <div className="coluna">
           <Gabarito itens={itens} />
@@ -103,8 +116,9 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
 }
 
 function PerguntaPublicada({ ctx, item, mod, num, Resposta }) {
-  const { modo, salvarIt } = ctx
+  const { dados, modo, salvarIt } = ctx
   const pr = modo === 'pr'
+  const pref = item.questionario_id ? prefixoDe(dados.prefixos, item.questionario_id, mod) : ''
   const [editando, setEditando] = useState(false)
   const [texto, setTexto] = useState(item.texto)
   const [excluir, setExcluir] = useState(false)
@@ -137,12 +151,14 @@ function PerguntaPublicada({ ctx, item, mod, num, Resposta }) {
           ) : (
             <p className="px-pub-t">{textoNaModalidade(item, mod)}</p>
           )}
+          {!editando && item.tipo !== 'aberta' && pref && <span className="small px-pub-lido">Lido junto: “{comPrefixo(pref, textoNaModalidade(item, mod))}”</span>}
           {mudou && !editando && s.t === 'Reescrita' && <span className="small muted">Antes: “{item.texto_original}”</span>}
           {adaptadaDe(item) && !editando && <span className="small muted">{adaptadaDe(item)}</span>}
           <div className="px-selos">
             {item.tipo !== 'aberta' && <SelosEixoDim eixo={item.eixo} dimensao={item.dimensao} />}
             {item.tipo === 'aberta' && <span className="selo cinza">pergunta aberta</span>}
             {mudou && !excluida && <span className={'selo ' + s.c}>{s.t}</span>}
+            {!excluida && desencaixa(dados.prefixos, item, mod) && <span className="selo laranja">não encaixa no enunciado</span>}
             {item.editada_pr && <span className="selo azul">editada pela Pró-Reitoria</span>}
             {item.decisao_pr === 'aprovada' && <span className="selo verde">aprovada</span>}
             {excluida && <span className="selo laranja">excluída pela Pró-Reitoria</span>}

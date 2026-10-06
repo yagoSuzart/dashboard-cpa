@@ -1,6 +1,7 @@
 // Enunciado (prefixo) que aparece antes das perguntas de um questionário, por modalidade.
 import { useState } from 'react'
-import { MODALIDADES, MOD_CURTO, prefixoDe, prefixoOriginal, linhaPrefixo, sugestoesPrefixo, salvarPrefixo, registrar, comPrefixo, entra, modsDoQuestionario, gruposPrefixo } from '../lib/proxima.js'
+import { MODALIDADES, MOD_CURTO, prefixoDe, prefixoOriginal, linhaPrefixo, sugestoesPrefixo, salvarPrefixo, registrar, comPrefixo, entra, modsDoQuestionario, gruposPrefixo, contarDesencaixes } from '../lib/proxima.js'
+import ProximaConcordancia from './ProximaConcordancia.jsx'
 
 export default function ProximaPrefixo({ ctx, qid, nomeQ }) {
   const { perfil, dados, modo, setDados, setAviso } = ctx
@@ -12,6 +13,7 @@ export default function ProximaPrefixo({ ctx, qid, nomeQ }) {
   const [texto, setTexto] = useState('')
   const [alvo, setAlvo] = useState(mods)
   const [ocupado, setOcupado] = useState(false)
+  const [ajustar, setAjustar] = useState(null)
   const editavel = modo !== 'leitura'
   const exemplo = dados.itens.filter((i) => i.questionario_id === qid && entra(i) && i.tipo !== 'aberta').sort((a, b) => (a.posicao ?? 999) - (b.posicao ?? 999))[0]
 
@@ -60,7 +62,16 @@ export default function ProximaPrefixo({ ctx, qid, nomeQ }) {
             <p className="pref-txt">{t || <span className="muted small">Sem enunciado (as perguntas aparecem sozinhas).</span>}</p>
             {mudou && orig && <p className="small">Hoje: <del>{orig}</del></p>}
             {exemplo && t && <p className="small muted">Exemplo: “{comPrefixo(t, exemplo.texto)}”</p>}
-            {editavel && !editando && <button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => abrir(t, ms)}>Editar enunciado{grupos.length > 1 ? ' de ' + ms.map((m) => MOD_CURTO[m]).join(', ') : ''}</button>}
+            {(() => {
+              const n = t ? contarDesencaixes(dados, qid, ms) : 0
+              return n > 0 ? <div className="aviso" role="note"><span><b>{n} {n === 1 ? 'pergunta não encaixa' : 'perguntas não encaixam'}</b> na leitura com este enunciado (ex.: falta “ao”, “à”, “aos”, “às”).</span></div> : null
+            })()}
+            {editavel && !editando && (
+              <div className="filtros" style={{ gap: 8 }}>
+                <button className="btn sm" onClick={() => abrir(t, ms)}>Editar enunciado{grupos.length > 1 ? ' de ' + ms.map((m) => MOD_CURTO[m]).join(', ') : ''}</button>
+                {t && <button className="btn sm escuro" onClick={() => setAjustar({ t, ms })}>Ajustar o português das perguntas</button>}
+              </div>
+            )}
           </div>
         )
       })}
@@ -83,7 +94,7 @@ export default function ProximaPrefixo({ ctx, qid, nomeQ }) {
               </label>
             ))}
           </fieldset>
-          {exemplo && texto.trim() && <p className="px-leitura"><span className="pref">{texto.trim()}</span> {exemplo.texto}</p>}
+          {exemplo && texto.trim() && <p className="px-leitura"><span className="mods">Como o aluno lê</span>{comPrefixo(texto.trim(), exemplo.texto)}</p>}
           <div className="filtros">
             <button className="btn sm escuro" disabled={ocupado || !alvo.length} onClick={salvar}>Salvar enunciado</button>
             <button className="btn sm" onClick={() => setEditando(false)}>Cancelar</button>
@@ -93,6 +104,7 @@ export default function ProximaPrefixo({ ctx, qid, nomeQ }) {
           </div>
         </div>
       )}
+      {ajustar && <ProximaConcordancia ctx={ctx} qid={qid} nomeQ={nomeQ} mods={ajustar.ms} prefixoAtual={ajustar.t} onFechar={() => setAjustar(null)} />}
     </div>
   )
 }

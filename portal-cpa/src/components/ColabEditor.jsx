@@ -7,11 +7,12 @@ import {
   perguntasFechadas, salvarInstrumento,
 } from '../lib/colaboradores.js'
 import { DIMS, EIXOS } from '../lib/proxima.js'
+import { leitura as lidoJunto, naoEncaixa } from '../lib/concordancia.js'
 import { SelosEixoDim } from './ProximaSelos.jsx'
 
 const copia = (x) => JSON.parse(JSON.stringify(x))
 const PUB_OPCOES = [['ambos', 'Docentes e técnicos'], ['docente', 'Só docentes'], ['tecnico', 'Só técnico-administrativos']]
-const PREFIXOS = ['Qual o seu grau de satisfação com relação a:', 'Qual o seu nível de conhecimento sobre:']
+const PREFIXOS = ['Qual o seu grau de satisfação com:', 'Qual o seu nível de conhecimento sobre:']
 
 export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = false }) {
   const [inst, setInst] = useState(() => copia(instrumentoDe(camp)))
@@ -140,7 +141,9 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
                 {g.perguntas.map((p, pi) => visivel(p) && (
                   <li key={p.id} className="ce-q">
                     <TextoEditavel valor={p.texto} travado={travado} rotulo="Texto da pergunta" onSalvar={(t) => mudar((n) => { n.blocos[bi].grupos[gi].perguntas[pi].texto = t }, 'Pergunta salva.')} />
+                    <span className="small" style={{ color: 'var(--blue-ink)' }}>Lido junto: “{lidoJunto(g.prefixo, p.texto)}”</span>
                     <div className="chips" style={{ gap: 6 }}>
+                      {naoEncaixa(g.prefixo, p.texto) && <span className="selo laranja">não encaixa no enunciado</span>}
                       <SelosEixoDim eixo={b.eixo} dimensao={p.dim} />
                       {p.p !== 'ambos' && <span className="selo cinza">só {PUBLICOS[p.p].curto.toLowerCase()}</span>}
                     </div>

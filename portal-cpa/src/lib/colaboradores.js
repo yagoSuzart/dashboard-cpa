@@ -15,7 +15,7 @@ export const PUBLICOS = {
 export const NAO_SEI = 6
 export const MIN_GRUPO = 5 // com menos respostas que isso, o grupo pode ser reconhecido: a tela avisa
 
-const SATISFACAO = 'Qual o seu grau de satisfação com relação a:'
+const SATISFACAO = 'Qual o seu grau de satisfação com:'
 const CONHECIMENTO = 'Qual o seu nível de conhecimento sobre:'
 
 export const ESCALAS_COLAB = {

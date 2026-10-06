@@ -4,7 +4,7 @@ import {
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
   ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
-  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe,
+  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe, desencaixa,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
@@ -441,6 +441,7 @@ function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
             {item.decisao_pr === 'aprovada' && <span className="selo verde">aprovada pela Pró-Reitoria</span>}
             {cand && !cand.analisada && entra(item) && <span className="selo laranja" title={cand.motivos.map((m) => m.t).join('\n')}>sugerida para revisão</span>}
             {foiAnalisada(item) && <span className="selo verde">mantida após análise</span>}
+            {entra(item) && item.modalidades.some((m) => desencaixa(dados.prefixos, item, m)) && <span className="selo laranja" title="Lida junto com o enunciado, a frase não fecha. Use “Ajustar o português das perguntas” no enunciado.">não encaixa no enunciado</span>}
             {!item.incluida && item.observacao && <span className="selo cinza px-selo">motivo: {item.observacao}</span>}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>

@@ -1,5 +1,6 @@
 // Próxima CPA: a proposta de perguntas que a CPA monta e a Pró-Reitoria aprova.
 import { sb } from './dados.js'
+import { leitura, naoEncaixa } from './concordancia.js'
 import instrumento from '../data/instrumento-atual.json'
 import banco from '../data/banco-perguntas.json'
 
@@ -247,9 +248,7 @@ export function prefixoDe(prefixos, qid, mod) {
 }
 // A pergunta lida junto com o enunciado ("Qual o seu grau de satisfação com relação a: <pergunta>")
 export function comPrefixo(prefixo, texto) {
-  if (!prefixo) return texto
-  const t = String(texto || '')
-  return `${prefixo.trim()} ${t.charAt(0).toLowerCase() + t.slice(1)}`
+  return leitura(prefixo, texto)
 }
 // Pergunta escrita como pergunta completa ("Como você avalia a clareza...?") vira item que combina com o
 // prefixo ("Qual o seu grau de satisfação com relação a: clareza..."). Devolve null se não souber adaptar.
@@ -485,3 +484,19 @@ export const atuaisDe = (itens) => itens.filter((i) => i.origem === 'atual')
 /* ---------------- perguntas adaptadas de outra modalidade ---------------- */
 export const MARCA_ADAPTADA = 'Adaptada de'
 export const adaptadaDe = (item) => (item.origem !== 'atual' && (item.observacao || '').startsWith(MARCA_ADAPTADA) ? item.observacao : null)
+
+/* ---------------- concordância entre enunciado e pergunta ---------------- */
+// A pergunta lida junto com o enunciado da modalidade não encaixa (ex.: "com relação a:" + "Dinamismo das aulas")
+export function desencaixa(prefixos, item, mod) {
+  if (item.tipo === 'aberta' || !item.questionario_id) return false
+  return naoEncaixa(prefixoDe(prefixos, item.questionario_id, mod), textoNaModalidade(item, mod))
+}
+export function contarDesencaixes(dados, qid, mods) {
+  let n = 0
+  for (const it of dados.itens) {
+    if (it.questionario_id !== qid || !it.incluida || it.decisao_pr === 'reprovada' || it.tipo === 'aberta') continue
+    const m = it.modalidades.find((x) => mods.includes(x))
+    if (m && desencaixa(dados.prefixos, it, m)) n++
+  }
+  return n
+}
