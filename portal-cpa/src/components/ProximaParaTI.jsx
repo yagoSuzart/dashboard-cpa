@@ -2,6 +2,7 @@
 // da Pró-Reitoria (só leitura). Pode ser baixado (CSV) ou impresso para enviar ao T.I.
 import { useState } from 'react'
 import { baixarPlanilhaTI } from '../lib/planilhaTI.js'
+import BotaoFormatoTI from './BotaoFormatoTI.jsx'
 import {
   ATUAL_POR_ID, MODALIDADES, MOD_CURTO, STATUS, adaptadaDe, classificarTI as classificar, GRUPOS_TI as GRUPOS, decisaoPr as decisao, motivoSaida, escalaDoItem, escalaMudou, escalaOriginal,
   modalidadesMudaram, nomeEscala, prefixoOriginal, prefixosAlterados, rotuloDim, rotuloEixo, EIXO_DA_DIM, textoNaModalidade,
@@ -54,6 +55,7 @@ export default function ProximaParaTI({ ctx }) {
           <div className="spacer" />
           <div className="filtros no-print" style={{ gap: 8 }}>
             <button className="btn" onClick={() => baixarPlanilhaTI(dados, nomes)}>Baixar Excel (com abas)</button>
+            <BotaoFormatoTI dados={dados} />
             <button className="btn escuro" onClick={() => window.print()}>Imprimir / PDF</button>
           </div>
         </div>

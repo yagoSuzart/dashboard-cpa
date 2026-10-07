@@ -9,7 +9,7 @@ import { baixarArquivo, montarXlsx } from './xlsx.js'
 
 const mods = (l) => MODALIDADES.filter((m) => l.includes(m)).map((m) => MOD_CURTO[m]).join(', ')
 
-function alternativas(item, esc) {
+export function alternativas(item, esc) {
   if (item.tipo === 'multipla' || item.tipo === 'outro') return (item.opcoes || '').split('|').map((o) => o.trim()).filter(Boolean).join(' · ')
   const E = ESCALAS[esc]
   if (!E || esc === 'aberta') return 'Texto livre'

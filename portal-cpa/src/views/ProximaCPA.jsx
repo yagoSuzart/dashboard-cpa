@@ -17,6 +17,7 @@ import ProximaAdaptar from '../components/ProximaAdaptar.jsx'
 import ProximaPublicada from '../components/ProximaPublicada.jsx'
 import ProximaParaTI from '../components/ProximaParaTI.jsx'
 import { baixarPlanilhaTI } from '../lib/planilhaTI.js'
+import BotaoFormatoTI from '../components/BotaoFormatoTI.jsx'
 import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
@@ -755,6 +756,7 @@ function Documento({ ctx }) {
         <div className="spacer" />
         <div className="filtros" style={{ gap: 8 }}>
           <button className="btn" onClick={() => baixarPlanilhaTI(dados, nomes)}>Baixar Excel (com abas)</button>
+            <BotaoFormatoTI dados={dados} />
           <button className="btn escuro" onClick={() => window.print()}>Imprimir / PDF</button>
         </div>
       </div>
