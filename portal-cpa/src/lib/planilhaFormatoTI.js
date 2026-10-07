@@ -20,7 +20,7 @@ export const STATUS_TI = {
 }
 
 export const CABECALHO_TI = [
-  'survey_id', 'pesquisa_nome', 'ING_MODALIDADE', 'pergunta_id', 'pergunta_posicao', 'pergunta', 'pergunta_tipo',
+  'ING_MODALIDADE', 'survey_id', 'pesquisa_nome', 'pergunta_id', 'pergunta_posicao', 'pergunta', 'pergunta_tipo',
   'STATUS_2026.2', 'PERGUNTA_2026.2', 'POSICAO_2026.2', 'ENUNCIADO_2026.2', 'ESCALA_2026.2', 'ALTERNATIVAS_2026.2', 'EIXO', 'DIMENSAO', 'OBSERVACAO',
 ]
 
@@ -32,7 +32,7 @@ export async function carregarCatalogoTI() {
 
 function tipoTI(it, esc) {
   if (it.tipo === 'multipla' || it.tipo === 'outro') return TIPOS[it.tipo]
-  if (esc === 'aberta' || it.tipo === 'aberta') return 'texto (aberta)'
+  if (esc === 'aberta' || it.tipo === 'aberta') return 'textarea'
   return 'rating_scale'
 }
 
@@ -83,7 +83,7 @@ export function linhasFormatoTI(dados, catalogo) {
       const modsHoje = new Set(hoje.map((h) => h.m))
 
       for (const h of hoje) {
-        const base = [survey, h.pesquisa, h.m, h.id, pos, h.texto, tipoTI(it, escalaOriginal(it, h.m))]
+        const base = [h.m, survey, h.pesquisa, h.id, pos, h.texto, tipoTI(it, escalaOriginal(it, h.m))]
         if (k === 'sai') {
           linhas.push({ status: 'EXCLUIDA', l: [...base, 'EXCLUIDA', '', '', '', '', '', eixo(it), dim(it), motivoSaida(it)] })
           continue
@@ -107,7 +107,7 @@ export function linhasFormatoTI(dados, catalogo) {
         for (const m of ORDEM_MOD.filter((x) => it.modalidades.includes(x) && !modsHoje.has(x))) {
           const f = final(it, m)
           const ids = hoje.filter((h) => h.id !== '').map((h) => `${MOD_CURTO[h.m]} ${h.id}`).join(', ')
-          linhas.push({ status: 'NOVA', l: [survey, pesquisaDoSurvey[survey] || q?.nome || '', m, '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), `A pergunta já existe em outra modalidade${ids ? ` (ID ${ids})` : ''}; passa a valer também nesta`] })
+          linhas.push({ status: 'NOVA', l: [m, survey, pesquisaDoSurvey[survey] || q?.nome || '', '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), `A pergunta já existe em outra modalidade${ids ? ` (ID ${ids})` : ''}; passa a valer também nesta`] })
         }
       }
       continue
@@ -119,14 +119,14 @@ export function linhasFormatoTI(dados, catalogo) {
     for (const m of ORDEM_MOD.filter((x) => it.modalidades.includes(x))) {
       const f = final(it, m)
       const quem = it.adicionada_pr ? 'Incluída pela Pró-Reitoria' : it.origem === 'banco' ? 'Do banco de perguntas da CPA' : 'Escrita pela CPA'
-      linhas.push({ status: 'NOVA', l: [survey, pesquisaDoSurvey[survey] || q?.nome || '', m, '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), quem + (survey === '' ? ' · questionário novo (sem survey_id)' : '')] })
+      linhas.push({ status: 'NOVA', l: [m, survey, pesquisaDoSurvey[survey] || q?.nome || '', '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), quem + (survey === '' ? ' · questionário novo (sem survey_id)' : '')] })
     }
   }
 
   // Na ordem do T.I: questionário, modalidade, posição nova (as excluídas no fim de cada bloco, pela posição de hoje)
   const peso = (r) => [
-    ordemQ[questionarios.find((x) => x.survey_id === r.l[0])?.id] ?? 99,
-    ORDEM_MOD.indexOf(r.l[2]),
+    ordemQ[questionarios.find((x) => x.survey_id === r.l[1])?.id] ?? 99,
+    ORDEM_MOD.indexOf(r.l[0]),
     r.status === 'EXCLUIDA' ? 1 : 0,
     r.status === 'EXCLUIDA' ? Number(r.l[4]) || 0 : Number(r.l[9]) || 0,
   ]
@@ -149,7 +149,8 @@ export async function baixarPlanilhaFormatoTI(dados) {
   const legenda = [
     ...Object.entries(STATUS_TI).map(([k, v]) => [k, v.d]),
     ['', ''],
-    ['Colunas de survey_id até pergunta_tipo', `Iguais à extração do T.I (ciclo ${ciclo}), sem as respostas e sem dados de alunos. Nas perguntas novas ficam em branco o pergunta_id, a posição e o texto de hoje.`],
+    ['Colunas de ING_MODALIDADE até pergunta_tipo', `Mesmos nomes e mesma ordem da extração do T.I (ciclo ${ciclo}). Só ficaram as colunas que descrevem a pergunta: as de aluno, professor, turma, tentativa e resposta foram retiradas. Nas perguntas novas ficam em branco o pergunta_id, a posição e o texto de hoje.`],
+    ['ING_MODALIDADE', 'Aqui é a modalidade em que a pergunta é aplicada (na extração, era a modalidade de quem respondeu). Só as modalidades oficiais de cada questionário.'],
     ['PERGUNTA_2026.2', 'Texto final da pergunta para cadastrar (vazio quando a pergunta sai).'],
     ['POSICAO_2026.2', 'Ordem da pergunta no questionário daquela modalidade na 2026.2.'],
     ['ENUNCIADO_2026.2', 'Frase que aparece antes da pergunta (ex.: "Qual o seu grau de satisfação com:").'],
@@ -170,7 +171,7 @@ export async function baixarPlanilhaFormatoTI(dados) {
     {
       nome: 'Perguntas 2026.2', cabecalho: CABECALHO_TI, linhas: linhas.map((r) => r.l),
       cores: linhas.map((r) => STATUS_TI[r.status].cor),
-      larguras: [10, 30, 16, 11, 10, 50, 14, 14, 55, 10, 36, 24, 44, 30, 30, 44],
+      larguras: [16, 10, 30, 11, 10, 50, 14, 14, 55, 10, 36, 24, 44, 30, 30, 44],
     },
     { nome: 'Legenda', cabecalho: ['Item', 'O que significa'], linhas: legenda, larguras: [34, 100] },
     { nome: 'Resumo', cabecalho: ['Item', 'Valor'], linhas: resumo, larguras: [34, 30] },
