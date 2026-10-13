@@ -116,6 +116,16 @@ export default function ProximaCPA({ perfil, base }) {
         </div>
       </section>
       <BarraStatus ctx={ctx} />
+      {ehPr && modo === 'leitura' && (
+        <div className="aviso" role="note" style={{ borderLeft: '6px solid var(--ember)' }}>
+          <span>
+            <b>Só leitura por enquanto.</b>{' '}
+            {['montagem', 'devolvida'].includes(proposta.status)
+              ? 'A proposta está com a CPA. Os botões Aprovar, Editar e Excluir aparecem aqui assim que a CPA clicar em “Enviar para a Pró-Reitoria”.'
+              : 'A proposta já foi aprovada. Para mudar alguma pergunta, a CPA reabre a proposta e envia de novo para você.'}
+          </span>
+        </div>
+      )}
       {aviso && <div className={'aviso ' + (aviso.tipo || '')} role="status">{aviso.txt}</div>}
       <div className="seg" role="tablist" aria-label="Seções da Próxima CPA">
         {(ehPr ? [['previa', 'Analisar e aprovar'], ['resumo', 'Resumo das mudanças'], ['historico', 'Histórico']] : []).map(([k, t]) => (

@@ -15,13 +15,15 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
   const { dados, modo, salvarIt } = ctx
   const { itens, questionarios } = dados
   const pr = modo === 'pr'
+  // A Pró-Reitoria vê os questionários novos em destaque mesmo antes de a proposta chegar para ela
+  const vePainel = pr || ctx.perfil?.role === 'pro_reitoria'
   const modsDe = (qid) => MODALIDADES.filter((m) => itens.some((i) => i.questionario_id === qid && i.incluida && i.modalidades.includes(m)))
   // O que ainda espera a decisão da Pró-Reitoria, por questionário (os novos primeiro)
   const pendDe = (qid) => itens.filter((i) => i.questionario_id === qid && i.incluida && !i.decisao_pr)
   const novos = questionarios.filter((x) => x.origem === 'novo')
   const corDe = (qid) => CORES_NOVOS[novos.findIndex((x) => x.id === qid) % CORES_NOVOS.length]
   const comPendencia = [...novos, ...questionarios.filter((x) => x.origem !== 'novo')].filter((x) => pendDe(x.id).length)
-  const inicial = (pr && comPendencia[0]?.id) || questionarios[0]?.id || ''
+  const inicial = (vePainel && comPendencia[0]?.id) || questionarios[0]?.id || ''
   const [q, setQ] = useState(inicial)
   const [mod, setMod] = useState(() => modsDe(inicial)[0] || MODALIDADES[0])
   const [soMudou, setSoMudou] = useState(false)
@@ -63,9 +65,10 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
   }
   return (
     <>
-      {pr && (
+      {vePainel && (
         <section className="card px-agora" aria-label="O que espera a sua decisão">
           <span className="eyebrow">Para a sua análise</span>
+          {!pr && <p className="small" style={{ color: 'var(--ember-ink)', fontWeight: 600 }}>Você já pode ler as perguntas. Para aprovar, editar ou excluir, a proposta precisa estar com você (a CPA clica em “Enviar para a Pró-Reitoria”).</p>}
           {comPendencia.length ? (
             <h2>{novosPend.length ? `${novosPend.length === 1 ? 'Um questionário novo' : novosPend.length + ' questionários novos'} esperando a sua decisão` : 'Perguntas que esperam a sua decisão'}</h2>
           ) : (
