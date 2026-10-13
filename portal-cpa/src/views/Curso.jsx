@@ -111,7 +111,7 @@ function UmCurso({ curso, perfil, base, escopo, planos, professores, irmaos, rec
               ))}
             </div>
           )}
-          <BotoesPdf tipos={['curso', 'geral']} base={base} escopo={escopo} cursoId={curso.id} perfil={perfil} planos={planos} />
+          <BotoesPdf tipos={['curso', 'geral']} base={base} escopo={escopo} cursoId={curso.id} planos={planos} />
         </div>
         <div className="spacer" />
         <div className="card escuro" style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12, padding: '18px 24px' }}>

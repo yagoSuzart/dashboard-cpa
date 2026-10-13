@@ -8,7 +8,7 @@
 // Assinaturas:
 //   baixarPdfCurso({ base, cursoId, perfil?, planos? })     → relatório completo do curso (CPA_<curso>.pdf):
 //     satisfação, dimensões x instituição, onde agir, mapa das turmas, pergunta por pergunta,
-//     professores, planos de ação e todos os comentários
+//     planos de ação e todos os comentários (sem nomes de professores)
 //   baixarPdfGeral({ base, escopo, respondentes? })         → um curso por página         (CPA_relatorio_geral.pdf)
 //   baixarPdfSetor({ base, setorId, comentarios? })         → PDF de um setor             (CPA_setor_<id>.pdf)
 //   baixarPdfPlanos({ base, escopo, perfil })               → planos de todos os autores  (CPA_planos_de_acao_geral.pdf)
@@ -119,8 +119,9 @@ function pdfCabecalho(doc, titulo, subtitulo) {
   const linhasTitulo = doc.splitTextToSize(titulo, larguraUtil - logoLargura - 8)
   doc.text(linhasTitulo, xTexto, 22)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...PDF_GRAY_TEXT)
-  doc.text(subtitulo, xTexto, 22 + linhasTitulo.length * 5.5)
-  return Math.max(15 + logoAltura + 12, 22 + linhasTitulo.length * 5.5 + 10)
+  const linhasSub = doc.splitTextToSize(subtitulo, larguraUtil - logoLargura - 8)
+  doc.text(linhasSub, xTexto, 22 + linhasTitulo.length * 5.5)
+  return Math.max(15 + logoAltura + 12, 22 + linhasTitulo.length * 5.5 + (linhasSub.length - 1) * 4 + 10)
 }
 
 // Faixa navy de rodapé (com numeração) em todas as páginas. Chamar por último.
@@ -237,7 +238,7 @@ async function amostraComentarios(cid) {
   return itens.map((c) => c.texto)
 }
 
-export async function baixarPdfCurso({ base, cursoId, perfil, planos } = {}) {
+export async function baixarPdfCurso({ base, cursoId, planos } = {}) {
   if (!cursoId || !base.cursos.some((c) => c.id === cursoId))
     throw new Error('Selecione um curso específico (não "todos os cursos") antes de baixar o PDF.')
   const ciclos = await ciclosImportados().catch(() => [])
@@ -253,7 +254,6 @@ export async function baixarPdfCurso({ base, cursoId, perfil, planos } = {}) {
     base, cid: cursoId, ciclo, turmas, comentarios,
     perguntas: somarPorPergunta(porCurso), gerais,
     planos: (planos || base.planos || []).filter((x) => x.curso_id === cursoId),
-    verProfessores: perfil?.role !== 'professor_auxiliar',
   })
   pdfRodapeTodasPaginas(doc)
   doc.save('CPA_' + cursoId + '.pdf')
@@ -320,8 +320,11 @@ function tabela(doc, y, colunas, linhas, { fonte = 8.5 } = {}) {
   y = cabe(doc, y, 16)
   cab()
   linhas.forEach((ln, i) => {
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(fonte)
-    const partes = ln.map((cel, k) => doc.splitTextToSize(String(cel && typeof cel === 'object' ? cel.v : cel ?? '—'), colunas[k].w - pad * 2))
+    doc.setFontSize(fonte)
+    const partes = ln.map((cel, k) => {
+      doc.setFont('helvetica', cel && typeof cel === 'object' && cel.b ? 'bold' : 'normal')
+      return doc.splitTextToSize(String(cel && typeof cel === 'object' ? cel.v : cel ?? '—'), colunas[k].w - pad * 2)
+    })
     const h = Math.max(...partes.map((p) => p.length)) * (fonte * 0.42) + 3.2
     if (y + h > FIM) { doc.addPage(); y = 20; cab() }
     if (i % 2) { doc.setFillColor(247, 248, 251); doc.rect(M, y, L, h, 'F') }
@@ -352,7 +355,7 @@ function paragrafo(doc, y, texto, { tam = 9.5, cor = [50, 54, 66], estilo = 'nor
 const nota2 = (v) => fmtNota(v)
 const dif = (v, b) => (v == null || b == null ? '—' : (v - b >= 0 ? '+' : '') + fmtNota(v - b))
 
-function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, perguntas, gerais, planos, verProfessores }) {
+function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, perguntas, gerais, planos }) {
   const n = base.notas[cid] || {}
   const inst = mediasPorDimensao(base.notas, base.cursos.map((c) => c.id))
   const resp = base.respondentes?.[cid]
@@ -414,10 +417,10 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
       .sort((a, b) => ordem.indexOf(a.dim) - ordem.indexOf(b.dim) || nomeCurto(a.pesquisa).localeCompare(nomeCurto(b.pesquisa)))
     y = secao(doc, y, 'Pergunta por pergunta', 'Média do curso em cada pergunta, comparada com a instituição. "Não sei / Não utilizo" fica fora da média. Na Satisfação Geral (0 a 10) aparece também o NPS.')
     for (const q of pesquisas) {
-      y = cabe(doc, y, 22)
+      y = cabe(doc, y + 3, 22)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...PDF_BLUE)
       doc.text(nomeCurto(q.pesquisa) + (q.dim && q.dim !== nomeCurto(q.pesquisa) ? '  ·  ' + q.dim : ''), M, y)
-      y += 3
+      y += 4
       const linhas = perguntas.filter((r) => r.survey_id === q.id).sort((a, b) => a.pergunta_posicao - b.pergunta_posicao).map((r) => {
         const e = estatisticas(r)
         const g = instQ[r.survey_id + '|' + r.pergunta_posicao]
@@ -425,19 +428,11 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
         const txtCurso = nota2(e.media) + (e.nps != null ? ' (NPS ' + e.nps + ')' : '')
         return [r.pergunta_posicao, r.pergunta, e.n, e.naoUtilizo || '—', cor ? { v: txtCurso, cor, b: true } : { v: txtCurso, b: true }, g ? nota2(g.media) + (g.nps != null ? ' (NPS ' + g.nps + ')' : '') : '—']
       })
-      y = tabela(doc, y, [{ t: '#', w: 8, a: 'center' }, { t: 'Pergunta', w: 86 }, { t: 'Respostas', w: 18, a: 'right' }, { t: 'Não sei / NU', w: 20, a: 'right' }, { t: 'Curso', w: 24, a: 'center' }, { t: 'Instituição', w: 24, a: 'right' }], linhas)
+      y = tabela(doc, y, [{ t: '#', w: 8, a: 'center' }, { t: 'Pergunta', w: 76 }, { t: 'Respostas', w: 18, a: 'right' }, { t: 'Não sei / NU', w: 20, a: 'right' }, { t: 'Curso', w: 29, a: 'center' }, { t: 'Instituição', w: 29, a: 'right' }], linhas)
     }
   }
 
-  // 6. Por professor
-  const profs = verProfessores ? (base.professores || []).filter((p) => p.curso_id === cid).sort((a, b) => a.nota - b.nota) : []
-  if (profs.length) {
-    y = secao(doc, y, 'Por professor', 'Nota de Docência por professor e disciplina, da menor para a maior.')
-    y = tabela(doc, y, [{ t: 'Professor(a)', w: 62 }, { t: 'Disciplina', w: 78 }, { t: 'Respostas', w: 20, a: 'right' }, { t: 'Nota', w: 20, a: 'center' }],
-      profs.map((p) => [p.nome, p.disciplina || '—', p.respondentes ?? '—', { v: nota2(Number(p.nota)), cor: corNota(Number(p.nota)), b: true }]))
-  }
-
-  // 7. Planos de ação do curso
+  // 6. Planos de ação do curso
   y = secao(doc, y, 'Planos de ação do curso', planos.length ? planos.length + ' plano(s) registrado(s).' : null)
   if (!planos.length) y = paragrafo(doc, y, 'Nenhum plano de ação registrado para este curso.', { cor: PDF_GRAY_TEXT }) + 4
   else {
@@ -447,7 +442,7 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
       planos.map((p) => [p.titulo, autor(p.usuario_id), statusTexto(p.status), p.prioridade || '—', data(p.prazo)]))
   }
 
-  // 8. Todos os comentários, por categoria
+  // 7. Todos os comentários, por categoria (só a turma; o nome do professor não entra no PDF)
   const SENT = { good: 'positivos', warn: 'pedem atenção', bad: 'negativos' }
   const cont = { good: 0, warn: 0, bad: 0 }
   for (const c of comentarios) if (cont[c.sentimento] != null) cont[c.sentimento]++
@@ -461,7 +456,7 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...PDF_BLUE)
     doc.text(`${cat} (${lista.length})`, M, y); y += 5
     for (const c of lista) {
-      const meta = [c.turma && 'Turma ' + c.turma, verProfessores && c.professor].filter(Boolean).join(' · ')
+      const meta = c.turma ? 'Turma ' + c.turma : ''
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8)
       const linhas = doc.splitTextToSize(String(c.texto || '').replace(/\\n/g, '\n'), L - 10)
       const h = linhas.length * 3.8 + (meta ? 4.2 : 0) + 4
