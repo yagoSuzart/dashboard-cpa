@@ -7,14 +7,23 @@ import ProximaConcordancia from './ProximaConcordancia.jsx'
 import { SelosEixoDim } from './ProximaSelos.jsx'
 
 const ordem = (a, b) => (a.tipo === 'aberta') - (b.tipo === 'aberta') || (a.posicao ?? 999) - (b.posicao ?? 999)
+// Cada questionário novo ganha uma cor própria (a mesma em toda a tela), para não se misturarem
+const CORES_NOVOS = ['azul', 'verde', 'roxo', 'laranja']
+const modsTexto = (ms) => (ms.length === 1 ? 'só ' + MOD_CURTO[ms[0]] : ms.map((m) => MOD_CURTO[m]).join(', '))
 
 export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
   const { dados, modo, salvarIt } = ctx
   const { itens, questionarios } = dados
   const pr = modo === 'pr'
-  const [q, setQ] = useState(questionarios[0]?.id || '')
   const modsDe = (qid) => MODALIDADES.filter((m) => itens.some((i) => i.questionario_id === qid && i.incluida && i.modalidades.includes(m)))
-  const [mod, setMod] = useState(() => modsDe(questionarios[0]?.id)[0] || MODALIDADES[0])
+  // O que ainda espera a decisão da Pró-Reitoria, por questionário (os novos primeiro)
+  const pendDe = (qid) => itens.filter((i) => i.questionario_id === qid && i.incluida && !i.decisao_pr)
+  const novos = questionarios.filter((x) => x.origem === 'novo')
+  const corDe = (qid) => CORES_NOVOS[novos.findIndex((x) => x.id === qid) % CORES_NOVOS.length]
+  const comPendencia = [...novos, ...questionarios.filter((x) => x.origem !== 'novo')].filter((x) => pendDe(x.id).length)
+  const inicial = (pr && comPendencia[0]?.id) || questionarios[0]?.id || ''
+  const [q, setQ] = useState(inicial)
+  const [mod, setMod] = useState(() => modsDe(inicial)[0] || MODALIDADES[0])
   const [soMudou, setSoMudou] = useState(false)
   const [lote, setLote] = useState(false)
   const [ocupado, setOcupado] = useState(false)
@@ -45,14 +54,60 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
   }
 
   let n = 0
+  const atualQ = questionarios.find((x) => x.id === q)
+  const novosPend = comPendencia.filter((x) => x.origem === 'novo')
+  const outrosPend = comPendencia.filter((x) => x.origem !== 'novo')
+  const abrir = (id) => {
+    escolherQ(id)
+    setTimeout(() => document.getElementById('px-analise')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 40)
+  }
   return (
     <>
-      <div className="chips" role="tablist" aria-label="Questionários">
-        {questionarios.map((x) => (
-          <button key={x.id} role="tab" className="chip-btn" aria-selected={q === x.id} onClick={() => escolherQ(x.id)}>
-            {x.nome}{x.origem === 'novo' ? ' (novo)' : ''} · {contagem(x.id)}
-          </button>
-        ))}
+      {pr && (
+        <section className="card px-agora" aria-label="O que espera a sua decisão">
+          <span className="eyebrow">Para a sua análise</span>
+          {comPendencia.length ? (
+            <h2>{novosPend.length ? `${novosPend.length === 1 ? 'Um questionário novo' : novosPend.length + ' questionários novos'} esperando a sua decisão` : 'Perguntas que esperam a sua decisão'}</h2>
+          ) : (
+            <h2>Tudo decidido. Falta só clicar em “Aprovar a proposta”.</h2>
+          )}
+          {novosPend.length > 0 && (
+            <div className="px-agora-grid">
+              {novosPend.map((x) => {
+                const ms = modsDe(x.id)
+                return (
+                  <button key={x.id} type="button" className={'px-novo ' + corDe(x.id) + (q === x.id ? ' sel' : '')} onClick={() => abrir(x.id)}>
+                    <span className="px-novo-tag">Questionário novo · {modsTexto(ms)}</span>
+                    <b className="px-novo-nome">{x.nome}</b>
+                    {x.publico && <span className="px-novo-pub"><b>Quem responde:</b> {x.publico}</span>}
+                    <span className="px-novo-pe">{pendDe(x.id).length} {pendDe(x.id).length === 1 ? 'pergunta para decidir' : 'perguntas para decidir'} <span aria-hidden="true">→</span></span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {outrosPend.length > 0 && (
+            <p className="small">
+              {novosPend.length ? 'Também esperam a sua decisão: ' : ''}
+              {outrosPend.map((x, i) => (
+                <span key={x.id}>{i ? ' · ' : ''}<button type="button" className="px-link" onClick={() => abrir(x.id)}>{x.nome} ({pendDe(x.id).length})</button></span>
+              ))}
+            </p>
+          )}
+        </section>
+      )}
+      <div className="filtros" id="px-analise">
+        <label className="small" htmlFor="px-q" style={{ fontWeight: 700 }}>Questionário</label>
+        <select id="px-q" className="input" style={{ height: 38, fontSize: 14, maxWidth: 380 }} value={q} onChange={(e) => escolherQ(e.target.value)}>
+          {novos.length > 0 && (
+            <optgroup label="Questionários novos">
+              {novos.map((x) => <option key={x.id} value={x.id}>{x.nome} · {contagem(x.id)}{pendDe(x.id).length ? ` · ${pendDe(x.id).length} para decidir` : ''}</option>)}
+            </optgroup>
+          )}
+          <optgroup label={novos.length ? 'Questionários de hoje' : 'Questionários'}>
+            {questionarios.filter((x) => x.origem !== 'novo').map((x) => <option key={x.id} value={x.id}>{x.nome} · {contagem(x.id)}{pendDe(x.id).length ? ` · ${pendDe(x.id).length} para decidir` : ''}</option>)}
+          </optgroup>
+        </select>
       </div>
       <div className="filtros">
         <div className="seg" role="group" aria-label="Modalidade">
@@ -70,9 +125,10 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
       <section className="grid-lado">
         <div className="coluna">
           <article className="card px-pub">
-            <div className="px-pub-cab">
-              <span className="eyebrow">{MOD_CURTO[mod]} · como o aluno vai ver</span>
+            <div className={'px-pub-cab' + (atualQ?.origem === 'novo' ? ' novo ' + corDe(q) : '')}>
+              <span className="eyebrow">{atualQ?.origem === 'novo' ? 'Questionário novo · ' : ''}{MOD_CURTO[mod]} · como o aluno vai ver</span>
               <h2>{nome}</h2>
+              {atualQ?.publico && <p className="px-pub-quem"><b>Quem responde:</b> {atualQ.publico}</p>}
             </div>
             {pref && lista.some((i) => i.tipo !== 'aberta') && (
               <div className="px-pub-pref"><span className="mods">Enunciado</span>{pref}</div>

@@ -23,6 +23,7 @@ import './proxima.css'
 export default function ProximaCPA({ perfil, base }) {
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState(null)
+  const [maisAbas, setMaisAbas] = useState(false)
   const [aba, setAba] = useState(perfil.role === 'pro_reitoria' ? 'previa' : 'montar')
   const [aviso, setAviso] = useState(null)
   // Resultados da planilha importada, por pergunta e modalidade (undefined = carregando, null = sem importação)
@@ -117,15 +118,20 @@ export default function ProximaCPA({ perfil, base }) {
       <BarraStatus ctx={ctx} />
       {aviso && <div className={'aviso ' + (aviso.tipo || '')} role="status">{aviso.txt}</div>}
       <div className="seg" role="tablist" aria-label="Seções da Próxima CPA">
-        {[
-          ...(ehPr ? [['previa', 'Como vai ficar'], ['resumo', 'Resumo das mudanças']] : []),
+        {(ehPr ? [['previa', 'Analisar e aprovar'], ['resumo', 'Resumo das mudanças'], ['historico', 'Histórico']] : []).map(([k, t]) => (
+          <button key={k} role="tab" aria-pressed={aba === k} onClick={() => { setAba(k); if (k === 'historico') recarregar() }}>{t}</button>
+        ))}
+        {ehPr && (
+          <button type="button" aria-expanded={maisAbas} onClick={() => setMaisAbas((x) => !x)}>{maisAbas ? 'Menos opções ▴' : 'Mais opções ▾'}</button>
+        )}
+        {(!ehPr || maisAbas) && [
           ['montar', modo === 'pr' ? 'Analisar as perguntas' : 'Montar a proposta'],
           ['atuais', `Perguntas atuais (${atuaisDe(dados.itens).length})`],
           ...(!ehPr ? [['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças']] : []),
           ...(!ehPr ? [['previa', 'Como vai ficar']] : []),
           ...(ehCpa ? [['ti', 'Para o T.I (entra, sai, muda)']] : []),
           ['documento', 'Documento para o T.I'],
-          ['historico', 'Histórico'],
+          ...(!ehPr ? [['historico', 'Histórico']] : []),
         ].map(([k, t]) => (
           <button key={k} role="tab" aria-pressed={aba === k} onClick={() => { setAba(k); if (k === 'historico') recarregar() }}>{t}</button>
         ))}
@@ -179,6 +185,13 @@ function BarraStatus({ ctx }) {
 
   return (
     <div className="card" style={{ gap: 14 }}>
+      {ehPr ? (
+        <div className="px-etapa-curta">
+          <span className="selo escuro">Etapa {idx + 1} de {TRILHO_PROPOSTA.length}</span>
+          <b>{STATUS[proposta.status === 'devolvida' ? 'montagem' : proposta.status]?.t}</b>
+          {proposta.status === 'pro_reitoria' && proposta.enviado_em && <span className="small muted">enviada por {nomes[proposta.enviado_por] || '—'} em {new Date(proposta.enviado_em).toLocaleDateString('pt-BR')}</span>}
+        </div>
+      ) : (
       <div className="etapas" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
         {TRILHO_PROPOSTA.map((s, i) => (
           <div key={s} className="etapa" style={i === idx ? { background: 'var(--navy)', color: '#fff' } : i < idx ? { background: 'var(--green-soft)', color: 'var(--green-ink)' } : undefined}>
@@ -187,6 +200,7 @@ function BarraStatus({ ctx }) {
           </div>
         ))}
       </div>
+      )}
       {proposta.status === 'devolvida' && proposta.comentario_pr && (
         <div className="aviso erro"><b>Comentário da Pró-Reitoria:</b>&nbsp;{proposta.comentario_pr}</div>
       )}

@@ -161,3 +161,33 @@
 .px-ti-n.azul { background: var(--blue-soft); color: var(--blue-ink); }
 .px-ti-n.roxo { background: #ece6fb; color: #4b2e93; }
 @media (max-width: 900px) { .px-ti-cont { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- Pró-Reitoria: etapa compacta e "para a sua análise" ---------- */
+.px-etapa-curta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.px-etapa-curta b { font-family: var(--f-title, inherit); font-size: 17px; color: var(--navy); }
+.px-agora { gap: 14px; border: 2px solid var(--navy); }
+.px-agora h2 { font-size: 26px; }
+.px-agora-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.px-novo { text-align: left; display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; border-radius: 18px; border: 2px solid transparent; cursor: pointer; font: inherit; color: inherit; transition: transform .12s ease, box-shadow .12s ease; }
+.px-novo:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 33, 86, .12); }
+.px-novo.sel { box-shadow: 0 0 0 3px var(--navy) inset; }
+.px-novo-tag { align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fff; padding: 4px 10px; border-radius: 99px; }
+.px-novo-nome { font-size: 24px; line-height: 1.15; }
+.px-novo-pub { font-size: 13.5px; line-height: 1.45; }
+.px-novo-pe { margin-top: auto; font-weight: 700; font-size: 15px; }
+.px-novo.azul { background: var(--blue-soft); border-color: var(--blue); }
+.px-novo.azul .px-novo-tag { background: var(--blue); } .px-novo.azul .px-novo-nome, .px-novo.azul .px-novo-pe { color: var(--blue-ink); }
+.px-novo.verde { background: var(--green-soft); border-color: var(--green); }
+.px-novo.verde .px-novo-tag { background: var(--green); } .px-novo.verde .px-novo-nome, .px-novo.verde .px-novo-pe { color: var(--green-ink); }
+.px-novo.roxo { background: #efe9fb; border-color: #6b4fbb; }
+.px-novo.roxo .px-novo-tag { background: #6b4fbb; } .px-novo.roxo .px-novo-nome, .px-novo.roxo .px-novo-pe { color: #4a3290; }
+.px-novo.laranja { background: var(--ember-soft); border-color: var(--ember); }
+.px-novo.laranja .px-novo-tag { background: var(--ember); } .px-novo.laranja .px-novo-nome, .px-novo.laranja .px-novo-pe { color: var(--ember-ink); }
+.px-link { background: none; border: 0; padding: 0; font: inherit; color: var(--blue-ink); text-decoration: underline; cursor: pointer; }
+.px-pub-cab.novo.azul { background: var(--blue); }
+.px-pub-cab.novo.verde { background: var(--green-ink); }
+.px-pub-cab.novo.roxo { background: #4a3290; }
+.px-pub-cab.novo.laranja { background: var(--ember-deep); }
+.px-pub-cab.novo .eyebrow { color: #fff; opacity: .9; }
+.px-pub-quem { font-size: 14px; line-height: 1.45; color: #fff; opacity: .95; margin: 0; }
+#px-analise { scroll-margin-top: 190px; }
