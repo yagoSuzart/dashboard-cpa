@@ -22,7 +22,9 @@ export default function ProximaAtencao({ ctx, onNova }) {
   const pend = candidatas.filter((c) => !c.analisada)
   const retiradas = dados.itens.filter((i) => !i.incluida)
   const aDecidir = retiradas.filter((i) => !retiradaConfirmada(i))
-  const [bloco, setBloco] = useState(faltam.length ? 'a' : pend.length ? 'b' : 'c')
+  // Começa fechado, para as perguntas aparecerem logo; abre ao clicar num quadro
+  const [bloco, setBloco] = useState(null)
+  const alternar = (b) => setBloco((x) => (x === b ? null : b))
 
   return (
     <section className="card px-atencao" id="px-atencao" aria-labelledby="px-atencao-t">
@@ -34,22 +36,23 @@ export default function ProximaAtencao({ ctx, onNova }) {
         </div>
       </div>
       <div className="px-blocos" role="group" aria-label="Blocos que precisam de atenção">
-        <button type="button" className={'px-bloco ' + (faltam.length ? 'alerta' : 'ok')} aria-pressed={bloco === 'a'} onClick={() => setBloco('a')}>
+        <button type="button" className={'px-bloco ' + (faltam.length ? 'alerta' : 'ok')} aria-pressed={bloco === 'a'} onClick={() => alternar('a')}>
           <span className="q">{faltam.length}</span>
           <span className="t">Dimensões sem pergunta</span>
           <span className="d">{faltam.length ? faltam.map((d) => 'D' + d).join(', ') + ' · com perguntas propostas prontas para acrescentar' : 'Todas as 10 dimensões têm pergunta.'}</span>
         </button>
-        <button type="button" className={'px-bloco ' + (pend.length ? 'alerta' : 'ok')} aria-pressed={bloco === 'b'} onClick={() => setBloco('b')}>
+        <button type="button" className={'px-bloco ' + (pend.length ? 'alerta' : 'ok')} aria-pressed={bloco === 'b'} onClick={() => alternar('b')}>
           <span className="q">{pend.length}</span>
           <span className="t">Candidatas à retirada</span>
           <span className="d">{pend.length ? `perguntas sugeridas para revisão ainda não analisadas (de ${candidatas.length})` : candidatas.length ? 'Todas as sugestões já foram analisadas.' : 'Nenhuma sugestão.'}</span>
         </button>
-        <button type="button" className={'px-bloco ' + (aDecidir.length ? 'alerta' : '')} aria-pressed={bloco === 'c'} onClick={() => setBloco('c')}>
+        <button type="button" className={'px-bloco ' + (aDecidir.length ? 'alerta' : '')} aria-pressed={bloco === 'c'} onClick={() => alternar('c')}>
           <span className="q">{retiradas.length}</span>
           <span className="t">Retiradas — decidir</span>
           <span className="d">{aDecidir.length ? `${aDecidir.length} para decidir: excluir de vez ou trazer de volta` : retiradas.length ? 'Todas decididas.' : 'Nenhuma pergunta retirada.'}</span>
         </button>
       </div>
+      {!bloco && <p className="small muted">Clique em um quadro para abrir. Para editar as perguntas, use a lista logo abaixo.</p>}
       {bloco === 'a' && <BlocoDimensoes ctx={ctx} faltam={faltam} onNova={onNova} />}
       {bloco === 'b' && <BlocoCandidatas ctx={ctx} />}
       {bloco === 'c' && <BlocoRetiradas ctx={ctx} retiradas={retiradas} />}

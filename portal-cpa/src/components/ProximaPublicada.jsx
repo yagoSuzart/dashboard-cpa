@@ -2,7 +2,7 @@
 // critério avaliativo e o espaço de comentário), com eixo e dimensão de cada pergunta e o gabarito SINAES ao lado.
 // A Pró-Reitoria aprova, edita ou exclui cada pergunta aqui mesmo.
 import { useState } from 'react'
-import { MODALIDADES, MOD_CURTO, adaptadaDe, comPrefixo, contarDesencaixes, desencaixa, entra, prefixoDe, situacao, textoNaModalidade } from '../lib/proxima.js'
+import { MARCA_RETIRADA, MODALIDADES, MOD_CURTO, adaptadaDe, marcar, comPrefixo, contarDesencaixes, desencaixa, entra, prefixoDe, situacao, textoNaModalidade } from '../lib/proxima.js'
 import ProximaConcordancia from './ProximaConcordancia.jsx'
 import { SelosEixoDim } from './ProximaSelos.jsx'
 
@@ -177,6 +177,7 @@ export default function ProximaPublicada({ ctx, Gabarito, Resposta }) {
 function PerguntaPublicada({ ctx, item, mod, num, Resposta }) {
   const { dados, modo, salvarIt } = ctx
   const pr = modo === 'pr'
+  const cpa = modo === 'cpa'
   const pref = item.questionario_id ? prefixoDe(dados.prefixos, item.questionario_id, mod) : ''
   const [editando, setEditando] = useState(false)
   const [texto, setTexto] = useState(item.texto)
@@ -232,6 +233,20 @@ function PerguntaPublicada({ ctx, item, mod, num, Resposta }) {
           )}
         </div>
       </div>
+      {cpa && !editando && (
+        <div className="filtros px-pub-acoes">
+          <button className="btn sm" onClick={() => { setTexto(item.texto); setEditando(true) }}>Editar texto</button>
+          {!excluir ? (
+            <button className="btn sm" onClick={() => setExcluir(true)}>Tirar do questionário</button>
+          ) : (
+            <span className="px-confirma">
+              <span className="small">Tirar esta pergunta? Ela vai para “Retiradas” (dá para trazer de volta em “Montar a proposta”).</span>
+              <button className="btn sm escuro" disabled={ocupado} onClick={async () => { await fazer({ incluida: false, observacao: marcar(MARCA_RETIRADA, 'tirada na visualização') }, 'retirou a pergunta'); setExcluir(false) }}>Sim, tirar</button>
+              <button className="btn sm" onClick={() => setExcluir(false)}>Não</button>
+            </span>
+          )}
+        </div>
+      )}
       {pr && !editando && (
         <div className="filtros px-pub-acoes">
           {excluida ? (

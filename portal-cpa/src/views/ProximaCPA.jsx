@@ -135,10 +135,10 @@ export default function ProximaCPA({ perfil, base }) {
           <button type="button" aria-expanded={maisAbas} onClick={() => setMaisAbas((x) => !x)}>{maisAbas ? 'Menos opções ▴' : 'Mais opções ▾'}</button>
         )}
         {(!ehPr || maisAbas) && [
-          ['montar', modo === 'pr' ? 'Analisar as perguntas' : 'Montar a proposta'],
+          ['montar', modo === 'pr' ? 'Lista completa das perguntas' : 'Montar a proposta'],
           ['atuais', `Perguntas atuais (${atuaisDe(dados.itens).length})`],
           ...(!ehPr ? [['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças']] : []),
-          ...(!ehPr ? [['previa', 'Como vai ficar']] : []),
+          ...(!ehPr ? [['previa', modo === 'cpa' ? 'Como vai ficar (editar aqui)' : 'Como vai ficar']] : []),
           ...(ehCpa ? [['ti', 'Para o T.I (entra, sai, muda)']] : []),
           ['documento', 'Documento para o T.I'],
           ...(!ehPr ? [['historico', 'Histórico']] : []),
@@ -355,7 +355,7 @@ function Montar({ ctx }) {
         </div>
         {q && <QuemResponde key={'p' + q} ctx={ctx} questionario={questionarios.find((x) => x.id === q)} />}
         {q && <ProximaPrefixo key={q} ctx={ctx} qid={q} nomeQ={nomeQ} />}
-        {modo !== 'leitura' && adaptaveis.length > 0 && (
+        {modo !== 'leitura' && adaptaveis.length > 0 && questionarios.find((x) => x.id === q)?.origem !== 'novo' && (
           <div className="px-adapt-barra">
             <span className="small">{nomeQ} hoje não é respondido por <b>{MODALIDADES.filter((m) => !adaptaveis.every((i) => i.modalidades.includes(m))).map((m) => MOD_CURTO[m]).join(' e ')}</b> em todas as perguntas.</span>
             <button className="btn sm" onClick={() => setModal('adaptar')}>Adaptar perguntas deste questionário para outra modalidade</button>
