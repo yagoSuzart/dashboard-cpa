@@ -41,7 +41,7 @@ export function baixarPlanilhaTI(dados, nomes) {
         aprovadas.push([
           q.nome, MOD_CURTO[m], k + 1, it.tipo === 'aberta' ? '' : prefixoDe(dados.prefixos, q.id, m), textoNaModalidade(it, m),
           it.tipo === 'multipla' || it.tipo === 'outro' ? TIPOS[it.tipo] : nomeEscala(esc), alternativas(it, esc),
-          rotuloEixo(it.eixo || EIXO_DA_DIM[it.dimensao]) || '', rotuloDim(it.dimensao) || '', situacao(it).t, decisaoPr(it),
+          rotuloEixo(it.eixo || EIXO_DA_DIM[it.dimensao]) || '', rotuloDim(it.dimensao) || '', situacao(it).t, decisaoPr(it), q.publico || '',
         ])
       })
     }
@@ -85,7 +85,7 @@ export function baixarPlanilhaTI(dados, nomes) {
   ]
 
   const blob = montarXlsx([
-    { nome: 'Instrumento aprovado', cabecalho: ['Questionário', 'Modalidade', 'Ordem', 'Enunciado (antes da pergunta)', 'Pergunta (texto literal)', 'Critério avaliativo (escala)', 'Alternativas', 'Eixo', 'Dimensão', 'Situação', 'Pró-Reitoria'], linhas: aprovadas, larguras: [24, 14, 8, 40, 60, 26, 50, 32, 34, 14, 30] },
+    { nome: 'Instrumento aprovado', cabecalho: ['Questionário', 'Modalidade', 'Ordem', 'Enunciado (antes da pergunta)', 'Pergunta (texto literal)', 'Critério avaliativo (escala)', 'Alternativas', 'Eixo', 'Dimensão', 'Situação', 'Pró-Reitoria', 'Quem responde (público específico)'], linhas: aprovadas, larguras: [24, 14, 8, 40, 60, 26, 50, 32, 34, 14, 30, 40] },
     { nome: 'Saíram ou excluídas', cabecalho: ['Questionário', 'Modalidades', 'Pergunta', 'Quem tirou', 'Motivo'], linhas: sairam, larguras: [26, 22, 60, 26, 50] },
     { nome: 'Mudanças', cabecalho: ['Tipo de mudança', 'Questionário', 'Modalidades', 'Antes (hoje)', 'Depois', 'Origem / pergunta', 'Pró-Reitoria'], linhas: mudancas, larguras: [20, 26, 22, 45, 45, 40, 30] },
     { nome: 'Resumo', cabecalho: ['Item', 'Valor'], linhas: resumo, larguras: [52, 40] },

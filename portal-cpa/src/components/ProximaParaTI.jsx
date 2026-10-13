@@ -84,6 +84,18 @@ export default function ProximaParaTI({ ctx }) {
         </div>
       </section>
 
+      {questionarios.some((x) => x.publico) && (
+        <section className="card" style={{ gap: 10 }}>
+          <h2>Quem responde (questionários com público específico)</h2>
+          <table className="tabela">
+            <thead><tr><th>Questionário</th><th>Quem responde</th></tr></thead>
+            <tbody>
+              {questionarios.filter((x) => x.publico).map((x) => <tr key={x.id}><td style={{ fontWeight: 600 }}>{x.nome}</td><td>{x.publico}</td></tr>)}
+            </tbody>
+          </table>
+        </section>
+      )}
+
       {prefMud.length > 0 && (
         <section className="card" style={{ gap: 10 }}>
           <h2>Enunciados (prefixos) que mudam</h2>

@@ -85,12 +85,12 @@ export function linhasFormatoTI(dados, catalogo) {
       for (const h of hoje) {
         const base = [h.m, survey, h.pesquisa, h.id, pos, h.texto, tipoTI(it, escalaOriginal(it, h.m))]
         if (k === 'sai') {
-          linhas.push({ status: 'EXCLUIDA', l: [...base, 'EXCLUIDA', '', '', '', '', '', eixo(it), dim(it), motivoSaida(it)] })
+          linhas.push({ qid: it.questionario_id, status: 'EXCLUIDA', l: [...base, 'EXCLUIDA', '', '', '', '', '', eixo(it), dim(it), motivoSaida(it)] })
           continue
         }
         if (!it.modalidades.includes(h.m)) {
           const fica = ORDEM_MOD.filter((m) => it.modalidades.includes(m)).map((m) => MOD_CURTO[m]).join(', ')
-          linhas.push({ status: 'EXCLUIDA', l: [...base, 'EXCLUIDA', '', '', '', '', '', eixo(it), dim(it), `Sai só desta modalidade (continua em: ${fica})`] })
+          linhas.push({ qid: it.questionario_id, status: 'EXCLUIDA', l: [...base, 'EXCLUIDA', '', '', '', '', '', eixo(it), dim(it), `Sai só desta modalidade (continua em: ${fica})`] })
           continue
         }
         const f = final(it, h.m)
@@ -100,14 +100,14 @@ export function linhasFormatoTI(dados, catalogo) {
         if (escalaMudou(it) && escalaOriginal(it, h.m) !== f.esc) obs.push(`Escala muda: ${nomeEscala(escalaOriginal(it, h.m))} → ${nomeEscala(f.esc)}`)
         if (f.pos !== '' && f.pos !== pos) obs.push(`Posição muda: ${pos} → ${f.pos}`)
         const st = reescrita ? 'REESCRITA' : 'MANTIDA'
-        linhas.push({ status: st, l: [...base, st, f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), obs.join(' · ')] })
+        linhas.push({ qid: it.questionario_id, status: st, l: [...base, st, f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), obs.join(' · ')] })
       }
       // Modalidades em que a pergunta passa a aparecer e que hoje não tem
       if (k !== 'sai') {
         for (const m of ORDEM_MOD.filter((x) => it.modalidades.includes(x) && !modsHoje.has(x))) {
           const f = final(it, m)
           const ids = hoje.filter((h) => h.id !== '').map((h) => `${MOD_CURTO[h.m]} ${h.id}`).join(', ')
-          linhas.push({ status: 'NOVA', l: [m, survey, pesquisaDoSurvey[survey] || q?.nome || '', '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), `A pergunta já existe em outra modalidade${ids ? ` (ID ${ids})` : ''}; passa a valer também nesta`] })
+          linhas.push({ qid: it.questionario_id, status: 'NOVA', l: [m, survey, pesquisaDoSurvey[survey] || q?.nome || '', '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), `A pergunta já existe em outra modalidade${ids ? ` (ID ${ids})` : ''}; passa a valer também nesta`] })
         }
       }
       continue
@@ -119,13 +119,13 @@ export function linhasFormatoTI(dados, catalogo) {
     for (const m of ORDEM_MOD.filter((x) => it.modalidades.includes(x))) {
       const f = final(it, m)
       const quem = it.adicionada_pr ? 'Incluída pela Pró-Reitoria' : it.origem === 'banco' ? 'Do banco de perguntas da CPA' : 'Escrita pela CPA'
-      linhas.push({ status: 'NOVA', l: [m, survey, pesquisaDoSurvey[survey] || q?.nome || '', '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), quem + (survey === '' ? ' · questionário novo (sem survey_id)' : '')] })
+      linhas.push({ qid: it.questionario_id, status: 'NOVA', l: [m, survey, pesquisaDoSurvey[survey] || q?.nome || '', '', '', '', tipoTI(it, f.esc), 'NOVA', f.texto, f.pos, f.enunciado, f.escala, f.alternativas, eixo(it), dim(it), quem + (survey === '' ? ' · questionário novo (sem survey_id)' : '')] })
     }
   }
 
   // Na ordem do T.I: questionário, modalidade, posição nova (as excluídas no fim de cada bloco, pela posição de hoje)
   const peso = (r) => [
-    ordemQ[questionarios.find((x) => x.survey_id === r.l[1])?.id] ?? 99,
+    ordemQ[r.qid] ?? 99,
     ORDEM_MOD.indexOf(r.l[0]),
     r.status === 'EXCLUIDA' ? 1 : 0,
     r.status === 'EXCLUIDA' ? Number(r.l[4]) || 0 : Number(r.l[9]) || 0,
@@ -136,6 +136,11 @@ export function linhasFormatoTI(dados, catalogo) {
     for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] - y[i]
     return 0
   })
+  // Questionário com público específico (ex.: só turmas da clínica-escola): a regra vai na observação de cada linha
+  for (const r of linhas) {
+    const pub = qPorId[r.qid]?.publico
+    if (pub && r.status !== 'EXCLUIDA') r.l[15] = ['Quem responde: ' + pub, r.l[15]].filter(Boolean).join(' · ')
+  }
   return linhas
 }
 

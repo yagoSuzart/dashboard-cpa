@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  carregarProposta, iniciarProposta, salvarItem, criarItem, apagarItem, criarQuestionario, mudarStatus, registrar,
+  carregarProposta, iniciarProposta, salvarItem, criarItem, apagarItem, criarQuestionario, mudarStatus, registrar, salvarPublico,
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
   ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
@@ -210,6 +210,9 @@ function BarraStatus({ ctx }) {
         {ehCpa && proposta.status === 'aprovada' && (
           <button className="btn escuro" onClick={() => setConfirmar('ti')}>Marcar como enviada ao T.I</button>
         )}
+        {ehCpa && ['aprovada', 'enviada_ti'].includes(proposta.status) && (
+          <button className="btn" onClick={() => setConfirmar('reabrir')}>Reabrir para incluir perguntas</button>
+        )}
         <span className="small muted">
           {fmtInt(itens.filter(entra).length)} perguntas entram · {faltam.length ? `${faltam.length} dimensões sem pergunta` : 'todas as dimensões atendidas ✅'}
         </span>
@@ -249,6 +252,17 @@ function BarraStatus({ ctx }) {
                 </div>
                 <div className="filtros">
                   <button className="btn escuro" disabled={!coment.trim()} onClick={() => executar({ status: 'devolvida', decidido_por: perfil.id, decidido_em: agora(), comentario_pr: coment.trim() }, 'devolveu a proposta', 'Proposta devolvida para a CPA.')}>Devolver</button>
+                  <button className="btn" onClick={() => setConfirmar(null)}>Cancelar</button>
+                </div>
+              </>
+            )}
+            {confirmar === 'reabrir' && (
+              <>
+                <h2>Reabrir a proposta para incluir perguntas?</h2>
+                <p className="muted">A proposta volta para “Em montagem”. Tudo o que a Pró-Reitoria já aprovou, editou ou excluiu continua marcado em cada pergunta. Depois de incluir as perguntas, envie de novo para a Pró-Reitoria: ela decide só o que for novo e aprova a proposta outra vez.</p>
+                {proposta.status === 'enviada_ti' && <div className="aviso">A proposta já foi enviada ao T.I. Depois da nova aprovação, baixe a planilha de novo e mande ao T.I o complemento (as linhas “NOVA”).</div>}
+                <div className="filtros">
+                  <button className="btn escuro" onClick={() => executar({ status: 'montagem' }, 'reabriu a proposta para incluir perguntas', 'Proposta reaberta. Inclua as perguntas e envie de novo para a Pró-Reitoria.')}>Reabrir</button>
                   <button className="btn" onClick={() => setConfirmar(null)}>Cancelar</button>
                 </div>
               </>
@@ -315,6 +329,7 @@ function Montar({ ctx }) {
             <input type="checkbox" checked={verRetiradas} onChange={(e) => setVerRetiradas(e.target.checked)} /> Mostrar as retiradas
           </label>
         </div>
+        {q && <QuemResponde key={'p' + q} ctx={ctx} questionario={questionarios.find((x) => x.id === q)} />}
         {q && <ProximaPrefixo key={q} ctx={ctx} qid={q} nomeQ={nomeQ} />}
         {modo !== 'leitura' && adaptaveis.length > 0 && (
           <div className="px-adapt-barra">
@@ -799,6 +814,7 @@ function Documento({ ctx }) {
         return (
           <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: 10, breakInside: 'avoid' }}>
             <h3 style={{ fontSize: 22, borderBottom: '2px solid var(--line)', paddingBottom: 6 }}>{q.nome}{q.origem === 'novo' ? ' (questionário novo)' : ''}</h3>
+            {q.publico && <p className="small"><b>Quem responde:</b> {q.publico}</p>}
             {MODALIDADES.map((m) => {
               const lista = ficam.filter((i) => i.modalidades.includes(m))
               if (!lista.length) return null
@@ -914,5 +930,48 @@ function ListaPropostas({ usados, onAcrescentar }) {
         {!lista.length && <Vazio>Nada encontrado.</Vazio>}
       </div>
     </>
+  )
+}
+
+// Quem responde o questionário: quando não é todo mundo da modalidade (ex.: só turmas da clínica-escola)
+function QuemResponde({ ctx, questionario }) {
+  const { modo, perfil, dados, recarregar, setAviso } = ctx
+  const [editando, setEditando] = useState(false)
+  const [texto, setTexto] = useState(questionario?.publico || '')
+  const [ocupado, setOcupado] = useState(false)
+  if (!questionario) return null
+  const pode = modo !== 'leitura'
+  if (!questionario.publico && !pode) return null
+  const salvar = async () => {
+    setOcupado(true)
+    try {
+      await salvarPublico(questionario.id, texto)
+      await registrar(dados.proposta.id, perfil.id, 'definiu quem responde o questionário', { questionario: questionario.nome, publico: texto.trim() })
+      setEditando(false)
+      await recarregar()
+    } catch (e) {
+      setAviso({ tipo: 'erro', txt: 'Não foi possível salvar: ' + (e.message || e) })
+    } finally {
+      setOcupado(false)
+    }
+  }
+  return (
+    <div className="aviso" role="note" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+      {!editando ? (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <span className="small"><b>Quem responde:</b> {questionario.publico || 'todos os alunos das modalidades marcadas nas perguntas'}</span>
+          {pode && <button className="btn sm" onClick={() => { setTexto(questionario.publico || ''); setEditando(true) }}>{questionario.publico ? 'Editar' : 'Definir um público específico'}</button>}
+        </div>
+      ) : (
+        <>
+          <label className="small" htmlFor={'pub-' + questionario.id} style={{ fontWeight: 700 }}>Quem responde “{questionario.nome}”? (vai junto para o T.I)</label>
+          <textarea id={'pub-' + questionario.id} className="input" rows={3} style={{ height: 'auto', padding: 10 }} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ex.: só as turmas que atendem na clínica-escola, a partir do 5º semestre" />
+          <div className="filtros">
+            <button className="btn sm escuro" disabled={ocupado} onClick={salvar}>Salvar</button>
+            <button className="btn sm" onClick={() => setEditando(false)}>Cancelar</button>
+          </div>
+        </>
+      )}
+    </div>
   )
 }

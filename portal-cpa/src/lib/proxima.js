@@ -166,6 +166,13 @@ export async function criarQuestionario(nome, usuarioId) {
   return data
 }
 
+// Quem responde o questionário (ex.: só as turmas que atendem na clínica-escola). Vai junto para o T.I.
+export async function salvarPublico(qid, texto) {
+  const { data, error } = await sb.from('cpa_questionarios').update({ publico: texto?.trim() || null }).eq('id', qid).select('*').single()
+  if (error) throw error
+  return data
+}
+
 export async function mudarStatus(proposta, patch) {
   const { data, error } = await sb.from('cpa_propostas').update(patch).eq('id', proposta.id).select('*').single()
   if (error) throw error
