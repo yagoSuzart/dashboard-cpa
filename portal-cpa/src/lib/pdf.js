@@ -6,7 +6,9 @@
 //   - lançam Error com a mesma mensagem de aviso do sistema anterior quando não há o que gerar.
 //
 // Assinaturas:
-//   baixarPdfCurso({ base, cursoId, respondentes? })        → PDF de um curso            (CPA_<curso>.pdf)
+//   baixarPdfCurso({ base, cursoId, perfil?, planos? })     → relatório completo do curso (CPA_<curso>.pdf):
+//     satisfação, dimensões x instituição, onde agir, mapa das turmas, pergunta por pergunta,
+//     professores, planos de ação e todos os comentários
 //   baixarPdfGeral({ base, escopo, respondentes? })         → um curso por página         (CPA_relatorio_geral.pdf)
 //   baixarPdfSetor({ base, setorId, comentarios? })         → PDF de um setor             (CPA_setor_<id>.pdf)
 //   baixarPdfPlanos({ base, escopo, perfil })               → planos de todos os autores  (CPA_planos_de_acao_geral.pdf)
@@ -18,8 +20,10 @@
 //     quando não vem, a linha "N aluno(s) responderam" simplesmente não aparece (como no antigo sem o dado).
 //   comentarios (opcional): textos de comentários do setor. O banco não tem tabela de comentários por setor;
 //     sem eles, o PDF mostra "Nenhum comentário específico registrado para este setor.", como no antigo.
-import { sb, buscarComentarios } from './dados.js'
-import { DIMENSOES, SATISFACAO, MODALIDADE_LABEL, ROLE_LABELS } from './config.js'
+import { sb, buscarComentarios, carregarTurmas, ciclosImportados, resultadosCursos, resultadosGerais } from './dados.js'
+import { DIMENSOES, SATISFACAO, META, MODALIDADE_LABEL, ROLE_LABELS } from './config.js'
+import { dimensaoDaPesquisa, estatisticas, fmtNota, nomeCurto, somarPorPergunta } from './cpa.js'
+import { mediasPorDimensao } from './escopo.js'
 
 const PDF_NAVY = [18, 57, 94]
 const PDF_BLUE = [28, 109, 179]
@@ -233,14 +237,246 @@ async function amostraComentarios(cid) {
   return itens.map((c) => c.texto)
 }
 
-export async function baixarPdfCurso({ base, cursoId, respondentes } = {}) {
+export async function baixarPdfCurso({ base, cursoId, perfil, planos } = {}) {
   if (!cursoId || !base.cursos.some((c) => c.id === cursoId))
     throw new Error('Selecione um curso específico (não "todos os cursos") antes de baixar o PDF.')
-  const [doc, coments] = await Promise.all([novoDocumento(), amostraComentarios(cursoId)])
-  escreverCursoNoPDF(doc, base, cursoId, coments, (respondentes || base.respondentes)?.[cursoId])
+  const ciclos = await ciclosImportados().catch(() => [])
+  const ciclo = ciclos[0]?.ciclo || null
+  const [doc, turmas, porCurso, gerais, comentarios] = await Promise.all([
+    novoDocumento(),
+    carregarTurmas(cursoId).catch(() => []),
+    ciclo ? resultadosCursos(ciclo, [cursoId]).catch(() => []) : [],
+    ciclo ? resultadosGerais(ciclo).catch(() => []) : [],
+    todosComentarios(cursoId),
+  ])
+  escreverCursoCompleto(doc, {
+    base, cid: cursoId, ciclo, turmas, comentarios,
+    perguntas: somarPorPergunta(porCurso), gerais,
+    planos: (planos || base.planos || []).filter((x) => x.curso_id === cursoId),
+    verProfessores: perfil?.role !== 'professor_auxiliar',
+  })
   pdfRodapeTodasPaginas(doc)
   doc.save('CPA_' + cursoId + '.pdf')
-  return 'PDF gerado com sucesso!'
+  return 'PDF do curso gerado com sucesso!'
+}
+
+// Todos os comentários do curso (de 1000 em 1000)
+async function todosComentarios(cid) {
+  const out = []
+  for (let pagina = 0; pagina < 20; pagina++) {
+    const { itens } = await buscarComentarios({ cursos: [cid], pagina, porPagina: 1000 })
+    out.push(...itens)
+    if (itens.length < 1000) break
+  }
+  return out
+}
+
+// ---------- relatório completo de um curso ----------
+const M = 15, L = 180, FIM = 282
+
+function cabe(doc, y, h) {
+  if (y + h > FIM) { doc.addPage(); return 20 }
+  return y
+}
+
+function secao(doc, y, titulo, apoio) {
+  y = cabe(doc, y + 5, 24)
+  doc.setFillColor(...PDF_BLUE); doc.rect(M, y - 4.2, 1.6, 6, 'F')
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(...PDF_INK)
+  doc.text(titulo, M + 4, y)
+  y += 5.5
+  if (apoio) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...PDF_GRAY_TEXT)
+    const l = doc.splitTextToSize(apoio, L)
+    doc.text(l, M, y); y += l.length * 4
+  }
+  return y + 3
+}
+
+// Mesmas faixas de cor do mapa de calor da tela
+function corNota(v) {
+  if (v == null || Number.isNaN(v)) return { f: [236, 239, 244], t: [120, 128, 140] }
+  if (v < 3.5) return { f: [142, 52, 19], t: [255, 255, 255] }
+  if (v < 4) return { f: [246, 201, 174], t: [74, 28, 8] }
+  if (v < 4.3) return { f: [211, 229, 246], t: [11, 58, 99] }
+  return { f: [28, 109, 179], t: [255, 255, 255] }
+}
+
+// Tabela simples: cabeçalho navy repetido a cada página, texto com quebra de linha.
+// colunas: [{ t, w, a: 'left'|'right'|'center' }]; linhas: [[valor | { v, cor }]]
+function tabela(doc, y, colunas, linhas, { fonte = 8.5 } = {}) {
+  const pad = 1.8
+  const cab = () => {
+    doc.setFillColor(...PDF_NAVY); doc.rect(M, y, L, 7, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(255, 255, 255)
+    let x = M
+    for (const c of colunas) {
+      const tx = c.a === 'right' ? x + c.w - pad : c.a === 'center' ? x + c.w / 2 : x + pad
+      doc.text(c.t, tx, y + 4.7, { align: c.a || 'left' })
+      x += c.w
+    }
+    y += 7
+  }
+  y = cabe(doc, y, 16)
+  cab()
+  linhas.forEach((ln, i) => {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(fonte)
+    const partes = ln.map((cel, k) => doc.splitTextToSize(String(cel && typeof cel === 'object' ? cel.v : cel ?? '—'), colunas[k].w - pad * 2))
+    const h = Math.max(...partes.map((p) => p.length)) * (fonte * 0.42) + 3.2
+    if (y + h > FIM) { doc.addPage(); y = 20; cab() }
+    if (i % 2) { doc.setFillColor(247, 248, 251); doc.rect(M, y, L, h, 'F') }
+    let x = M
+    ln.forEach((cel, k) => {
+      const c = colunas[k]
+      const cor = cel && typeof cel === 'object' ? cel.cor : null
+      if (cor) { doc.setFillColor(...cor.f); doc.rect(x + 0.4, y + 0.4, c.w - 0.8, h - 0.8, 'F') }
+      doc.setTextColor(...(cor ? cor.t : [40, 44, 56]))
+      doc.setFont('helvetica', cel && typeof cel === 'object' && cel.b ? 'bold' : 'normal')
+      const tx = c.a === 'right' ? x + c.w - pad : c.a === 'center' ? x + c.w / 2 : x + pad
+      doc.text(partes[k], tx, y + 2.2 + fonte * 0.35, { align: c.a || 'left' })
+      x += c.w
+    })
+    y += h
+  })
+  return y + 5
+}
+
+function paragrafo(doc, y, texto, { tam = 9.5, cor = [50, 54, 66], estilo = 'normal' } = {}) {
+  doc.setFont('helvetica', estilo); doc.setFontSize(tam); doc.setTextColor(...cor)
+  const l = doc.splitTextToSize(texto, L)
+  y = cabe(doc, y, l.length * tam * 0.45)
+  doc.text(l, M, y)
+  return y + l.length * tam * 0.45 + 2
+}
+
+const nota2 = (v) => fmtNota(v)
+const dif = (v, b) => (v == null || b == null ? '—' : (v - b >= 0 ? '+' : '') + fmtNota(v - b))
+
+function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, perguntas, gerais, planos, verProfessores }) {
+  const n = base.notas[cid] || {}
+  const inst = mediasPorDimensao(base.notas, base.cursos.map((c) => c.id))
+  const resp = base.respondentes?.[cid]
+
+  let y = pdfCabecalho(doc, cursoLabel(base, cid),
+    'Relatório CPA' + (ciclo ? ' ' + ciclo : '') + ' — UniFECAF' + (resp ? ' · ' + resp + ' aluno(s) responderam' : '') + ' · Gerado em ' + hoje())
+
+  // 1. Satisfação geral
+  doc.setFillColor(233, 241, 252); doc.roundedRect(M, y, L, 24, 3, 3, 'F')
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.setTextColor(...PDF_BLUE)
+  doc.text(nota2(n[SATISFACAO]), M + 8, y + 15.5)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...PDF_INK)
+  doc.text('Satisfação geral dos alunos (0 a 10)', M + 38, y + 10.5)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...PDF_GRAY_TEXT)
+  doc.text('Média institucional: ' + nota2(inst[SATISFACAO]) + '   ·   Diferença: ' + dif(n[SATISFACAO], inst[SATISFACAO]), M + 38, y + 16.5)
+  y += 33
+
+  // 2. Dimensões x instituição
+  y = secao(doc, y, 'Resultado por dimensão', 'Notas de 1 a 5. Meta: ' + fmtNota(META, 1) + '. Cores iguais às do mapa de calor do Portal.')
+  y = tabela(doc, y,
+    [{ t: 'Dimensão', w: 80 }, { t: 'Curso', w: 30, a: 'center' }, { t: 'Média institucional', w: 40, a: 'right' }, { t: 'Diferença', w: 30, a: 'right' }],
+    DIMENSOES.map((d) => [d, { v: nota2(n[d]), cor: corNota(n[d]), b: true }, nota2(inst[d]), dif(n[d], inst[d])]))
+
+  // 3. Ponto forte, oportunidade e onde agir primeiro
+  const comNota = DIMENSOES.filter((d) => typeof n[d] === 'number').sort((a, b) => n[b] - n[a])
+  const mapa = {}
+  for (const t of turmas) (mapa[t.turma] ||= {})[t.categoria] = Number(t.nota)
+  const linhasTurma = Object.entries(mapa).sort((a, b) => a[0].localeCompare(b[0], 'pt-BR', { numeric: true }))
+  if (comNota.length) {
+    y = cabe(doc, y, 30)
+    const forte = comNota[0], oport = comNota[comNota.length - 1]
+    const w = (L - 6) / 2
+    pdfCaixaDestaque(doc, M, y, w, 20, PDF_GREEN, [226, 246, 235], 'PONTO FORTE', forte + ' (' + nota2(n[forte]) + ')')
+    pdfCaixaDestaque(doc, M + w + 6, y, w, 20, PDF_AMBER, [252, 240, 222], 'OPORTUNIDADE', oport + ' (' + nota2(n[oport]) + ')')
+    y += 27
+    const comT = linhasTurma.filter(([, v]) => v[oport] != null)
+    const abaixo = comT.filter(([, v]) => v[oport] < META).sort((a, b) => a[1][oport] - b[1][oport])
+    y = secao(doc, y, 'Onde agir primeiro')
+    y = paragrafo(doc, y, `${oport} é a dimensão mais baixa (${nota2(n[oport])})` + (comT.length ? `, abaixo da meta em ${abaixo.length} de ${comT.length} turmas.` : '.') +
+      (abaixo.length ? ` Turmas mais baixas: ${abaixo.slice(0, 5).map(([t, v]) => `${t} (${nota2(v[oport])})`).join(', ')}.` : ''))
+    y += 4
+  }
+
+  // 4. Mapa de calor das turmas
+  if (linhasTurma.length) {
+    y = secao(doc, y, 'Mapa de calor das turmas', 'Nota de cada turma em cada dimensão. Laranja escuro: abaixo de 3,5 · Laranja claro: 3,5 a 3,99 · Azul claro: 4,0 a 4,29 · Azul: 4,3 ou mais.')
+    const CURTO = { 'Conteúdo das Disciplinas': 'Conteúdo', 'Infraestrutura e Atendimento': 'Infraestrutura', 'Políticas Acadêmicas': 'Pol. acadêmicas', 'Políticas de Gestão': 'Pol. de gestão', 'Docência e Tutoria': 'Docência' }
+    y = tabela(doc, y,
+      [{ t: 'Turma', w: 30 }, ...DIMENSOES.map((d) => ({ t: CURTO[d] || d, w: 30, a: 'center' }))],
+      linhasTurma.map(([t, v]) => [t, ...DIMENSOES.map((d) => ({ v: v[d] == null ? '—' : nota2(v[d]), cor: corNota(v[d]) }))]))
+  }
+
+  // 5. Pergunta por pergunta
+  if (perguntas.length) {
+    const instQ = {}
+    for (const g of gerais) instQ[g.survey_id + '|' + g.pergunta_posicao] = estatisticas(g)
+    const ordem = [...DIMENSOES, SATISFACAO]
+    const pesquisas = [...new Map(perguntas.map((r) => [r.survey_id, { id: r.survey_id, pesquisa: r.pesquisa, dim: dimensaoDaPesquisa(r.pesquisa) }])).values()]
+      .sort((a, b) => ordem.indexOf(a.dim) - ordem.indexOf(b.dim) || nomeCurto(a.pesquisa).localeCompare(nomeCurto(b.pesquisa)))
+    y = secao(doc, y, 'Pergunta por pergunta', 'Média do curso em cada pergunta, comparada com a instituição. "Não sei / Não utilizo" fica fora da média. Na Satisfação Geral (0 a 10) aparece também o NPS.')
+    for (const q of pesquisas) {
+      y = cabe(doc, y, 22)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...PDF_BLUE)
+      doc.text(nomeCurto(q.pesquisa) + (q.dim && q.dim !== nomeCurto(q.pesquisa) ? '  ·  ' + q.dim : ''), M, y)
+      y += 3
+      const linhas = perguntas.filter((r) => r.survey_id === q.id).sort((a, b) => a.pergunta_posicao - b.pergunta_posicao).map((r) => {
+        const e = estatisticas(r)
+        const g = instQ[r.survey_id + '|' + r.pergunta_posicao]
+        const cor = e.escala === '0a10' ? null : corNota(e.media)
+        const txtCurso = nota2(e.media) + (e.nps != null ? ' (NPS ' + e.nps + ')' : '')
+        return [r.pergunta_posicao, r.pergunta, e.n, e.naoUtilizo || '—', cor ? { v: txtCurso, cor, b: true } : { v: txtCurso, b: true }, g ? nota2(g.media) + (g.nps != null ? ' (NPS ' + g.nps + ')' : '') : '—']
+      })
+      y = tabela(doc, y, [{ t: '#', w: 8, a: 'center' }, { t: 'Pergunta', w: 86 }, { t: 'Respostas', w: 18, a: 'right' }, { t: 'Não sei / NU', w: 20, a: 'right' }, { t: 'Curso', w: 24, a: 'center' }, { t: 'Instituição', w: 24, a: 'right' }], linhas)
+    }
+  }
+
+  // 6. Por professor
+  const profs = verProfessores ? (base.professores || []).filter((p) => p.curso_id === cid).sort((a, b) => a.nota - b.nota) : []
+  if (profs.length) {
+    y = secao(doc, y, 'Por professor', 'Nota de Docência por professor e disciplina, da menor para a maior.')
+    y = tabela(doc, y, [{ t: 'Professor(a)', w: 62 }, { t: 'Disciplina', w: 78 }, { t: 'Respostas', w: 20, a: 'right' }, { t: 'Nota', w: 20, a: 'center' }],
+      profs.map((p) => [p.nome, p.disciplina || '—', p.respondentes ?? '—', { v: nota2(Number(p.nota)), cor: corNota(Number(p.nota)), b: true }]))
+  }
+
+  // 7. Planos de ação do curso
+  y = secao(doc, y, 'Planos de ação do curso', planos.length ? planos.length + ' plano(s) registrado(s).' : null)
+  if (!planos.length) y = paragrafo(doc, y, 'Nenhum plano de ação registrado para este curso.', { cor: PDF_GRAY_TEXT }) + 4
+  else {
+    const autor = (id) => base.usuarios.find((u) => u.id === id)?.nome || '—'
+    const data = (d) => (d ? new Date(String(d).length <= 10 ? d + 'T12:00:00' : d).toLocaleDateString('pt-BR') : '—')
+    y = tabela(doc, y, [{ t: 'Plano', w: 64 }, { t: 'Autor', w: 36 }, { t: 'Situação', w: 38 }, { t: 'Prioridade', w: 18 }, { t: 'Prazo', w: 24, a: 'center' }],
+      planos.map((p) => [p.titulo, autor(p.usuario_id), statusTexto(p.status), p.prioridade || '—', data(p.prazo)]))
+  }
+
+  // 8. Todos os comentários, por categoria
+  const SENT = { good: 'positivos', warn: 'pedem atenção', bad: 'negativos' }
+  const cont = { good: 0, warn: 0, bad: 0 }
+  for (const c of comentarios) if (cont[c.sentimento] != null) cont[c.sentimento]++
+  y = secao(doc, y, `Comentários dos alunos (${comentarios.length})`, comentarios.length ? 'Exatamente como os alunos escreveram, separados por categoria. ' + Object.entries(cont).filter(([, v]) => v).map(([k, v]) => `${v} ${SENT[k]}`).join(' · ') + '.' : null)
+  if (!comentarios.length) y = paragrafo(doc, y, 'Nenhum comentário registrado para este curso.', { cor: PDF_GRAY_TEXT })
+  const porCat = new Map()
+  for (const c of comentarios) { const k = c.categoria || 'Outros'; if (!porCat.has(k)) porCat.set(k, []); porCat.get(k).push(c) }
+  const COR_SENT = { good: PDF_GREEN, warn: PDF_AMBER, bad: [176, 58, 30] }
+  for (const [cat, lista] of porCat) {
+    y = cabe(doc, y, 18)
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...PDF_BLUE)
+    doc.text(`${cat} (${lista.length})`, M, y); y += 5
+    for (const c of lista) {
+      const meta = [c.turma && 'Turma ' + c.turma, verProfessores && c.professor].filter(Boolean).join(' · ')
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8)
+      const linhas = doc.splitTextToSize(String(c.texto || '').replace(/\\n/g, '\n'), L - 10)
+      const h = linhas.length * 3.8 + (meta ? 4.2 : 0) + 4
+      y = cabe(doc, y, h)
+      doc.setFillColor(...PDF_CARD_BG); doc.rect(M, y, L, h, 'F')
+      doc.setFillColor(...(COR_SENT[c.sentimento] || PDF_BLUE)); doc.rect(M, y, 1.3, h, 'F')
+      let yy = y + 4
+      if (meta) { doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...PDF_GRAY_TEXT); doc.text(meta, M + 5, yy); yy += 4.2 }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8); doc.setTextColor(50, 54, 66)
+      doc.text(linhas, M + 5, yy)
+      y += h + 2
+    }
+    y += 3
+  }
+  return y
 }
 
 export async function baixarPdfGeral({ base, escopo, respondentes } = {}) {

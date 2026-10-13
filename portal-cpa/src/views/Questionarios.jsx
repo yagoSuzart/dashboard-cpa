@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DIMENSOES, SATISFACAO, IMPORTA_ROLES } from '../lib/config.js'
 import { ciclosImportados, resultadosGerais, resultadosCursos, resultadosDetalhe } from '../lib/dados.js'
-import { dimensaoDaPesquisa, estatisticas, fmtNota, fmtInt, nomeCurto, normalizar } from '../lib/cpa.js'
+import { dimensaoDaPesquisa, estatisticas, fmtNota, fmtInt, nomeCurto, normalizar, somarPorPergunta } from '../lib/cpa.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import { Carregando, Erro, Vazio, Distribuicao, Legenda } from '../components/ui.jsx'
 import { ListaComentarios } from './Comentarios.jsx'
@@ -10,25 +10,6 @@ import FormPlano from '../components/FormPlano.jsx'
 import { ESCREVE_PLANO } from '../lib/planos.js'
 import { eixoDimDoId } from '../lib/proxima.js'
 import { SelosEixoDim } from '../components/ProximaSelos.jsx'
-
-const CAMPOS = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'nao_utilizo', 'n', 'soma']
-
-// Soma linhas da mesma pergunta (vários cursos, turmas ou professores)
-function somarPorPergunta(linhas) {
-  const m = new Map()
-  for (const r of linhas) {
-    const k = r.survey_id + '|' + r.pergunta_posicao
-    let g = m.get(k)
-    if (!g) {
-      g = { survey_id: r.survey_id, pesquisa: r.pesquisa, escala: r.escala, pergunta_posicao: r.pergunta_posicao, pergunta: r.pergunta }
-      for (const c of CAMPOS) g[c] = 0
-      m.set(k, g)
-    }
-    for (const c of CAMPOS) g[c] += Number(r[c]) || 0
-    if (r.pergunta && r.pergunta.length > (g.pergunta || '').length) g.pergunta = r.pergunta
-  }
-  return [...m.values()]
-}
 
 export default function Questionarios({ perfil, base, escopo, planos, param, recarregarBase, aoEnviarPlano }) {
   const [ciclos, setCiclos] = useState(null)

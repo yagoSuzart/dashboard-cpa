@@ -87,3 +87,22 @@ export const SENTIMENTO = {
 export function numOuNada(v) {
   return v == null || v === '' ? null : Number(v)
 }
+
+const CAMPOS = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'nao_utilizo', 'n', 'soma']
+
+// Soma linhas da mesma pergunta (vários cursos, turmas ou professores)
+export function somarPorPergunta(linhas) {
+  const m = new Map()
+  for (const r of linhas) {
+    const k = r.survey_id + '|' + r.pergunta_posicao
+    let g = m.get(k)
+    if (!g) {
+      g = { survey_id: r.survey_id, pesquisa: r.pesquisa, escala: r.escala, pergunta_posicao: r.pergunta_posicao, pergunta: r.pergunta }
+      for (const c of CAMPOS) g[c] = 0
+      m.set(k, g)
+    }
+    for (const c of CAMPOS) g[c] += Number(r[c]) || 0
+    if (r.pergunta && r.pergunta.length > (g.pergunta || '').length) g.pergunta = r.pergunta
+  }
+  return [...m.values()]
+}
