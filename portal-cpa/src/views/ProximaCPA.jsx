@@ -4,7 +4,7 @@ import {
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
   ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
-  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe, desencaixa, classificarTI, GRUPOS_TI, decisaoPr, motivoSaida, MARCA_MANTIDA,
+  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe, desencaixa, classificarTI, GRUPOS_TI, decisaoPr, motivoSaida, faltaAnaliseCpa, MARCA_MANTIDA,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
@@ -14,6 +14,7 @@ import ProximaAtencao from '../components/ProximaAtencao.jsx'
 import ProximaResumo from '../components/ProximaResumo.jsx'
 import ProximaAtuais from '../components/ProximaAtuais.jsx'
 import ProximaAdaptar from '../components/ProximaAdaptar.jsx'
+import ProximaAnalise from '../components/ProximaAnalise.jsx'
 import ProximaPublicada from '../components/ProximaPublicada.jsx'
 import ProximaParaTI from '../components/ProximaParaTI.jsx'
 import { baixarPlanilhaTI } from '../lib/planilhaTI.js'
@@ -24,7 +25,7 @@ export default function ProximaCPA({ perfil, base }) {
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState(null)
   const [maisAbas, setMaisAbas] = useState(false)
-  const [aba, setAba] = useState(perfil.role === 'pro_reitoria' ? 'previa' : 'montar')
+  const [aba, setAba] = useState(perfil.role === 'pro_reitoria' ? 'previa' : EDITA_CPA.includes(perfil.role) ? 'analisar' : 'montar')
   const [aviso, setAviso] = useState(null)
   // Resultados da planilha importada, por pergunta e modalidade (undefined = carregando, null = sem importação)
   const [res, setRes] = useState(undefined)
@@ -105,7 +106,8 @@ export default function ProximaCPA({ perfil, base }) {
   }
   const candPorItem = Object.fromEntries(candidatas.map((c) => [c.item.id, c]))
   const irPara = (k) => setAba(k)
-  const ctx = { perfil, dados, modo, recarregar, setDados, setAviso, nomes, res: res || null, candidatas, candPorItem, salvarIt, criarIt, excluirIt, irPara }
+  const faltamCpa = dados.itens.filter(faltaAnaliseCpa).length
+  const ctx = { perfil, dados, modo, recarregar, setDados, setAviso, nomes, res: res || null, candidatas, candPorItem, salvarIt, criarIt, excluirIt, irPara, faltamCpa }
 
   return (
     <>
@@ -134,19 +136,47 @@ export default function ProximaCPA({ perfil, base }) {
         {ehPr && (
           <button type="button" aria-expanded={maisAbas} onClick={() => setMaisAbas((x) => !x)}>{maisAbas ? 'Menos opções ▴' : 'Mais opções ▾'}</button>
         )}
-        {(!ehPr || maisAbas) && [
-          ['montar', modo === 'pr' ? 'Lista completa das perguntas' : 'Montar a proposta'],
+        {ehPr && maisAbas && [
+          ['montar', 'Lista completa das perguntas'],
           ['atuais', `Perguntas atuais (${atuaisDe(dados.itens).length})`],
-          ...(!ehPr ? [['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças']] : []),
-          ...(!ehPr ? [['previa', modo === 'cpa' ? 'Como vai ficar (editar aqui)' : 'Como vai ficar']] : []),
-          ...(ehCpa ? [['ti', 'Para o T.I (entra, sai, muda)']] : []),
           ['documento', 'Documento para o T.I'],
-          ...(!ehPr ? [['historico', 'Histórico']] : []),
         ].map(([k, t]) => (
-          <button key={k} role="tab" aria-pressed={aba === k} onClick={() => { setAba(k); if (k === 'historico') recarregar() }}>{t}</button>
+          <button key={k} role="tab" aria-pressed={aba === k} onClick={() => setAba(k)}>{t}</button>
         ))}
+        {!ehPr && (() => {
+          const principais = [
+            ...(ehCpa ? [['analisar', `Analisar uma a uma${faltamCpa ? ` (${faltamCpa})` : ' ✓'}`]] : []),
+            ['montar', 'Montar a proposta'],
+          ]
+          const mais = [
+            ['atuais', `Perguntas atuais (${atuaisDe(dados.itens).length})`],
+            ['resumo', ehCpa && ['montagem', 'devolvida'].includes(proposta.status) ? 'Revisar antes de enviar' : 'Resumo das mudanças'],
+            ['previa', modo === 'cpa' ? 'Como vai ficar (editar aqui)' : 'Como vai ficar'],
+            ...(ehCpa ? [['ti', 'Para o T.I (entra, sai, muda)']] : []),
+            ['documento', 'Documento para o T.I'],
+            ['historico', 'Histórico'],
+          ]
+          const naMais = mais.find(([k]) => k === aba)
+          const ir = (k) => { setAba(k); setMaisAbas(false); if (k === 'historico') recarregar() }
+          return (
+            <>
+              {principais.map(([k, t]) => (
+                <button key={k} role="tab" aria-pressed={aba === k} onClick={() => ir(k)}>{t}</button>
+              ))}
+              <div className={'px-mais' + (maisAbas ? ' aberto' : '')} onMouseLeave={() => setMaisAbas(false)}>
+                <button type="button" aria-pressed={!!naMais} aria-expanded={maisAbas} onClick={() => setMaisAbas((x) => !x)}>{naMais ? naMais[1] : 'Mais opções'} ▾</button>
+                <div className="px-mais-lista" role="menu">
+                  {mais.map(([k, t]) => (
+                    <button key={k} type="button" role="menuitem" aria-pressed={aba === k} onClick={() => ir(k)}>{t}</button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )
+        })()}
       </div>
       {aba === 'resumo' && <ProximaResumo ctx={ctx} titulo={ehPr ? 'Para a sua análise' : 'Revisar antes de enviar'} />}
+      {aba === 'analisar' && <ProximaAnalise ctx={ctx} Detalhe={ItemCard} />}
       {aba === 'montar' && <Montar ctx={ctx} />}
       {aba === 'atuais' && <ProximaAtuais ctx={ctx} Detalhe={ItemCard} />}
       {aba === 'previa' && <ProximaPublicada ctx={ctx} Gabarito={Gabarito} Resposta={Resposta} />}
@@ -167,7 +197,7 @@ function tituloPorStatus(s, ehPr) {
 
 /* ---------------- barra de status e ações principais ---------------- */
 function BarraStatus({ ctx }) {
-  const { perfil, dados, recarregar, setAviso, nomes, candidatas, irPara } = ctx
+  const { perfil, dados, recarregar, setAviso, nomes, candidatas, irPara, faltamCpa } = ctx
   const { proposta, itens } = dados
   const pendentes = candidatas.filter((c) => !c.analisada).length
   const aDecidir = atuaisDe(itens).filter((i) => decisaoDe(i) === 'decidir').length
@@ -221,8 +251,10 @@ function BarraStatus({ ctx }) {
               {pendentes ? `${pendentes} ${pendentes === 1 ? 'pergunta sugerida' : 'perguntas sugeridas'} para revisão ainda não ${pendentes === 1 ? 'analisada' : 'analisadas'}` : 'Todas as sugestões de revisão foram analisadas'}
             </button>
             <button className="btn" onClick={() => irPara('atuais')}>Perguntas atuais{aDecidir ? ` · ${aDecidir} a decidir` : ' · todas decididas'}</button>
-            <button className="btn" onClick={() => irPara('resumo')}>Revisar antes de enviar</button>
-            <button className="btn escuro" onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
+            <button type="button" className={'px-pend' + (faltamCpa ? '' : ' ok')} onClick={() => irPara('analisar')}>
+              {faltamCpa ? `Faltam ${faltamCpa} ${faltamCpa === 1 ? 'pergunta' : 'perguntas'} para a CPA analisar` : 'Todas as perguntas analisadas pela CPA ✓'}
+            </button>
+            <button className="btn escuro" disabled={faltamCpa > 0} title={faltamCpa ? 'Analise (aprove ou reprove) todas as perguntas antes de enviar' : undefined} onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
           </>
         )}
         {ehPr && proposta.status === 'pro_reitoria' && (
@@ -244,7 +276,8 @@ function BarraStatus({ ctx }) {
 
       {ehCpa && ['montagem', 'devolvida'].includes(proposta.status) && !confirmar && (
         <div className="no-print" style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 40, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <button className="btn escuro" style={{ boxShadow: '0 6px 20px rgba(0,0,0,.18)' }} onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
+          {faltamCpa > 0 && <button type="button" className="px-pend" style={{ boxShadow: '0 6px 20px rgba(0,0,0,.12)' }} onClick={() => irPara('analisar')}>Faltam {faltamCpa} para analisar</button>}
+          <button className="btn escuro" disabled={faltamCpa > 0} style={{ boxShadow: '0 6px 20px rgba(0,0,0,.18)' }} onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
         </div>
       )}
       {confirmar && (
@@ -257,7 +290,7 @@ function BarraStatus({ ctx }) {
                 {faltam.length > 0 && <div className="aviso">Ainda sem pergunta: {faltam.map((d) => `D${d} ${DIMS[d]}`).join(', ')}.</div>}
                 {pendentes > 0 && <div className="aviso">{pendentes} {pendentes === 1 ? 'pergunta sugerida' : 'perguntas sugeridas'} para revisão ainda não {pendentes === 1 ? 'foi analisada' : 'foram analisadas'} (painel “Precisa de atenção”).</div>}
                 <div className="filtros">
-                  <button className="btn escuro" onClick={() => executar({ status: 'pro_reitoria', enviado_por: perfil.id, enviado_em: agora(), comentario_pr: null }, 'enviou para a Pró-Reitoria', 'Proposta enviada para a Pró-Reitoria.')}>Enviar</button>
+                  <button className="btn escuro" disabled={faltamCpa > 0} onClick={() => executar({ status: 'pro_reitoria', enviado_por: perfil.id, enviado_em: agora(), comentario_pr: null }, 'enviou para a Pró-Reitoria', 'Proposta enviada para a Pró-Reitoria.')}>Enviar</button>
                   <button className="btn" onClick={() => setConfirmar(null)}>Cancelar</button>
                 </div>
               </>
@@ -394,7 +427,7 @@ function Montar({ ctx }) {
   )
 }
 
-function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
+function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false, semDecisao = false }) {
   const { perfil, dados, modo, setDados, setAviso, nomes, res, candPorItem } = ctx
   const [verEscala, setVerEscala] = useState(false)
   const [adaptar, setAdaptar] = useState(false)
@@ -488,6 +521,8 @@ function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
             {item.origem === 'banco' && <span className="selo cinza">do banco</span>}
             {item.editada_pr && <span className="selo azul">editada pela Pró-Reitoria</span>}
             {item.decisao_pr === 'aprovada' && <span className="selo verde">aprovada pela Pró-Reitoria</span>}
+            {!item.decisao_pr && item.decisao_cpa === 'aprovada' && <span className="selo verde">aprovada pela CPA</span>}
+            {!item.decisao_pr && faltaAnaliseCpa(item) && <span className="selo laranja">falta a CPA analisar</span>}
             {cand && !cand.analisada && entra(item) && <span className="selo laranja" title={cand.motivos.map((m) => m.t).join('\n')}>sugerida para revisão</span>}
             {foiAnalisada(item) && <span className="selo verde">mantida após análise</span>}
             {entra(item) && item.modalidades.some((m) => desencaixa(dados.prefixos, item, m)) && <span className="selo laranja" title="Lida junto com o enunciado, a frase não fecha. Use “Ajustar o português das perguntas” no enunciado.">não encaixa no enunciado</span>}
@@ -564,16 +599,15 @@ function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
           </>
         )}
         <div style={{ flex: 1 }} />
-        {modo === 'cpa' && (
+        {modo === 'cpa' && !semDecisao && (
           <>
-            {cand && !cand.analisada && entra(item) && !adaptadaDe(item) && (
-              <button className="btn sm escuro" disabled={ocupado} title="A pergunta fica como está e sai da lista de sugeridas para revisão" onClick={() => salvar({ observacao: MARCA_MANTIDA }, 'manteve a pergunta após análise')}>Aprovar (manter)</button>
+            {item.incluida && !item.decisao_pr && (
+              <button className={'btn sm' + (item.decisao_cpa === 'aprovada' ? ' escuro' : '')} disabled={ocupado} onClick={() => salvar({ decisao_cpa: item.decisao_cpa === 'aprovada' ? null : 'aprovada', ...(item.decisao_cpa !== 'aprovada' && cand && !cand.analisada && !adaptadaDe(item) ? { observacao: MARCA_MANTIDA } : {}) }, item.decisao_cpa === 'aprovada' ? 'desfez a análise da pergunta' : 'aprovou a pergunta (CPA)')}>
+                {item.decisao_cpa === 'aprovada' ? 'Aprovada ✓' : 'Aprovar'}
+              </button>
             )}
-            {foiAnalisada(item) && item.incluida && (
-              <button className="btn sm" disabled={ocupado} title="Volta a pergunta para a lista de sugeridas para revisão" onClick={() => salvar({ observacao: null }, 'desfez a aprovação da pergunta')}>Desfazer aprovação</button>
-            )}
-            <button className={'btn sm' + (item.incluida ? '' : ' escuro')} disabled={ocupado} onClick={() => salvar(item.incluida ? { incluida: false, ...(foiAnalisada(item) ? { observacao: null } : {}) } : { incluida: true, observacao: null }, item.incluida ? 'retirou a pergunta' : 'trouxe a pergunta de volta')}>
-              {item.incluida ? 'Retirar' : 'Trazer de volta'}
+            <button className={'btn sm' + (item.incluida ? '' : ' escuro')} disabled={ocupado} onClick={() => salvar(item.incluida ? { incluida: false, decisao_cpa: 'reprovada', ...(foiAnalisada(item) ? { observacao: null } : {}) } : { incluida: true, decisao_cpa: null, observacao: null }, item.incluida ? 'reprovou a pergunta (CPA)' : 'trouxe a pergunta de volta')}>
+              {item.incluida ? 'Reprovar' : 'Trazer de volta'}
             </button>
             {item.origem !== 'atual' && (
               <button className="btn sm" disabled={ocupado} onClick={async () => { try { await apagarItem(item); setDados((d) => ({ ...d, itens: d.itens.filter((x) => x.id !== item.id) })); registrar(dados.proposta.id, perfil.id, 'excluiu a pergunta', { texto: item.texto }) } catch (e) { setAviso({ tipo: 'erro', txt: e.message }) } }}>Excluir</button>

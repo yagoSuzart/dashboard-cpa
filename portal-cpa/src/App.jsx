@@ -58,6 +58,19 @@ export default function App() {
   const [recuperando, setRecuperando] = useState(false)
   const [pedindo, setPedindo] = useState(false)
   const [aviso, setAviso] = useState(null)
+  // Grupo do menu aberto pelo clique (no computador abre também ao passar o mouse)
+  const [menuAberto, setMenuAberto] = useState(null)
+
+  useEffect(() => {
+    const fechar = (e) => !e.target.closest?.('.menu') && setMenuAberto(null)
+    const esc = (e) => e.key === 'Escape' && setMenuAberto(null)
+    document.addEventListener('click', fechar)
+    document.addEventListener('keydown', esc)
+    return () => {
+      document.removeEventListener('click', fechar)
+      document.removeEventListener('keydown', esc)
+    }
+  }, [])
 
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setSessao(data.session))
@@ -210,14 +223,23 @@ export default function App() {
         <button className="btn sm" onClick={() => sair()}>Sair</button>
       </header>
       <nav className="menu" aria-label="Áreas do Portal">
-        {grupos.map((g) => (
-          <div key={g.g} className="menu-grupo">
-            <span className="menu-g">{g.g}</span>
-            {g.itens.map((n) => (
-              <a key={n.k} href={'#/' + n.k} aria-current={atual === n.k ? 'page' : undefined}>{n.t}</a>
-            ))}
-          </div>
-        ))}
+        {grupos.map((g) => {
+          const ativo = g.itens.find((n) => n.k === atual)
+          return (
+            <div key={g.g} className={'menu-drop' + (menuAberto === g.g ? ' aberto' : '') + (ativo ? ' ativo' : '')} onMouseLeave={() => menuAberto === g.g && setMenuAberto(null)}>
+              <button type="button" className="menu-topo" aria-expanded={menuAberto === g.g} aria-haspopup="true" onClick={() => setMenuAberto((x) => (x === g.g ? null : g.g))}>
+                <span className="menu-g">{g.g}</span>
+                {ativo && <b>{ativo.t}</b>}
+                <span aria-hidden="true">▾</span>
+              </button>
+              <div className="menu-lista">
+                {g.itens.map((n) => (
+                  <a key={n.k} href={'#/' + n.k} aria-current={atual === n.k ? 'page' : undefined} onClick={(e) => { setMenuAberto(null); e.currentTarget.blur() }}>{n.t}</a>
+                ))}
+              </div>
+            </div>
+          )
+        })}
       </nav>
       <PrimeiroAcesso perfil={perfil} onFim={(x) => x?.mensagem && setAviso(x.mensagem)} />
       <main className="conteudo">

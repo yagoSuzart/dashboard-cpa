@@ -241,7 +241,7 @@ function PerguntaPublicada({ ctx, item, mod, num, Resposta }) {
           ) : (
             <span className="px-confirma">
               <span className="small">Tirar esta pergunta? Ela vai para “Retiradas” (dá para trazer de volta em “Montar a proposta”).</span>
-              <button className="btn sm escuro" disabled={ocupado} onClick={async () => { await fazer({ incluida: false, observacao: marcar(MARCA_RETIRADA, 'tirada na visualização') }, 'retirou a pergunta'); setExcluir(false) }}>Sim, tirar</button>
+              <button className="btn sm escuro" disabled={ocupado} onClick={async () => { await fazer({ incluida: false, decisao_cpa: 'reprovada', observacao: marcar(MARCA_RETIRADA, 'tirada na visualização') }, 'retirou a pergunta'); setExcluir(false) }}>Sim, tirar</button>
               <button className="btn sm" onClick={() => setExcluir(false)}>Não</button>
             </span>
           )}

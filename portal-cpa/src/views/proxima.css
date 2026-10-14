@@ -191,3 +191,21 @@
 .px-pub-cab.novo .eyebrow { color: #fff; opacity: .9; }
 .px-pub-quem { font-size: 14px; line-height: 1.45; color: #fff; opacity: .95; margin: 0; }
 #px-analise { scroll-margin-top: 190px; }
+
+/* Analisar uma a uma (CPA) */
+.px-uma { gap: 12px; border: 2px solid var(--line); }
+.px-passos { display: flex; flex-wrap: wrap; gap: 6px; }
+.px-passo { min-width: 34px; height: 34px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--navy); font-weight: 700; cursor: pointer; }
+.px-passo.ok { background: var(--green-soft); border-color: var(--green); color: var(--green-ink); }
+.px-passo.nao { background: #eef1f5; color: var(--muted); text-decoration: line-through; }
+.px-passo.falta { border-color: var(--ember); color: var(--ember-ink); }
+.px-passo[aria-current='step'] { box-shadow: 0 0 0 3px var(--navy); }
+.px-decisao { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--paper-2); }
+.btn.verde { background: var(--green); border-color: var(--green); color: #fff; }
+.btn.verde:hover { background: var(--green-ink); border-color: var(--green-ink); color: #fff; }
+.px-mais { position: relative; display: inline-flex; }
+.px-mais-lista { display: none; position: absolute; top: 100%; left: 0; z-index: 30; min-width: 240px; flex-direction: column; gap: 2px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--sombra); }
+.px-mais.aberto .px-mais-lista { display: flex; }
+@media (hover: hover) { .px-mais:hover .px-mais-lista { display: flex; } }
+.px-mais-lista button { text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 6px; font-weight: 600; color: var(--ink-2); }
+.px-mais-lista button:hover, .px-mais-lista button[aria-pressed='true'] { background: var(--blue-soft); color: var(--blue-ink); }

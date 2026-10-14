@@ -58,6 +58,12 @@ export function entra(item) {
   return item.incluida && item.decisao_pr !== 'reprovada'
 }
 
+// A CPA ainda precisa analisar (aprovar ou reprovar) antes de enviar para a Pró-Reitoria.
+// O que a Pró-Reitoria já decidiu numa rodada anterior não volta para a análise.
+export function faltaAnaliseCpa(item) {
+  return item.incluida && !item.decisao_pr && !item.decisao_cpa
+}
+
 // Texto que o aluno de cada modalidade vê: se a pergunta atual não foi reescrita, mantém a variação de hoje
 export function textoNaModalidade(item, mod) {
   if (item.origem === 'atual' && item.texto === item.texto_original) {

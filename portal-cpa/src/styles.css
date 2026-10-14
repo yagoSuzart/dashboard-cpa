@@ -369,3 +369,24 @@ h1 { font-weight: 600; letter-spacing: -0.02em; }
 .eyebrow { letter-spacing: 0.1em; }
 /* Selos com texto longo quebram linha em vez de estourar a tela no celular */
 .selo { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
+
+/* Menu em listas: cada área mostra só o nome e abre as opções ao passar o mouse (ou ao clicar) */
+.menu { gap: 10px; flex-wrap: wrap; overflow: visible; }
+.menu-drop { position: relative; }
+.menu-topo { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--navy); font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+.menu-topo .menu-g { padding: 0; }
+.menu-topo b { color: var(--blue-ink); }
+.menu-drop.ativo .menu-topo { border-color: var(--blue); background: var(--blue-soft); }
+.menu-drop:hover .menu-topo, .menu-drop.aberto .menu-topo { border-color: var(--navy); }
+.menu-lista { display: none; position: absolute; top: 100%; left: 0; z-index: 50; min-width: 250px; flex-direction: column; gap: 2px; padding: 8px 6px 6px; margin-top: 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--sombra); }
+.menu-drop.aberto .menu-lista { display: flex; }
+@media (hover: hover) { .menu-drop:hover .menu-lista { display: flex; } }
+.menu .menu-lista a { border: 0; border-radius: 8px; padding: 9px 12px; background: transparent; color: var(--ink-2); }
+.menu .menu-lista a:hover { background: var(--blue-soft); color: var(--blue-ink); }
+.menu .menu-lista a[aria-current='page'] { background: var(--blue); color: #fff; }
+@media (max-width: 860px) {
+  .menu { overflow: visible; flex-wrap: wrap; }
+  .menu-topo b { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+  .menu-lista { min-width: min(250px, calc(100vw - 32px)); }
+  .menu-drop:last-child .menu-lista { left: auto; right: 0; }
+}

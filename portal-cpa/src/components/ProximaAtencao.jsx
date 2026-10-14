@@ -273,14 +273,14 @@ function Candidata({ ctx, c, nomeQ }) {
         <div className="filtros">
           <label className="sr-only" htmlFor={'mt-' + item.id}>Por que manter</label>
           <input id={'mt-' + item.id} className="input" style={{ flex: 1, minWidth: 200, height: 38, fontSize: 14 }} placeholder="Por que manter? (opcional)" value={motivo} onChange={(e) => setMotivo(e.target.value)} />
-          <button className="btn sm escuro" disabled={ocupado} onClick={async () => { await fazer({ observacao: marcar(MARCA_MANTIDA, motivo) }, 'manteve a pergunta após análise', { texto: item.texto, motivo: motivo.trim() || null }); setManter(false) }}>Confirmar: manter</button>
+          <button className="btn sm escuro" disabled={ocupado} onClick={async () => { await fazer({ decisao_cpa: 'aprovada', observacao: marcar(MARCA_MANTIDA, motivo) }, 'manteve a pergunta após análise', { texto: item.texto, motivo: motivo.trim() || null }); setManter(false) }}>Confirmar: manter</button>
           <button className="btn sm" onClick={() => setManter(false)}>Cancelar</button>
         </div>
       )}
       <div className="filtros" style={{ gap: 8 }}>
         {editavel && !manter && (
           <>
-            <button className="btn sm escuro" disabled={ocupado} onClick={() => fazer({ incluida: false, observacao: marcar(MARCA_RETIRADA, resumo) }, 'retirou a pergunta', { texto: item.texto, motivo: resumo })}>Retirar</button>
+            <button className="btn sm escuro" disabled={ocupado} onClick={() => fazer({ incluida: false, decisao_cpa: 'reprovada', observacao: marcar(MARCA_RETIRADA, resumo) }, 'retirou a pergunta', { texto: item.texto, motivo: resumo })}>Retirar</button>
             {!analisada && <button className="btn sm" disabled={ocupado} onClick={() => setManter(true)}>Manter</button>}
             {infra && ehInfra(item) && infra.mods.map((m) => (
               item.modalidades.length > 1 && (
@@ -340,7 +340,7 @@ function Retirada({ ctx, item, nomeQ }) {
       {item.atualizado_por && <span className="small muted">Retirada por {nomes[item.atualizado_por] || '—'} · {new Date(item.atualizado_em).toLocaleString('pt-BR')}</span>}
       {editavel && (
         <div className="filtros" style={{ gap: 8 }}>
-          <button className="btn sm escuro" disabled={ocupado} onClick={() => fazer(() => salvarIt(item, { incluida: true, observacao: null }, 'trouxe a pergunta de volta', { texto: item.texto }))}>Trazer de volta</button>
+          <button className="btn sm escuro" disabled={ocupado} onClick={() => fazer(() => salvarIt(item, { incluida: true, decisao_cpa: null, observacao: null }, 'trouxe a pergunta de volta', { texto: item.texto }))}>Trazer de volta</button>
           {item.origem === 'atual' ? (
             <button className="btn sm" disabled={ocupado} onClick={() => fazer(() => salvarIt(item, { observacao: marcar(MARCA_CONFIRMADA, motivo) }, 'confirmou a retirada', { texto: item.texto, motivo: motivo.trim() || null }))}>{conf ? 'Salvar motivo' : 'Confirmar a retirada'}</button>
           ) : (
