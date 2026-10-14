@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { rotuloCurso } from '../lib/escopo.js'
 import {
-  PRIORIDADES, SELO_STATUS, areasDisponiveis, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, coordenadoresDoCurso, devolvidoAoCoordenador, retornoDaDevolucao, RETORNO, excluirPlano, fmtData, hoje,
+  PRIORIDADES, SELO_STATUS, areasDisponiveis, destinosDo, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, coordenadoresDoCurso, devolvidoAoCoordenador, retornoDaDevolucao, RETORNO, excluirPlano, fmtData, hoje,
   nomeArea, partesPrazoPlano, rotuloStatus, seloPrazo, textoPrazoSetor, useVinculos,
 } from '../lib/planos.js'
 
@@ -70,7 +70,8 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
     <article className="plano-item" style={{ borderLeft: `4px solid ${borda}` }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <b style={{ flex: 1, minWidth: 200 }}>{p.titulo}</b>
-        {p.externa ? <span className="selo laranja">Depende do setor: {nomeArea(p.area, base.setores)}</span> : <span className="selo verde">Sob gestão direta</span>}
+        {p.externa ? <span className="selo laranja">Depende {destinosDo(p).length > 1 ? 'dos setores' : 'do setor'}: {destinosDo(p).map((a) => nomeArea(a, base.setores)).join(', ')}</span> : <span className="selo verde">Sob gestão direta</span>}
+        {p.externa && p.triagem !== 'liberado' && perfil.role !== 'setor' && <span className="selo cinza">Encaminhamento ao setor em análise pela CPA</span>}
       </div>
       <div className="chips" style={{ gap: 6 }}>
         <span className="selo cinza">{alvo}</span>
@@ -110,6 +111,12 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
         <div className="aviso" style={{ flexDirection: 'column', gap: 2 }}>
           <b className="small">Queixa do aluno relatada</b>
           <span className="small">{p.queixa_aluno}</span>
+        </div>
+      )}
+      {p.externa && p.triagem === 'liberado' && p.triagem_obs && (
+        <div className="aviso ok" style={{ flexDirection: 'column', gap: 2 }}>
+          <b className="small">Recado da CPA para o setor</b>
+          <span className="small" style={{ whiteSpace: 'pre-line' }}>{p.triagem_obs}</span>
         </div>
       )}
       {(p.status === 'devolvido' || voltouAoCoordenador) && p.comentario_revisor && (

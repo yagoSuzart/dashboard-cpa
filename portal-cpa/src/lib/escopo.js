@@ -1,4 +1,5 @@
 import { DIMENSOES, SATISFACAO, MODALIDADE_LABEL, TRILHO } from './config.js'
+import { chegaAoSetor } from './planos.js'
 
 // Cursos que a pessoa acompanha — mesma regra do sistema atual:
 // visão global para Pró-Reitoria, CPA, Comissão e admin; diretor(a) de núcleo vê os cursos que coordena
@@ -31,7 +32,7 @@ export function mediasPorDimensao(notas, ids) {
 export function planosDoEscopo(perfil, planos, idsCursos) {
   if (perfil.global) return planos
   const ids = new Set(idsCursos)
-  if (perfil.role === 'setor') return planos.filter((p) => p.setor_id === perfil.setor || (p.externa && p.area === perfil.setor))
+  if (perfil.role === 'setor') return planos.filter((p) => p.setor_id === perfil.setor || chegaAoSetor(p, perfil.setor))
   return planos.filter((p) => ids.has(p.curso_id) || p.usuario_id === perfil.id)
 }
 

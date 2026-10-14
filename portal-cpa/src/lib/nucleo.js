@@ -1,7 +1,7 @@
 // Núcleos (de cursos e de setores), ações da direção e demandas dos setores.
 // Mesmas regras do sistema anterior (renderNucleo, renderSetorGeral, getDemandasParaSetor, renderNucleoSetorGeral).
 import { sb } from './dados.js'
-import { atualizarPlano, statusDeEnvio } from './planos.js'
+import { atualizarPlano, chegaAoSetor, statusDeEnvio } from './planos.js'
 
 export const NUCLEO_LABELS = { saude: 'Núcleo de Saúde', engenharias_tech: 'Núcleo de Engenharias e Tecnologia' }
 export const NUCLEO_SETOR_LABELS = { facilities: 'Núcleo de Facilities' }
@@ -50,7 +50,7 @@ export function demandasParaSetor(planos, usuarios, setorId) {
   const papeis = new Set(['coordenador', 'professor_auxiliar', 'diretor_nucleo'])
   const papel = Object.fromEntries(usuarios.map((u) => [u.id, u.role]))
   return planos
-    .filter((p) => p.externa && p.area === setorId && papeis.has(papel[p.usuario_id]))
+    .filter((p) => chegaAoSetor(p, setorId) && papeis.has(papel[p.usuario_id]))
     .sort((a, b) => {
       if (!!a.atendido_pelo_setor !== !!b.atendido_pelo_setor) return a.atendido_pelo_setor ? 1 : -1
       return porStatus(a, b)
