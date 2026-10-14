@@ -4,7 +4,7 @@ import {
   ATUAL_POR_ID, BANCO, MODALIDADES, MOD_CURTO, TIPOS, EIXOS, DIMS, EIXO_DA_DIM, STATUS, TRILHO_PROPOSTA,
   EDITA_CPA, entra, textoNaModalidade, situacao, cobertura,
   ESCALAS, escalaDoItem, escalaOriginal, tipoDaEscala, nomeEscala, escalasPorModalidade, prefixoDe, prefixoOriginal, gruposPrefixo,
-  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe, desencaixa, classificarTI, GRUPOS_TI, decisaoPr, motivoSaida,
+  prefixosAlterados, carregarResultadosModalidade, candidatasRetirada, ehInfra, fmtPct, foiAnalisada, rotuloEixo, rotuloDim, atuaisDe, decisaoDe, adaptadaDe, desencaixa, classificarTI, GRUPOS_TI, decisaoPr, motivoSaida, MARCA_MANTIDA,
 } from '../lib/proxima.js'
 import { fmtInt } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
@@ -561,6 +561,12 @@ function ItemCard({ ctx, item, vizinhos, mod, semSituacao = false }) {
         <div style={{ flex: 1 }} />
         {modo === 'cpa' && (
           <>
+            {cand && !cand.analisada && entra(item) && !adaptadaDe(item) && (
+              <button className="btn sm escuro" disabled={ocupado} title="A pergunta fica como está e sai da lista de sugeridas para revisão" onClick={() => salvar({ observacao: MARCA_MANTIDA }, 'manteve a pergunta após análise')}>Aprovar (manter)</button>
+            )}
+            {foiAnalisada(item) && item.incluida && (
+              <button className="btn sm" disabled={ocupado} title="Volta a pergunta para a lista de sugeridas para revisão" onClick={() => salvar({ observacao: null }, 'desfez a aprovação da pergunta')}>Desfazer aprovação</button>
+            )}
             <button className={'btn sm' + (item.incluida ? '' : ' escuro')} disabled={ocupado} onClick={() => salvar(item.incluida ? { incluida: false, ...(foiAnalisada(item) ? { observacao: null } : {}) } : { incluida: true, observacao: null }, item.incluida ? 'retirou a pergunta' : 'trouxe a pergunta de volta')}>
               {item.incluida ? 'Retirar' : 'Trazer de volta'}
             </button>
