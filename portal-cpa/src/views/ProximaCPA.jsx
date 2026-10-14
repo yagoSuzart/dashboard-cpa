@@ -242,6 +242,11 @@ function BarraStatus({ ctx }) {
         </span>
       </div>
 
+      {ehCpa && ['montagem', 'devolvida'].includes(proposta.status) && !confirmar && (
+        <div className="no-print" style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 40, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <button className="btn escuro" style={{ boxShadow: '0 6px 20px rgba(0,0,0,.18)' }} onClick={() => setConfirmar('enviar')}>Enviar para a Pró-Reitoria</button>
+        </div>
+      )}
       {confirmar && (
         <div className="modal-fundo" role="dialog" aria-modal="true" onClick={(e) => e.target === e.currentTarget && setConfirmar(null)}>
           <div className="modal" style={{ maxWidth: 560 }}>
