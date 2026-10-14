@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { rotuloCurso } from '../lib/escopo.js'
 import {
-  PRIORIDADES, SELO_STATUS, areasDisponiveis, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, coordenadoresDoCurso, devolvidoAoCoordenador, excluirPlano, fmtData, hoje,
+  PRIORIDADES, SELO_STATUS, areasDisponiveis, TEXTO_STATUS, acoes, botoesDoPlano, coordenaAutor, coordenadoresDoCurso, devolvidoAoCoordenador, retornoDaDevolucao, RETORNO, excluirPlano, fmtData, hoje,
   nomeArea, partesPrazoPlano, rotuloStatus, seloPrazo, textoPrazoSetor, useVinculos,
 } from '../lib/planos.js'
 
@@ -77,6 +77,7 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
         {p.categoria && <span className="selo cinza">{p.categoria}</span>}
         {p.prioridade && <span className="selo cinza">Prioridade {p.prioridade.toLowerCase()}</span>}
         <span className={'selo ' + SELO_STATUS[p.status]} title={TEXTO_STATUS[p.status]}>{rotuloStatus(p)}</span>
+        {['ajustado', 'resolvido'].includes(retornoDaDevolucao(p)) && <span className={'selo ' + RETORNO[retornoDaDevolucao(p)].c}>{RETORNO[retornoDaDevolucao(p)].t}</span>}
         {prazo && <span className={'selo ' + prazo.c}>{prazo.t}</span>}
         {p.externa && p.atendido_pelo_setor && <span className="selo verde">Atendido pelo setor</span>}
         {autor && autor.id !== perfil.id && <span className="selo cinza">Criado por: {autor.nome}</span>}
@@ -118,6 +119,14 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
             {' · '}comentário de {p.revisado_por || 'quem revisou'}{p.revisado_em ? ` em ${fmtData(p.revisado_em)}` : ''}
           </b>
           <span className="small" style={{ whiteSpace: 'pre-line' }}>{p.comentario_revisor}</span>
+        </div>
+      )}
+      {['ajustado', 'resolvido'].includes(retornoDaDevolucao(p)) && (
+        <div className={'aviso ' + (retornoDaDevolucao(p) === 'resolvido' ? 'ok' : '')} style={{ flexDirection: 'column', gap: 2 }}>
+          <b className="small">
+            {retornoDaDevolucao(p) === 'ajustado' ? 'Foi devolvido e o coordenador ajustou e reenviou para a CPA' : `Foi devolvido e o coordenador marcou como já resolvido${p.data_conclusao ? ` em ${fmtData(p.data_conclusao)}` : ''}`}
+          </b>
+          <span className="small" style={{ whiteSpace: 'pre-line' }}>Comentário da devolução{p.revisado_por && retornoDaDevolucao(p) === 'ajustado' ? ` (${p.revisado_por})` : ''}: {p.comentario_revisor}</span>
         </div>
       )}
       {erro && <div className="aviso erro" role="alert">{erro}</div>}

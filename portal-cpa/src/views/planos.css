@@ -61,3 +61,27 @@
   .cob-check-linha { grid-template-columns: 28px minmax(0, 1fr); }
   .cob-check-mods { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* Gabarito por curso e modelo de oferta */
+.gab-quadros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.gab-quadro { display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 14px 16px; border-radius: 14px; border: 2px solid transparent; cursor: pointer; font: inherit; color: inherit; }
+.gab-quadro .q { font-family: var(--f-title); font-size: 30px; line-height: 1; }
+.gab-quadro .t { font-size: 12.5px; font-weight: 700; line-height: 1.3; }
+.gab-quadro.laranja { background: var(--ember-soft); color: var(--ember-ink); }
+.gab-quadro.azul { background: var(--blue-soft); color: var(--blue-ink); }
+.gab-quadro.verde { background: var(--green-soft); color: var(--green-ink); }
+.gab-quadro[aria-pressed='true'] { border-color: currentColor; }
+.gab-tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 860px; }
+.gab-tabela th, .gab-tabela td { padding: 10px 12px; border-top: 1px solid var(--line-2); text-align: left; vertical-align: middle; }
+.gab-tabela thead th { font-size: 12px; font-weight: 700; color: var(--ink-2); border-top: 0; background: var(--paper-2); }
+.gab-tabela tbody th b { display: block; font-size: 14px; }
+.gab-tabela td.num { text-align: center; font-weight: 700; }
+.gab-tabela td.acoes { white-space: nowrap; }
+.gab-tabela td.acoes .btn { margin: 2px; }
+.gab-tabela tr.pend th b { color: var(--ember-deep); }
+.gab-tabela tr.gab-planos td { background: var(--paper); }
+.gab-coord { display: block; font-weight: 600; }
+.gab-mod { display: inline-block; margin-top: 3px; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.gab-mod.m-PRESENCIAL { background: rgba(0, 98, 171, 0.12); color: #0b4f8a; }
+.gab-mod.m-EAD { background: rgba(42, 168, 98, 0.14); color: #087543; }
+.gab-mod.m-SEMIPRESENCIAL { background: rgba(107, 79, 187, 0.14); color: #4a3290; }

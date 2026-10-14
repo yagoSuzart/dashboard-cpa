@@ -318,6 +318,22 @@ export function devolvidoAoCoordenador(p) {
   return p.status === 'aguardando_coordenador' && !!p.comentario_revisor
 }
 
+// O que aconteceu com um plano devolvido (o comentário da devolução fica guardado no plano):
+// 'aguardando' = ainda não ajustado · 'ajustado' = o coordenador ajustou e reenviou para a CPA ·
+// 'resolvido' = o coordenador marcou "Já resolvi" (ações já feitas). null = nunca foi devolvido ou já foi validado.
+export function retornoDaDevolucao(p) {
+  if (!p.comentario_revisor) return null
+  if (p.status === 'devolvido' || devolvidoAoCoordenador(p)) return 'aguardando'
+  if (p.status === 'enviado' || p.status === 'rascunho') return 'ajustado'
+  if (p.status === 'concluido') return 'resolvido'
+  return null
+}
+export const RETORNO = {
+  aguardando: { t: 'Devolvido · aguardando ajuste', c: 'laranja' },
+  ajustado: { t: 'Devolvido · ajustado e reenviado', c: 'azul' },
+  resolvido: { t: 'Devolvido · coordenador marcou como já resolvido', c: 'verde' },
+}
+
 // Texto da situação do plano nos selos (o mesmo vocabulário do quadro de situação)
 export function rotuloStatus(p) {
   const st = situacaoDe(p)
