@@ -61,3 +61,14 @@
   .cob-check-linha { grid-template-columns: 28px minmax(0, 1fr); }
   .cob-check-mods { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* ---------- Encaminhar aos setores (triagem do admin) ---------- */
+.tr-card { border-left: 6px solid var(--ember); }
+.tr-card.liberado { border-left-color: var(--green); }
+.tr-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tr-encaminhar { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; background: var(--track, #f1f4f8); border-radius: 14px; padding: 14px; }
+.tr-encaminhar .campo { display: flex; flex-direction: column; gap: 6px; }
+.tr-extras { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(160px, 1fr)); gap: 4px 14px; min-width: 300px; }
+.tr-extras legend { margin-bottom: 6px; }
+.tr-extras label { display: flex; gap: 6px; align-items: center; }
+@media (max-width: 700px) { .tr-extras { grid-template-columns: 1fr; min-width: 0; } }

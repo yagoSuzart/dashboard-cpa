@@ -25,6 +25,21 @@ export function areasDisponiveis(setores = []) {
   return [...doBanco, ...AREAS_EXTRAS]
 }
 
+// ---------- encaminhamento aos setores (triagem do admin) ----------
+// Para onde o plano vai: o setor principal (area) e os que o admin acrescentou
+export function destinosDo(p) {
+  return [...new Set([p.area, ...(p.areas_extra || [])].filter(Boolean))]
+}
+// O setor só recebe o plano depois que o admin libera o encaminhamento
+export function chegaAoSetor(p, setorId) {
+  return !!p.externa && p.triagem === 'liberado' && !!setorId && destinosDo(p).includes(setorId)
+}
+// Setor com alguém que entra no Portal para responder (os demais ficam com o admin)
+export const PAPEIS_DE_SETOR = ['setor', 'diretor_nucleo_setor']
+export function setorTemAcesso(area, usuarios = []) {
+  return usuarios.some((u) => PAPEIS_DE_SETOR.includes(u.role) && u.setor_id === area)
+}
+
 // Nome por extenso do setor de quem a ação depende
 const NOMES_RESERVA = { nead: 'NEAD / AVA (Ambiente Virtual de Aprendizagem)', ti: 'Tecnologia da Informação (T.I.)', biblioteca: 'Biblioteca', manutencao: 'Manutenção', limpeza: 'Limpeza' }
 export function nomeArea(area, setores = []) {
@@ -269,7 +284,7 @@ export function botoesDoPlano(p, perfil, { coordenaAutor } = {}) {
       if (st === 'enviado') b.push('editar', 'excluir', 'puxarParaRevisao')
       if (st === 'devolvido') b.push('editar')
     }
-    if (r === 'setor' && p.externa && p.area && p.area === perfil.setor) b.push('atendidoPeloSetor')
+    if (r === 'setor' && chegaAoSetor(p, perfil.setor)) b.push('atendidoPeloSetor')
     if (r === 'admin' && !b.includes('excluir')) b.push('excluir')
     return [...new Set(b)]
   }

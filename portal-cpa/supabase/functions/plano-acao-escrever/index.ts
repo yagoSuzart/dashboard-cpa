@@ -20,6 +20,10 @@ const PAPEIS_AUTONOMOS_PLANO = ['diretor_nucleo', 'coordenador', 'setor']
 // (e, quando a ação depende de outro setor: qual setor, a queixa do aluno e o prazo estimado pelo setor)
 const CAMPOS_CONTEUDO = ['titulo', 'descricao', 'indicador', 'prioridade', 'prazo', 'externa', 'area', 'queixa_aluno', 'prazo_estimado']
 
+// Encaminhamento aos setores (triagem): só o admin (Yago) decide para quais setores o plano vai
+// e libera; até a liberação o setor não vê nem age sobre o plano.
+const CAMPOS_TRIAGEM = ['externa', 'area', 'areas_extra', 'triagem', 'triagem_obs', 'triagem_por', 'triagem_em']
+
 // Campos permitidos numa transição de status. revisado_por/validado_por, mesmo
 // quando presentes, são sempre recalculados a partir de quem está autenticado —
 // nunca aceitamos o valor vindo do cliente.
@@ -119,7 +123,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: item, error: itemError } = await adminClient
       .from('planos_acao')
-      .select('id, usuario_id, curso_id, setor_id, area, status')
+      .select('id, usuario_id, curso_id, setor_id, area, areas_extra, triagem, status')
       .eq('id', itemId)
       .single()
     if (itemError || !item) throw new Error('Item não encontrado.')
@@ -141,7 +145,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const escopoSetorProprio = perfil.role === 'setor' && !!item.setor_id && perfil.setor_id === item.setor_id
-    const escopoSetorDemanda = perfil.role === 'setor' && !!item.area && perfil.setor_id === item.area
+    const destinos = [item.area, ...(item.areas_extra || [])].filter(Boolean)
+    const escopoSetorDemanda = perfil.role === 'setor' && item.triagem === 'liberado' && !!perfil.setor_id && destinos.includes(perfil.setor_id)
 
     const autorizado =
       isOwner ||
@@ -209,6 +214,10 @@ Deno.serve(async (req: Request) => {
       if (!escopoSetorDemanda) {
         throw new Error('Você não pode marcar este item como atendido.')
       }
+    } else if (perfil.role === 'admin' && chaves.every((k) => CAMPOS_CONTEUDO.includes(k) || CAMPOS_TRIAGEM.includes(k))) {
+      // Admin (Yago): edita o conteúdo e decide o encaminhamento aos setores. Quem liberou vem do login.
+      if ('triagem_por' in patch || 'triagem' in patch) patch.triagem_por = patch.triagem ? perfil.nome : null
+      if (patch.areas_extra != null && !Array.isArray(patch.areas_extra)) throw new Error('areas_extra inválido.')
     } else {
       const chaveInvalida = chaves.find((k) => !CAMPOS_CONTEUDO.includes(k))
       if (chaveInvalida) throw new Error('Campo não permitido nesta operação: ' + chaveInvalida)
@@ -217,6 +226,12 @@ Deno.serve(async (req: Request) => {
         podeEditar = true
       }
       if (!podeEditar) throw new Error('Só o autor do item pode editar o conteúdo.')
+      // O autor mudou o setor: o encaminhamento volta para a análise do admin
+      if (('area' in patch && patch.area !== item.area) || patch.externa === false) {
+        patch.triagem = null
+        patch.triagem_por = null
+        patch.triagem_em = null
+      }
     }
 
     const { error: updError } = await adminClient.from('planos_acao').update(patch).eq('id', itemId)

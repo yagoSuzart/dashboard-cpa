@@ -714,3 +714,38 @@ export async function baixarPdfMeuPlano({ base, perfil } = {}) {
   doc.save('CPA_meu_plano_' + String(perfil.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.pdf')
   return 'PDF do seu plano gerado com sucesso!'
 }
+
+// ---------- demandas de um setor sem acesso ao Portal (o admin envia ao responsável) ----------
+export async function baixarPdfDemandas({ base, area, planos = [] } = {}) {
+  if (!planos.length) throw new Error('Nenhum plano para este destino.')
+  const doc = await novoDocumento()
+  const nome = nomeAreaPdf(area, base.setores)
+  let y = pdfCabecalho(doc, 'Demandas para: ' + nome, 'Planos de ação da CPA — UniFECAF · ' + planos.length + ' plano(s) · Gerado em ' + hoje())
+  y = paragrafo(doc, y, 'Pontos levantados pelos alunos na avaliação da CPA que dependem deste setor. Cada item traz o curso, o que será feito, o que os alunos apontaram e os comentários anexados pelo coordenador.', { cor: PDF_GRAY_TEXT, tam: 9 }) + 3
+  planos.forEach((p, i) => {
+    const autor = base.usuarios.find((u) => u.id === p.usuario_id)?.nome || '—'
+    y = secao(doc, y, (i + 1) + '. ' + p.titulo, cursoLabel(base, p.curso_id) + ' · ' + autor + ' · ' + statusTexto(p.status) + (p.prazo ? ' · prazo ' + new Date(p.prazo + 'T12:00:00').toLocaleDateString('pt-BR') : ''))
+    y = paragrafo(doc, y, 'O que será feito: ' + (p.descricao || '—'))
+    if (p.queixa_aluno) y = paragrafo(doc, y, 'O que os alunos apontaram: ' + p.queixa_aluno)
+    if (p.triagem_obs) y = paragrafo(doc, y, 'Recado da CPA: ' + p.triagem_obs, { estilo: 'bold', cor: PDF_INK })
+    const outros = [p.area, ...(p.areas_extra || [])].filter((a) => a && a !== area)
+    if (outros.length) y = paragrafo(doc, y, 'Também encaminhado para: ' + outros.map((a) => nomeAreaPdf(a, base.setores)).join(', '), { cor: PDF_GRAY_TEXT, tam: 9 })
+    const coments = p.comentarios_selecionados || []
+    if (coments.length) {
+      y = paragrafo(doc, y, 'Comentários dos alunos anexados (' + coments.length + '):', { estilo: 'bold', tam: 9.5 })
+      y = pdfComentariosEmCards(doc, M, L, y, coments)
+    }
+    y += 4
+  })
+  pdfRodapeTodasPaginas(doc)
+  doc.save('CPA_demandas_' + String(area).replace(/[^A-Za-z0-9]+/g, '_') + '.pdf')
+  return 'PDF de “' + nome + '” gerado com ' + planos.length + ' plano(s).'
+}
+
+function nomeAreaPdf(area, setores = []) {
+  const s = setores.find((x) => x.id === area)
+  if (s) return s.nome
+  if (area === 'polos') return 'Polos (EAD/Semipresencial)'
+  if (area === 'outro') return 'Financeiro / Outra área'
+  return area || ''
+}
