@@ -223,10 +223,10 @@ export default function App() {
         <button className="btn sm" onClick={() => sair()}>Sair</button>
       </header>
       <nav className="menu" aria-label="Áreas do Portal">
-        {grupos.map((g) => {
+        {grupos.map((g, gi) => {
           const ativo = g.itens.find((n) => n.k === atual)
           return (
-            <div key={g.g} className={'menu-drop' + (menuAberto === g.g ? ' aberto' : '') + (ativo ? ' ativo' : '')} onMouseLeave={() => menuAberto === g.g && setMenuAberto(null)}>
+            <div key={g.g} className={'menu-drop cor-' + ['azul', 'verde', 'roxo'][gi % 3] + (menuAberto === g.g ? ' aberto' : '') + (ativo ? ' ativo' : '')} onMouseLeave={() => menuAberto === g.g && setMenuAberto(null)}>
               <button type="button" className="menu-topo" aria-expanded={menuAberto === g.g} aria-haspopup="true" onClick={() => setMenuAberto((x) => (x === g.g ? null : g.g))}>
                 <span className="menu-g">{g.g}</span>
                 {ativo && <b>{ativo.t}</b>}

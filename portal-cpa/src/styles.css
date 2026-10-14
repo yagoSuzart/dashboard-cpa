@@ -390,3 +390,36 @@ h1 { font-weight: 600; letter-spacing: -0.02em; }
   .menu-lista { min-width: min(250px, calc(100vw - 32px)); }
   .menu-drop:last-child .menu-lista { left: auto; right: 0; }
 }
+
+/* Menu centralizado, cada área com a sua cor da UniFECAF em vidro (azul, verde, roxo) */
+.menu { justify-content: center; gap: 14px; padding-top: 12px; padding-bottom: 12px;
+  background: linear-gradient(90deg, rgba(0, 98, 171, 0.07), rgba(42, 168, 98, 0.07) 50%, rgba(107, 79, 187, 0.07)), rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px) saturate(1.4); -webkit-backdrop-filter: blur(12px) saturate(1.4); }
+.menu-drop { --c: 0, 98, 171; --c-ink: #0b4f8a; }
+.menu-drop.cor-verde { --c: 42, 168, 98; --c-ink: #087543; }
+.menu-drop.cor-roxo { --c: 107, 79, 187; --c-ink: #4a3290; }
+.menu-topo {
+  height: 42px; padding: 0 18px; color: var(--c-ink);
+  background: linear-gradient(135deg, rgba(var(--c), 0.16), rgba(var(--c), 0.06)), rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(var(--c), 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 14px rgba(var(--c), 0.12);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.menu-topo .menu-g { color: rgba(var(--c), 0.85); }
+.menu-topo b { color: var(--c-ink); }
+.menu-drop:hover .menu-topo, .menu-drop.aberto .menu-topo { transform: translateY(-1px); border-color: rgba(var(--c), 0.55); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 20px rgba(var(--c), 0.2); }
+.menu-drop.ativo .menu-topo { background: linear-gradient(135deg, rgba(var(--c), 0.28), rgba(var(--c), 0.12)), rgba(255, 255, 255, 0.5); border-color: rgba(var(--c), 0.6); }
+.menu-lista {
+  left: 50%; transform: translateX(-50%); padding-top: 10px;
+  background: linear-gradient(160deg, rgba(var(--c), 0.1), rgba(255, 255, 255, 0) 60%), rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(var(--c), 0.25);
+  backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: 0 12px 32px rgba(var(--c), 0.18);
+}
+.menu .menu-lista a:hover { background: rgba(var(--c), 0.12); color: var(--c-ink); }
+.menu .menu-lista a[aria-current='page'] { background: rgba(var(--c), 0.85); color: #fff; }
+@media (max-width: 860px) {
+  .menu-drop:first-child .menu-lista { left: 0; transform: none; }
+  .menu-drop:last-child .menu-lista { left: auto; right: 0; transform: none; }
+}
