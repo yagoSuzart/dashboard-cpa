@@ -35,20 +35,15 @@ planos e o andamento de cada um. Essa etapa entra aqui na sequência (ver `INVEN
 ## Publicar no mesmo endereço do Plano de Ação
 
 O Portal fica no Worker **`cpa-unifecaf`** (`https://cpa-unifecaf.yago-brito.workers.dev`), o mesmo endereço de
-sempre. O sistema anterior continua acessível em **`/antigo/`** até a migração terminar (link "Sistema anterior ↗"
-no menu), porque criar e aprovar planos, agenda, PDFs e usuários ainda estão lá.
-
-O `index.html` do sistema anterior **não vai para este repositório** (ele tem comentários e notas embutidos e o
-repositório é público). Ele entra só no pacote que é enviado à mão.
+sempre. Os dados (planos, propostas, usuários) ficam no Supabase: publicar uma versão nova do site não apaga nada.
 
 1. `npm install && npm run build`
-2. Criar a pasta `dist/antigo/` e colocar nela o `index.html` do sistema anterior.
-3. Cloudflare → *Workers & Pages* → `cpa-unifecaf` → enviar a pasta `dist` (ou o `.zip` dela), como era feito com o
-   `index.html`. Pela linha de comando: `npx wrangler deploy` (usa o `wrangler.jsonc`).
-4. No Supabase *Plano de Ação - CPA* → *Authentication → URL Configuration → Redirect URLs*, ter
-   `https://cpa-unifecaf.yago-brito.workers.dev/**` (o "Esqueci a senha" do Portal e do `/antigo/`).
+2. Cloudflare → *Workers & Pages* → `cpa-unifecaf` → enviar o `.zip` da pasta `dist` (ou a pasta).
+   Pela linha de comando: `npx wrangler deploy` (usa o `wrangler.jsonc`).
+3. No Supabase *Plano de Ação - CPA* → *Authentication → URL Configuration → Redirect URLs*, ter
+   `https://cpa-unifecaf.yago-brito.workers.dev/**` (o "Esqueci a senha").
 
-`VITE_SISTEMA_ATUAL_URL` troca o endereço do sistema anterior (vazio esconde o link).
+O sistema anterior (`/antigo/`) saiu do ar e o link para ele não aparece mais. `VITE_SISTEMA_ATUAL_URL` troca o endereço do sistema anterior (vazio esconde o link).
 
 ## Rodar no computador
 

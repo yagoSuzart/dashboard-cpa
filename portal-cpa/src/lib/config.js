@@ -8,8 +8,8 @@ export const SUPABASE = {
 // Endereços dos sistemas que continuam no ar durante a migração.
 // SISTEMA_ATUAL: onde os planos são criados e aprovados até essa etapa chegar ao Portal (vazio = esconde o link).
 export const LINKS = {
-  // O sistema anterior fica publicado em /antigo/ no mesmo endereço até a migração terminar
-  sistemaAtual: import.meta.env.VITE_SISTEMA_ATUAL_URL ?? '/antigo/',
+  // O sistema anterior saiu do ar (o ZIP publicado não leva mais a pasta /antigo/); o link fica escondido
+  sistemaAtual: import.meta.env.VITE_SISTEMA_ATUAL_URL ?? '',
   bancoPerguntas: 'https://perguntas-cpa.pages.dev',
 }
 
