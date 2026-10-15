@@ -3,12 +3,20 @@
 // passam pela função do servidor `plano-acao-escrever`, que confere o papel de quem pede.
 import { useEffect, useState } from 'react'
 import { sb } from './dados.js'
-import { DIMENSOES, SATISFACAO, ROLE_LABELS, STATUS_PLANO } from './config.js'
+import { DIMENSOES, ROLE_LABELS, STATUS_PLANO } from './config.js'
 
 // Quem escreve plano de curso (precisa ter cursos vinculados)
 export const ESCREVE_PLANO = ['coordenador', 'professor_auxiliar', 'diretor_nucleo', 'admin', 'diretor_cpa', 'pro_reitoria']
 
-export const CATEGORIAS_PLANO = [...DIMENSOES, SATISFACAO]
+// Questionários que pedem plano de melhoria do coordenador. Ficam de fora:
+//   - Satisfação Geral: perguntas sobre a faculdade, com outro critério de avaliação;
+//   - Docência e Tutoria: o plano de melhoria dos docentes é conduzido pelo RH. O Portal segue mostrando as notas
+//     e os comentários sobre cada professor, mas o coordenador não monta plano nem tem pendência nesse questionário.
+export const SEM_PLANO_DO_COORDENADOR = {
+  'Satisfação Geral': 'Satisfação Geral não tem plano de melhoria: são perguntas sobre a faculdade, com outro critério de avaliação.',
+  'Docência e Tutoria': 'O plano de melhoria de Docência e Tutoria é conduzido pelo RH. As notas e os comentários sobre cada professor ficam aqui como devolutiva, sem plano do coordenador.',
+}
+export const CATEGORIAS_PLANO = DIMENSOES.filter((d) => !SEM_PLANO_DO_COORDENADOR[d])
 export const PRIORIDADES = ['Alta', 'Média', 'Baixa']
 
 // Áreas para "esta ação depende de outro setor": os setores cadastrados no banco (base.setores)
@@ -189,6 +197,7 @@ export async function criarPlano(perfil, dados) {
     queixa_aluno: dados.externa ? dados.queixa_aluno?.trim() || null : null,
     prazo_estimado: dados.externa && dados.prazo_estimado ? dados.prazo_estimado : null,
     comentarios_selecionados: dados.comentarios_selecionados?.length ? dados.comentarios_selecionados : null,
+    ...(dados.sem_melhoria ? { sem_melhoria: true, prioridade: null } : {}),
     status,
     usuario_id: perfil.id,
     ...(status === 'aguardando_coordenador' ? { enviado_coordenador_em: new Date().toISOString() } : {}),
@@ -196,6 +205,24 @@ export async function criarPlano(perfil, dados) {
   const { data, error } = await sb.from('planos_acao').insert(registro).select('*').single()
   if (error) throw new Error(traduzir(error))
   return data
+}
+
+// Declaração "sem pontos a melhorar" de um curso + modalidade + questionário. Segue o mesmo envio de um plano
+// (vai para a análise da CPA; a do professor auxiliar passa antes pelo coordenador) e conta como entrega.
+export const TITULO_SEM_MELHORIA = 'Sem pontos a melhorar'
+export const TEXTO_SEM_MELHORIA =
+  'Analisamos os resultados deste questionário e os comentários dos alunos e não identificamos pontos que exijam um plano de melhoria neste momento. Os indicadores estão em bom nível, e seguiremos acompanhando e trabalhando para manter e elevar a qualidade do curso.'
+export function criarDeclaracaoSemMelhoria(perfil, { curso_id, categoria, texto }) {
+  return criarPlano(perfil, {
+    tipo: 'curso',
+    curso_id,
+    categoria,
+    titulo: `${TITULO_SEM_MELHORIA} · ${categoria}`,
+    descricao: texto,
+    indicador: 'Manter ou elevar a nota do questionário no próximo ciclo da CPA',
+    prazo: null,
+    sem_melhoria: true,
+  })
 }
 
 async function escrever(body) {

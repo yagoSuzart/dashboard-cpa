@@ -16,6 +16,7 @@ import Comentarios from './views/Comentarios.jsx'
 import Triagem from './views/Triagem.jsx'
 import Planos from './views/Planos.jsx'
 import Acompanhar from './views/Acompanhar.jsx'
+import MontarPlanos from './views/MontarPlanos.jsx'
 import Nucleo from './views/Nucleo.jsx'
 import Setores from './views/Setores.jsx'
 import MeuSetor from './views/MeuSetor.jsx'
@@ -31,7 +32,7 @@ import FormPlano from './components/FormPlano.jsx'
 import { LE_PROPOSTA } from './lib/proxima.js'
 import { VE_COLAB } from './lib/colaboradores.js'
 import { podeVerAgenda, verificarCumprimentoEntrega } from './lib/agenda.js'
-import { ESCREVE_PLANO } from './lib/planos.js'
+import { CATEGORIAS_PLANO, ESCREVE_PLANO, SEM_PLANO_DO_COORDENADOR } from './lib/planos.js'
 
 // Logo depois do login, o banco às vezes recusa a chave por um ou dois segundos de diferença
 // entre os relógios dos servidores ("JWT issued at future"). Espera e tenta de novo.
@@ -157,6 +158,7 @@ export default function App() {
         {
           g: 'Resultados',
           itens: [
+            ...(ESCREVE_PLANO.includes(r) && temCursos ? [{ k: 'montar', t: 'Montar planos' }] : []),
             { k: 'inicio', t: 'Visão geral' },
             { k: 'executiva', t: 'Visão executiva' },
             { k: 'curso', t: 'Cursos' },
@@ -198,7 +200,9 @@ export default function App() {
 
   // Formulário do plano dentro de cada questionário (sem rascunho: envia direto para a análise)
   const planoNoQuestionario = (curso, categoria, selecionados, limpar) =>
-    escreve && curso && perfil.cursos.includes(curso.id) ? (
+    escreve && curso && perfil.cursos.includes(curso.id) && SEM_PLANO_DO_COORDENADOR[categoria] ? (
+      <div className="aviso" role="note">{SEM_PLANO_DO_COORDENADOR[categoria]}</div>
+    ) : escreve && curso && perfil.cursos.includes(curso.id) && CATEGORIAS_PLANO.includes(categoria) ? (
       <FormPlano key={curso.id + categoria} perfil={perfil} base={base} escopo={[curso]} cursoInicial={curso.id} categoriaInicial={categoria}
         titulo={`Plano de ação · ${categoria}`} comentarios={selecionados.map((c) => c.texto)} mostrarSelecao={false}
         onEnviado={() => { limpar(); aoEnviarPlano(); recarregarBase() }} />
@@ -256,6 +260,7 @@ export default function App() {
         {atual === 'professores' && <Professores {...props} />}
         {atual === 'comentarios' && <Comentarios {...props} />}
         {atual === 'planos' && <Planos {...props} key={param} />}
+        {atual === 'montar' && <MontarPlanos {...props} key={param} />}
         {atual === 'acompanhar' && <Acompanhar {...props} />}
         {atual === 'triagem' && <Triagem {...props} />}
         {atual === 'nucleo' && <Nucleo {...props} />}

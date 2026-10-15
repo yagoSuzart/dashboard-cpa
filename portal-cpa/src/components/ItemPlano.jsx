@@ -69,7 +69,7 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
   return (
     <article className="plano-item" style={{ borderLeft: `4px solid ${borda}` }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        <b style={{ flex: 1, minWidth: 200 }}>{p.titulo}</b>
+        <b style={{ flex: 1, minWidth: 200 }}>{p.sem_melhoria ? <span className="selo verde" style={{ marginRight: 6 }}>Sem pontos a melhorar</span> : null}{p.titulo}</b>
         {p.externa ? <span className="selo laranja">Depende {destinosDo(p).length > 1 ? 'dos setores' : 'do setor'}: {destinosDo(p).map((a) => nomeArea(a, base.setores)).join(', ')}</span> : <span className="selo verde">Sob gestão direta</span>}
         {p.externa && p.triagem !== 'liberado' && perfil.role !== 'setor' && <span className="selo cinza">Encaminhamento ao setor em análise pela CPA</span>}
       </div>

@@ -337,7 +337,7 @@ export function ListaPlanos({ planos, base, compacto, perfil, onMudou }) {
           const prazo = seloPrazo(p)
           return (
             <button key={p.id} className="plano-item" onClick={() => setAbertoId(p.id)}>
-              <b>{p.titulo}</b>
+              <b>{p.sem_melhoria ? <span className="selo verde" style={{ marginRight: 6 }}>Sem pontos a melhorar</span> : null}{p.titulo}</b>
               <div className="chips" style={{ gap: 6 }}>
                 <span className={'selo ' + SELO_STATUS[p.status]}>{rotuloStatus(p)}</span>
                 {p.categoria && <span className="selo cinza">{p.categoria}</span>}

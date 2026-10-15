@@ -7,7 +7,7 @@ import { Carregando, Erro, Vazio, Distribuicao, Legenda } from '../components/ui
 import { ListaComentarios } from './Comentarios.jsx'
 import { ListaPlanos } from './Planos.jsx'
 import FormPlano from '../components/FormPlano.jsx'
-import { ESCREVE_PLANO } from '../lib/planos.js'
+import { CATEGORIAS_PLANO, ESCREVE_PLANO, SEM_PLANO_DO_COORDENADOR } from '../lib/planos.js'
 import { eixoDimDoId } from '../lib/proxima.js'
 import { SelosEixoDim } from '../components/ProximaSelos.jsx'
 
@@ -144,7 +144,8 @@ function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, pl
   const [sel, setSel] = useState([])
   const [escrevendo, setEscrevendo] = useState(false)
   const alternar = (t) => setSel((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]))
-  const dimPlano = [...DIMENSOES, SATISFACAO].includes(pesquisa.dim) ? pesquisa.dim : SATISFACAO
+  // Satisfação Geral não tem plano de melhoria: só as 5 dimensões
+  const dimPlano = CATEGORIAS_PLANO.includes(pesquisa.dim) ? pesquisa.dim : null
   // Escreve plano quem tem cursos vinculados (o plano é sempre de um curso)
   const podeEscrever = !!perfil && ESCREVE_PLANO.includes(perfil.role) && perfil.cursos.length > 0
   const temProfessor = normalizar(pesquisa.pesquisa).includes('docente')
@@ -275,11 +276,12 @@ function Questionario({ pesquisa, linhas, cursoId, ciclo, cursosFiltro, base, pl
             <span className="selo cinza">{fmtInt(planosDim.length)}</span>
           </div>
           <ListaPlanos planos={planosDim.slice(0, 8)} base={base} perfil={perfil} onMudou={() => recarregarBase()} compacto />
-          {podeEscrever && !escrevendo && (
+          {podeEscrever && !dimPlano && SEM_PLANO_DO_COORDENADOR[pesquisa.dim] && <p className="small muted" style={{ margin: 0 }}>{SEM_PLANO_DO_COORDENADOR[pesquisa.dim]}</p>}
+          {podeEscrever && dimPlano && !escrevendo && (
             <button className="btn escuro" style={{ alignSelf: 'flex-start' }} onClick={() => setEscrevendo(true)}>Escrever um plano para esta dimensão</button>
           )}
         </div>
-        {podeEscrever && escrevendo && (
+        {podeEscrever && dimPlano && escrevendo && (
           <FormPlano perfil={perfil} base={base} escopo={base.cursos.filter((c) => perfil.cursos.includes(c.id))}
             cursoInicial={cursoId && perfil.cursos.includes(cursoId) ? cursoId : undefined}
             categoriaInicial={dimPlano} titulo={`Plano de ação · ${dimPlano}`}

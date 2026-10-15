@@ -148,3 +148,26 @@
 .ac-conferir { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; background: #fffbea; border: 1px dashed #e0c25a; }
 .ac-conferir p { margin: 0; }
 .ac-recebidos td { font-size: 13px; }
+/* Montar planos (coordenador) */
+.mp-progresso { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 320px); gap: 16px; align-items: center; border-left: 5px solid #be2626; }
+.mp-progresso.completo { border-left-color: var(--green); }
+.mp-barra { height: 12px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.mp-barra span { display: block; height: 100%; background: var(--green); border-radius: 999px; }
+.mp-curso-h { display: flex; flex-direction: column; gap: 2px; padding: 0 4px; }
+.mp-q { gap: 10px; padding: 16px 18px; border-left: 5px solid var(--line); }
+.mp-q.falta { border-left-color: #be2626; }
+.mp-q.ok { border-left-color: var(--green); }
+.mp-q.devolvido { border-left-color: #d97706; }
+.mp-q.nao_enviado { border-left-color: #7c3aed; }
+.mp-q-h { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mp-q-h h3 { margin: 0; font-size: 18px; }
+.mp-nota { display: inline-flex; gap: 6px; align-items: center; }
+.mp-planos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.mp-planos li { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; font-size: 14px; }
+.mp-acoes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mp-dica { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+.mp-dica.laranja { background: #fdecd3; color: #7c2d12; }
+.mp-dica.roxo { background: #ece4fa; color: #4c1d95; }
+.mp-sem { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 12px; background: var(--green-soft); border: 1px solid #b7e2c8; }
+.mp-sem textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-size: 14px; line-height: 1.45; resize: vertical; }
+@media (max-width: 700px) { .mp-progresso { grid-template-columns: 1fr; } }

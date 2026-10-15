@@ -110,21 +110,25 @@ export const CURTO_DIM = {
 
 // O que o coordenador precisa fazer em cada célula pendente (para a tela e para o PDF)
 export function acaoPendente(estado, planos, nomeDe = () => '') {
-  if (estado === 'falta') return 'Escrever o plano de ação e clicar em Enviar.'
+  if (estado === 'falta') return 'Montar o plano de ação (Resultados → Montar planos) e enviar, ou, se não houver pontos a melhorar, declarar isso no mesmo lugar.'
   const parados = planos.filter((p) => situacaoEnvio(p) === estado)
   const lista = parados.map((p) => `“${p.titulo}”${nomeDe(p.usuario_id) ? ' (' + nomeDe(p.usuario_id) + ')' : ''}`).join(', ')
   if (estado === 'devolvido') return `Plano devolvido com comentário: ${lista}. Ajustar e reenviar.`
   return `Plano escrito, mas não enviado: ${lista}. Revisar e clicar em Enviar.`
 }
 
-// Coordenadores com a cobertura de cada um (lista ordenada por pendências)
+// Quem responde pelos planos de um curso: o coordenador e, nos cursos sem coordenador, o diretor de núcleo
+// vinculado a eles (ex.: núcleos de Tecnologia e Engenharia)
+export const RESPONDEM_PELO_CURSO = ['coordenador', 'diretor_nucleo']
+
+// Coordenadores (e diretores de núcleo com cursos) com a cobertura de cada um (lista ordenada por pendências)
 export function coberturaPorCoordenador(base, vinculos) {
   if (!vinculos) return []
   const porCurso = Object.fromEntries(base.cursos.map((c) => [c.id, c]))
   const cursosDe = {}
   for (const v of vinculos) (cursosDe[v.usuario_id] ||= []).push(v.curso_id)
   return base.usuarios
-    .filter((u) => u.role === 'coordenador' && cursosDe[u.id]?.length)
+    .filter((u) => RESPONDEM_PELO_CURSO.includes(u.role) && cursosDe[u.id]?.length)
     .map((u) => {
       const ids = [...new Set(cursosDe[u.id])]
       const cursos = ids.map((id) => porCurso[id] || { id, nome: id, modalidade: '' }).sort(ordCurso)

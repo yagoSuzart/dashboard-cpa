@@ -779,7 +779,7 @@ export async function baixarPdfPendencias({ base, pessoa, cob, conferidoEm = new
 
   let y = pdfCabecalho(doc, 'Planos de ação: o que falta entregar', pessoa.nome + ' · ' + cob.linhas.length + ' curso(s)/modalidade(s) · Situação conferida no Portal da CPA em ' + quando)
   y = paragrafo(doc, y, pend
-    ? 'Para cada curso que você coordena, a CPA espera um plano de ação ENVIADO para cada questionário e para cada modalidade de oferta (Presencial, EAD e Semipresencial têm planos próprios, mesmo quando o curso tem o mesmo nome). Abaixo está o gabarito do que já chegou para a análise e do que ainda falta. Só conta como entregue o plano enviado: plano escrito e não enviado (inclusive o do professor auxiliar, que depende da sua aprovação) não chega para a CPA.'
+    ? 'Para cada curso que você coordena, a CPA espera um plano de ação ENVIADO para cada questionário e para cada modalidade de oferta (Presencial, EAD e Semipresencial têm planos próprios, mesmo quando o curso tem o mesmo nome). Satisfação Geral e Docência e Tutoria não entram (Satisfação Geral não tem plano; o plano dos docentes é conduzido pelo RH). Os planos são montados em Resultados → Montar planos; se não houver pontos a melhorar em algum questionário, declare isso no mesmo lugar, com a sua justificativa. Abaixo está o gabarito do que já chegou para a análise e do que ainda falta. Só conta como entregue o plano enviado: plano escrito e não enviado (inclusive o do professor auxiliar, que depende da sua aprovação) não chega para a CPA.'
     : 'Todos os planos de ação dos seus cursos já foram enviados para a análise da CPA. Obrigado!', { cor: PDF_GRAY_TEXT, tam: 9 }) + 2
 
   // Resumo em quatro caixas

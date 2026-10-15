@@ -7,7 +7,7 @@ import { MODALIDADE_LABEL } from '../lib/config.js'
 import { fmtInt } from '../lib/cpa.js'
 import { CATEGORIAS_PLANO, carregarVinculos, rotuloStatus, useVinculos } from '../lib/planos.js'
 import {
-  CURTO_DIM, ESTADO_CELULA, acaoPendente, calcularCobertura, coberturaPorCoordenador, mensagemCobranca, nomeCurso,
+  CURTO_DIM, ESTADO_CELULA, RESPONDEM_PELO_CURSO, acaoPendente, calcularCobertura, coberturaPorCoordenador, mensagemCobranca, nomeCurso,
   ordCurso, situacaoEnvio, textoIndicio,
 } from '../lib/cobertura.js'
 import { Vazio } from '../components/ui.jsx'
@@ -62,7 +62,7 @@ export default function Acompanhar({ base, recarregarBase }) {
 
   const coordsDoCurso = (cid) => {
     const ids = new Set(vinculos.filter((v) => v.curso_id === cid).map((v) => v.usuario_id))
-    return base.usuarios.filter((u) => ids.has(u.id) && u.role === 'coordenador').map((u) => u.nome)
+    return base.usuarios.filter((u) => ids.has(u.id) && RESPONDEM_PELO_CURSO.includes(u.role)).map((u) => u.nome)
   }
   const atualizar = async () => {
     setAtualizando(true)
@@ -186,7 +186,7 @@ function Gabarito({ x, modo, filtro, setFiltro, base, coordsDoCurso, onPdf, pess
     <section className="card" style={{ gap: 14 }}>
       <div className="card-h">
         <div className="t">
-          <span className="eyebrow">{modo === 'coord' ? 'Coordenador' : 'Curso'} · {fmtInt(cob.total)} {cob.total === 1 ? 'curso/modalidade' : 'cursos/modalidades'}</span>
+          <span className="eyebrow">{modo === 'coord' ? (x.pessoa?.role === 'diretor_nucleo' ? 'Diretor(a) de núcleo' : 'Coordenador') : 'Curso'} · {fmtInt(cob.total)} {cob.total === 1 ? 'curso/modalidade' : 'cursos/modalidades'}</span>
           <h2 style={{ fontSize: 24 }}>{x.nome}</h2>
         </div>
         <div className="spacer" />
