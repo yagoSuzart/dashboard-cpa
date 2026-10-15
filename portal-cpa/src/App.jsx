@@ -15,6 +15,7 @@ import Professores from './views/Professores.jsx'
 import Comentarios from './views/Comentarios.jsx'
 import Triagem from './views/Triagem.jsx'
 import Planos from './views/Planos.jsx'
+import Acompanhar from './views/Acompanhar.jsx'
 import Nucleo from './views/Nucleo.jsx'
 import Setores from './views/Setores.jsx'
 import MeuSetor from './views/MeuSetor.jsx'
@@ -171,6 +172,7 @@ export default function App() {
           g: 'Planos',
           itens: [
             { k: 'planos', t: 'Planos de ação' },
+            ...(perfil.global ? [{ k: 'acompanhar', t: 'Acompanhar' }] : []),
             ...(r === 'admin' ? [{ k: 'triagem', t: 'Encaminhar aos setores' }] : []),
             ...(podeVerAgenda(perfil) ? [{ k: 'agenda', t: r === 'admin' ? 'Agenda e prazos' : 'Agenda de entregas' }] : []),
             ...(temCursos ? [{ k: 'feedback', t: 'Feedback para os alunos' }] : []),
@@ -254,6 +256,7 @@ export default function App() {
         {atual === 'professores' && <Professores {...props} />}
         {atual === 'comentarios' && <Comentarios {...props} />}
         {atual === 'planos' && <Planos {...props} key={param} />}
+        {atual === 'acompanhar' && <Acompanhar {...props} />}
         {atual === 'triagem' && <Triagem {...props} />}
         {atual === 'nucleo' && <Nucleo {...props} />}
         {atual === 'setores' && <Setores {...props} />}

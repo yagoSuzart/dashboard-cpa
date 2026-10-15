@@ -13,6 +13,7 @@
 //   baixarPdfSetor({ base, setorId, comentarios? })         → PDF de um setor             (CPA_setor_<id>.pdf)
 //   baixarPdfPlanos({ base, escopo, perfil })               → planos de todos os autores  (CPA_planos_de_acao_geral.pdf)
 //   baixarPdfMeuPlano({ base, perfil })                     → planos de quem está logado  (CPA_meu_plano_<nome>.pdf)
+//   baixarPdfPendencias({ base, pessoa, cob })              → gabarito e pendências de um coordenador (CPA_pendencias_<nome>.pdf)
 //
 //   base: o objeto `base` do App (cursos, notas, setores, setorPerguntas, usuarios...).
 //   escopo: ids dos cursos visíveis para a pessoa (prop `escopo` do App).
@@ -24,6 +25,8 @@ import { sb, buscarComentarios, carregarTurmas, ciclosImportados, resultadosCurs
 import { DIMENSOES, SATISFACAO, META, MODALIDADE_LABEL, ROLE_LABELS } from './config.js'
 import { dimensaoDaPesquisa, estatisticas, fmtNota, nomeCurto, somarPorPergunta } from './cpa.js'
 import { mediasPorDimensao } from './escopo.js'
+import { CATEGORIAS_PLANO } from './planos.js'
+import { acaoPendente, nomeCurso } from './cobertura.js'
 
 const PDF_NAVY = [18, 57, 94]
 const PDF_BLUE = [28, 109, 179]
@@ -748,4 +751,91 @@ function nomeAreaPdf(area, setores = []) {
   if (area === 'polos') return 'Polos (EAD/Semipresencial)'
   if (area === 'outro') return 'Financeiro / Outra área'
   return area || ''
+}
+
+// ---------- pendências de planos de ação de um coordenador ----------
+// Cores das células do gabarito (mesmas da tela de Acompanhar)
+const COR_ESTADO = {
+  ok: { f: [221, 242, 228], t: [22, 101, 52] },
+  nao_enviado: { f: [236, 228, 250], t: [91, 33, 182] },
+  devolvido: { f: [253, 236, 211], t: [146, 64, 14] },
+  falta: { f: [190, 38, 38], t: [255, 255, 255] },
+}
+// Cabeçalhos curtos para caber nas colunas do PDF
+const CURTO_PDF = { 'Conteúdo das Disciplinas': 'Conteúdo', 'Infraestrutura e Atendimento': 'Infraestr.', 'Políticas Acadêmicas': 'Pol. Acad.', 'Políticas de Gestão': 'Pol. Gestão', 'Docência e Tutoria': 'Docência', 'Satisfação Geral': 'Satisfação' }
+const SIGLA_ESTADO = { ok: 'ENVIADO', nao_enviado: 'NÃO ENVIADO', devolvido: 'DEVOLVIDO', falta: 'FALTA' }
+
+export async function baixarPdfPendencias({ base, pessoa, cob } = {}) {
+  if (!pessoa || !cob?.linhas?.length) throw new Error('Este coordenador não tem cursos vinculados.')
+  const doc = await novoDocumento()
+  const nomeDe = (id) => base.usuarios.find((u) => u.id === id)?.nome || ''
+  const conta = { ok: 0, nao_enviado: 0, devolvido: 0, falta: 0 }
+  for (const l of cob.linhas) for (const d of CATEGORIAS_PLANO) conta[l.estado[d]]++
+  const pend = conta.nao_enviado + conta.devolvido + conta.falta
+  const total = cob.linhas.length * CATEGORIAS_PLANO.length
+  const modal = (c) => MODALIDADE_LABEL[c.modalidade] || c.modalidade || ''
+
+  let y = pdfCabecalho(doc, 'Planos de ação: o que falta entregar', pessoa.nome + ' · ' + cob.linhas.length + ' curso(s)/modalidade(s) · Gerado em ' + hoje())
+  y = paragrafo(doc, y, pend
+    ? 'Para cada curso que você coordena, a CPA espera um plano de ação ENVIADO para cada questionário. Abaixo está o gabarito do que já chegou para a análise e do que ainda falta. Só conta como entregue o plano enviado: plano escrito e não enviado (inclusive o do professor auxiliar, que depende da sua aprovação) não chega para a CPA.'
+    : 'Todos os planos de ação dos seus cursos já foram enviados para a análise da CPA. Obrigado!', { cor: PDF_GRAY_TEXT, tam: 9 }) + 2
+
+  // Resumo em quatro caixas
+  y = cabe(doc, y, 22)
+  const caixas = [['ok', 'Enviados'], ['nao_enviado', 'Escritos, não enviados'], ['devolvido', 'Devolvidos'], ['falta', 'Faltando']]
+  const wc = (L - 3 * 4) / 4
+  caixas.forEach(([k, t], i) => {
+    const x = M + i * (wc + 4), cor = COR_ESTADO[k]
+    doc.setFillColor(...cor.f); doc.roundedRect(x, y, wc, 18, 2.5, 2.5, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(...cor.t)
+    doc.text(String(conta[k]), x + 4, y + 9)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+    doc.text(t, x + 4, y + 14.5)
+  })
+  y += 22
+  y = paragrafo(doc, y, pend + ' pendência(s) de ' + total + ' itens (curso × questionário).', { estilo: 'bold', cor: PDF_INK, tam: 9.5 }) + 1
+
+  // Gabarito: cursos × questionários
+  y = secao(doc, y, 'Gabarito', 'Linhas = cursos (curso + modalidade). Colunas = questionários (Conteúdo das Disciplinas, Infraestrutura e Atendimento, Políticas Acadêmicas, Políticas de Gestão, Docência e Tutoria, Satisfação Geral). ENVIADO = já chegou para a CPA; NÃO ENVIADO = escrito e parado; DEVOLVIDO = voltou com comentário; FALTA = não há plano.')
+  const wDim = 22, wCurso = L - wDim * CATEGORIAS_PLANO.length
+  const colunas = [{ t: 'Curso · modalidade', w: wCurso }, ...CATEGORIAS_PLANO.map((d) => ({ t: CURTO_PDF[d] || d, w: wDim, a: 'center' }))]
+  const linhas = cob.linhas.map((l) => [
+    { v: nomeCurso(l.curso) + ' · ' + modal(l.curso), b: true },
+    ...CATEGORIAS_PLANO.map((d) => ({ v: SIGLA_ESTADO[l.estado[d]], cor: COR_ESTADO[l.estado[d]], b: true })),
+  ])
+  doc.setFontSize(7)
+  y = tabela(doc, y, colunas, linhas, { fonte: 7 })
+
+  // O que fazer, curso a curso
+  const pendentes = cob.linhas.filter((l) => l.faltam.length)
+  if (pendentes.length) {
+    y = secao(doc, y, 'O que fazer, curso a curso', 'Só aparecem os cursos com pendência.')
+    for (const l of pendentes) {
+      y = cabe(doc, y, 14)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...PDF_INK)
+      doc.text(nomeCurso(l.curso) + ' · ' + modal(l.curso) + '  (' + l.faltam.length + ' pendência' + (l.faltam.length > 1 ? 's' : '') + ')', M, y)
+      y += 5
+      for (const d of l.faltam) {
+        const e = l.estado[d], cor = COR_ESTADO[e]
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
+        const txt = doc.splitTextToSize(d + ': ' + acaoPendente(e, l.planosDim[d], nomeDe), L - 30)
+        const h = txt.length * 4 + 2
+        y = cabe(doc, y, h)
+        doc.setFillColor(...cor.f); doc.roundedRect(M + 2, y - 3.4, 24, 5, 1.2, 1.2, 'F')
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(...cor.t)
+        doc.text(SIGLA_ESTADO[e], M + 14, y + 0.1, { align: 'center' })
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(50, 54, 66)
+        doc.text(txt, M + 29, y)
+        y += h
+      }
+      y += 3
+    }
+    y = cabe(doc, y + 2, 30)
+    pdfCaixaDestaque(doc, M, y, L, 27, PDF_AMBER, [253, 246, 232], 'Atenção',
+      'Se você já escreveu algum destes planos, confira se clicou em Enviar: plano escrito e não enviado não chega para a CPA aprovar. Planos do professor auxiliar precisam da sua revisão e envio. Qualquer dúvida, fale com a CPA.')
+  }
+
+  pdfRodapeTodasPaginas(doc)
+  doc.save('CPA_pendencias_' + String(pessoa.nome).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.pdf')
+  return 'PDF de pendências de ' + pessoa.nome + ' gerado (' + pend + ' pendência' + (pend === 1 ? '' : 's') + ').'
 }
