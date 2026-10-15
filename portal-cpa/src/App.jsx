@@ -104,7 +104,7 @@ export default function App() {
     }
   }, [userId])
 
-  const recarregarBase = useCallback(() => carregarBase().then(setBase), [])
+  const recarregarBase = useCallback(() => carregarBase().then((b) => { setBase(b); return b }), [])
   // Depois de enviar um plano: dá baixa na cobrança de entrega pendente (como no sistema anterior)
   const aoEnviarPlano = useCallback(() => perfil && verificarCumprimentoEntrega(perfil), [perfil])
 

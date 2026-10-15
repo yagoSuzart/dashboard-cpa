@@ -140,3 +140,11 @@
   .ac-curso-pend li { grid-template-columns: 1fr; }
   .ac-tabela .ac-col-curso { min-width: 150px; }
 }
+.ac-cel.conferir { background: #fff4c7; color: #7a5a00; border: 1px dashed #c9a227; }
+.ac-topo { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.ac-conferido { display: flex; gap: 8px; align-items: center; }
+.ac-selos { display: inline-flex; gap: 4px; flex: none; }
+.ac-pend.conf { background: #fff4c7; color: #7a5a00; }
+.ac-conferir { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; background: #fffbea; border: 1px dashed #e0c25a; }
+.ac-conferir p { margin: 0; }
+.ac-recebidos td { font-size: 13px; }

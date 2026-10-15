@@ -26,7 +26,7 @@ import { DIMENSOES, SATISFACAO, META, MODALIDADE_LABEL, ROLE_LABELS } from './co
 import { dimensaoDaPesquisa, estatisticas, fmtNota, nomeCurto, somarPorPergunta } from './cpa.js'
 import { mediasPorDimensao } from './escopo.js'
 import { CATEGORIAS_PLANO } from './planos.js'
-import { acaoPendente, nomeCurso } from './cobertura.js'
+import { acaoPendente, nomeCurso, situacaoEnvio, textoIndicio } from './cobertura.js'
 
 const PDF_NAVY = [18, 57, 94]
 const PDF_BLUE = [28, 109, 179]
@@ -760,22 +760,24 @@ const COR_ESTADO = {
   nao_enviado: { f: [236, 228, 250], t: [91, 33, 182] },
   devolvido: { f: [253, 236, 211], t: [146, 64, 14] },
   falta: { f: [190, 38, 38], t: [255, 255, 255] },
+  conferir: { f: [255, 244, 199], t: [122, 90, 0] },
 }
 // Cabeçalhos curtos para caber nas colunas do PDF
 const CURTO_PDF = { 'Conteúdo das Disciplinas': 'Conteúdo', 'Infraestrutura e Atendimento': 'Infraestr.', 'Políticas Acadêmicas': 'Pol. Acad.', 'Políticas de Gestão': 'Pol. Gestão', 'Docência e Tutoria': 'Docência', 'Satisfação Geral': 'Satisfação' }
-const SIGLA_ESTADO = { ok: 'ENVIADO', nao_enviado: 'NÃO ENVIADO', devolvido: 'DEVOLVIDO', falta: 'FALTA' }
+const SIGLA_ESTADO = { ok: 'ENVIADO', nao_enviado: 'NÃO ENVIADO', devolvido: 'DEVOLVIDO', falta: 'FALTA', conferir: 'CONFIRMAR' }
 
-export async function baixarPdfPendencias({ base, pessoa, cob } = {}) {
+export async function baixarPdfPendencias({ base, pessoa, cob, conferidoEm = new Date() } = {}) {
   if (!pessoa || !cob?.linhas?.length) throw new Error('Este coordenador não tem cursos vinculados.')
   const doc = await novoDocumento()
   const nomeDe = (id) => base.usuarios.find((u) => u.id === id)?.nome || ''
-  const conta = { ok: 0, nao_enviado: 0, devolvido: 0, falta: 0 }
+  const conta = { ok: 0, nao_enviado: 0, devolvido: 0, falta: 0, conferir: 0 }
   for (const l of cob.linhas) for (const d of CATEGORIAS_PLANO) conta[l.estado[d]]++
   const pend = conta.nao_enviado + conta.devolvido + conta.falta
+  const quando = conferidoEm.toLocaleDateString('pt-BR') + ' às ' + conferidoEm.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   const total = cob.linhas.length * CATEGORIAS_PLANO.length
   const modal = (c) => MODALIDADE_LABEL[c.modalidade] || c.modalidade || ''
 
-  let y = pdfCabecalho(doc, 'Planos de ação: o que falta entregar', pessoa.nome + ' · ' + cob.linhas.length + ' curso(s)/modalidade(s) · Gerado em ' + hoje())
+  let y = pdfCabecalho(doc, 'Planos de ação: o que falta entregar', pessoa.nome + ' · ' + cob.linhas.length + ' curso(s)/modalidade(s) · Situação conferida no Portal da CPA em ' + quando)
   y = paragrafo(doc, y, pend
     ? 'Para cada curso que você coordena, a CPA espera um plano de ação ENVIADO para cada questionário. Abaixo está o gabarito do que já chegou para a análise e do que ainda falta. Só conta como entregue o plano enviado: plano escrito e não enviado (inclusive o do professor auxiliar, que depende da sua aprovação) não chega para a CPA.'
     : 'Todos os planos de ação dos seus cursos já foram enviados para a análise da CPA. Obrigado!', { cor: PDF_GRAY_TEXT, tam: 9 }) + 2
@@ -793,10 +795,10 @@ export async function baixarPdfPendencias({ base, pessoa, cob } = {}) {
     doc.text(t, x + 4, y + 14.5)
   })
   y += 22
-  y = paragrafo(doc, y, pend + ' pendência(s) de ' + total + ' itens (curso × questionário).', { estilo: 'bold', cor: PDF_INK, tam: 9.5 }) + 1
+  y = paragrafo(doc, y, pend + ' pendência(s) de ' + total + ' itens (curso × questionário)' + (conta.conferir ? ' · ' + conta.conferir + ' item(ns) para confirmar com você.' : '.'), { estilo: 'bold', cor: PDF_INK, tam: 9.5 }) + 1
 
   // Gabarito: cursos × questionários
-  y = secao(doc, y, 'Gabarito', 'Linhas = cursos (curso + modalidade). Colunas = questionários (Conteúdo das Disciplinas, Infraestrutura e Atendimento, Políticas Acadêmicas, Políticas de Gestão, Docência e Tutoria, Satisfação Geral). ENVIADO = já chegou para a CPA; NÃO ENVIADO = escrito e parado; DEVOLVIDO = voltou com comentário; FALTA = não há plano.')
+  y = secao(doc, y, 'Gabarito', 'Linhas = cursos (curso + modalidade). Colunas = questionários (Conteúdo das Disciplinas, Infraestrutura e Atendimento, Políticas Acadêmicas, Políticas de Gestão, Docência e Tutoria, Satisfação Geral). ENVIADO = já chegou para a CPA; NÃO ENVIADO = escrito e parado; DEVOLVIDO = voltou com comentário; FALTA = não há plano; CONFIRMAR = há plano em outra modalidade, precisamos confirmar se vale para esta.')
   const wDim = 22, wCurso = L - wDim * CATEGORIAS_PLANO.length
   const colunas = [{ t: 'Curso · modalidade', w: wCurso }, ...CATEGORIAS_PLANO.map((d) => ({ t: CURTO_PDF[d] || d, w: wDim, a: 'center' }))]
   const linhas = cob.linhas.map((l) => [
@@ -830,10 +832,44 @@ export async function baixarPdfPendencias({ base, pessoa, cob } = {}) {
       }
       y += 3
     }
-    y = cabe(doc, y + 2, 30)
-    pdfCaixaDestaque(doc, M, y, L, 27, PDF_AMBER, [253, 246, 232], 'Atenção',
-      'Se você já escreveu algum destes planos, confira se clicou em Enviar: plano escrito e não enviado não chega para a CPA aprovar. Planos do professor auxiliar precisam da sua revisão e envio. Qualquer dúvida, fale com a CPA.')
   }
+
+  // Para confirmar: há plano enviado em outra modalidade do mesmo curso
+  const aConferir = cob.linhas.filter((l) => l.conferir.length)
+  if (aConferir.length) {
+    y = secao(doc, y, 'Para confirmar com você', 'Não encontramos plano nestas modalidades, mas há plano enviado do mesmo questionário em outra modalidade do mesmo curso. Se ele vale também para esta modalidade, basta responder confirmando; se não, escreva e envie o plano desta modalidade.')
+    for (const l of aConferir) {
+      y = cabe(doc, y, 12)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...PDF_INK)
+      doc.text(nomeCurso(l.curso) + ' · ' + modal(l.curso), M, y)
+      y += 5
+      for (const d of l.conferir) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
+        const txt = doc.splitTextToSize(d + ': há ' + textoIndicio(l.indicios[d], l.curso, base) + '.', L - 30)
+        const h = txt.length * 4 + 2
+        y = cabe(doc, y, h)
+        doc.setFillColor(...COR_ESTADO.conferir.f); doc.roundedRect(M + 2, y - 3.4, 24, 5, 1.2, 1.2, 'F')
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(...COR_ESTADO.conferir.t)
+        doc.text(SIGLA_ESTADO.conferir, M + 14, y + 0.1, { align: 'center' })
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(50, 54, 66)
+        doc.text(txt, M + 29, y)
+        y += h
+      }
+      y += 3
+    }
+  }
+
+  // O que já recebemos: o registro do que chegou para a CPA
+  const recebidos = cob.linhas.flatMap((l) => CATEGORIAS_PLANO.flatMap((d) => l.planosDim[d].filter((p) => situacaoEnvio(p) === 'enviado').map((p) => ({ l, d, p }))))
+  y = secao(doc, y, 'O que já recebemos', recebidos.length ? 'Planos enviados que constam no Portal da CPA em ' + quando + '.' : 'Nenhum plano enviado consta no Portal da CPA em ' + quando + '.')
+  if (recebidos.length) {
+    y = tabela(doc, y, [{ t: 'Curso · modalidade', w: 46 }, { t: 'Questionário', w: 32 }, { t: 'Plano', w: 57 }, { t: 'Situação', w: 24 }, { t: 'Registrado', w: 21, a: 'center' }],
+      recebidos.map(({ l, d, p }) => [nomeCurso(l.curso) + ' · ' + modal(l.curso), CURTO_PDF[d] || d, p.titulo || '—', statusTexto(p.status).replace(' — ainda não enviado', ''), p.criado_em ? new Date(p.criado_em).toLocaleDateString('pt-BR') : '—']), { fonte: 7.5 })
+  }
+
+  y = cabe(doc, y + 2, 34)
+  pdfCaixaDestaque(doc, M, y, L, 31, PDF_AMBER, [253, 246, 232], 'Atenção',
+    'Se você já escreveu algum destes planos, confira se clicou em Enviar: plano escrito e não enviado não chega para a CPA aprovar. Planos do professor auxiliar precisam da sua revisão e envio. Se você enviou algum plano que não aparece em "O que já recebemos", responda com o título dele que a CPA confere.')
 
   pdfRodapeTodasPaginas(doc)
   doc.save('CPA_pendencias_' + String(pessoa.nome).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.pdf')
