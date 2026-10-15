@@ -96,3 +96,14 @@
 .tr-extras legend { margin-bottom: 6px; }
 .tr-extras label { display: flex; gap: 6px; align-items: center; }
 @media (max-width: 700px) { .tr-extras { grid-template-columns: 1fr; min-width: 0; } }
+.cob-parado { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #efe9fb; color: #4a3290; font-weight: 700; white-space: nowrap; }
+.selo.roxo { background: #efe9fb; color: #4a3290; }
+/* ---------- Cobrar coordenador ---------- */
+.selo.vermelho.cb-falta { background: #fbe0d6; color: #8e3413; }
+.cb-curso { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line-2); }
+.cb-lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.cb-lista .cb-item { text-align: left; justify-items: start; display: grid; grid-template-columns: 200px 220px 1fr; gap: 10px; align-items: center; padding: 6px 10px; border-radius: 10px; background: var(--track, #f1f4f8); }
+.cb-item.ok { background: var(--green-soft); }
+.cb-dim { font-weight: 600; font-size: 14px; }
+.cb-planos { line-height: 1.4; }
+@media (max-width: 800px) { .cb-item { grid-template-columns: 1fr; } }

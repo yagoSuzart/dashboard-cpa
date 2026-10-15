@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { MODALIDADE_LABEL } from '../lib/config.js'
 import { fmtInt } from '../lib/cpa.js'
 import { CATEGORIAS_PLANO, useVinculos } from '../lib/planos.js'
-import { calcularCobertura, cursosDaPessoa, nomeCurso, ordCurso, planosDaCobertura } from '../lib/cobertura.js'
+import { ESTADO_CELULA, calcularCobertura, cursosDaPessoa, nomeCurso, ordCurso, planosDaCobertura } from '../lib/cobertura.js'
 import { Vazio } from './ui.jsx'
 
 // Nomes curtos das colunas (o nome completo fica no title)
@@ -32,19 +32,23 @@ export function MatrizCobertura({ cob }) {
         </thead>
         <tbody>
           {cob.linhas.map((l) => (
-            <tr key={l.curso.id} className={l.total ? '' : 'sem-plano'}>
+            <tr key={l.curso.id} className={l.enviados ? '' : 'sem-plano'}>
               <th scope="row" className="cob-curso">
                 <b>{nomeCurso(l.curso)}</b>
                 <span className="small muted">
-                  {modalidade(l.curso)} · {l.total ? `${fmtInt(l.total)} ${l.total === 1 ? 'plano' : 'planos'}` : 'nenhum plano'}
+                  {modalidade(l.curso)} · {l.total ? `${fmtInt(l.enviados)} de ${fmtInt(l.total)} ${l.total === 1 ? 'plano enviado' : 'planos enviados'}` : 'nenhum plano'}
                   {l.semDim > 0 && ` (${l.semDim} sem dimensão)`}
                 </span>
               </th>
               {CATEGORIAS_PLANO.map((d) => {
-                const n = l.porDim[d]
+                const e = l.estado[d]
+                const n = e === 'ok' ? l.enviadosDim[d] : l.porDim[d]
                 return (
-                  <td key={d} title={`${nomeCurso(l.curso)} (${modalidade(l.curso)}) · ${d}: ${n ? n + (n === 1 ? ' plano' : ' planos') : 'sem plano'}`}>
-                    {n ? <span className="cob-ok">✓ {n}</span> : <span className="cob-falta">falta</span>}
+                  <td key={d} title={`${nomeCurso(l.curso)} (${modalidade(l.curso)}) · ${d}: ${ESTADO_CELULA[e].t}`}>
+                    {e === 'ok' && <span className="cob-ok">✓ {n}</span>}
+                    {e === 'nao_enviado' && <span className="cob-parado">✎ não enviado</span>}
+                    {e === 'devolvido' && <span className="cob-falta">↩ devolvido</span>}
+                    {e === 'falta' && <span className="cob-falta">falta</span>}
                   </td>
                 )
               })}
@@ -60,9 +64,10 @@ export function ResumoCobertura({ cob }) {
   const fora = cob.total - cob.comPlano
   return (
     <div className="chips" style={{ gap: 6 }}>
-      <span className={'selo ' + (fora ? 'laranja' : 'verde')}>{fmtInt(cob.comPlano)} de {fmtInt(cob.total)} {cob.total === 1 ? 'curso' : 'cursos'} com plano</span>
+      <span className={'selo ' + (fora ? 'laranja' : 'verde')}>{fmtInt(cob.comPlano)} de {fmtInt(cob.total)} {cob.total === 1 ? 'curso' : 'cursos'} com plano enviado</span>
+      {cob.paradas > 0 && <span className="selo roxo">{fmtInt(cob.paradas)} {cob.paradas === 1 ? 'dimensão escrita e não enviada (ou devolvida)' : 'dimensões escritas e não enviadas (ou devolvidas)'}</span>}
       <span className="selo cinza">{fmtInt(cob.completos)} com as 6 dimensões cobertas</span>
-      {fora > 0 && <span className="selo laranja">{fmtInt(fora)} {fora === 1 ? 'curso sem nenhum plano' : 'cursos sem nenhum plano'}</span>}
+      {fora > 0 && <span className="selo laranja">{fmtInt(fora)} {fora === 1 ? 'curso sem nenhum plano enviado' : 'cursos sem nenhum plano enviado'}</span>}
     </div>
   )
 }
@@ -87,7 +92,7 @@ export function CoberturaMinha({ perfil, base }) {
       {aberto && (
         <>
           <MatrizCobertura cob={cob} />
-          <p className="small muted">Contam os seus planos e os dos professores auxiliares / coordenadores adjuntos dos mesmos cursos, em qualquer situação. Um plano pode tratar mais de uma dimensão.</p>
+          <p className="small muted">✓ = enviado para a análise. <b>✎ não enviado</b> = está escrito, mas ainda não foi enviado (ex.: plano do auxiliar esperando você aprovar e enviar). <b>↩ devolvido</b> = voltou com comentário e falta reenviar. Contam os seus planos e os dos auxiliares / coordenadores adjuntos dos mesmos cursos.</p>
         </>
       )}
     </section>
@@ -181,34 +186,34 @@ export function CoberturaPessoa({ base, pessoa }) {
     if (!grupos.has(k)) grupos.set(k, [])
     grupos.get(k).push(l)
   }
-  const faltando = cob.linhas.filter((l) => !l.total)
+  const faltando = cob.linhas.filter((l) => !l.enviados)
   return (
     <section className="card" style={{ gap: 12 }}>
       <div className="card-h">
         <div className="t">
           <span className="eyebrow">Entrega dos planos por curso</span>
-          <h3 style={{ fontSize: 20 }}>{pessoa.nome} · {fmtInt(cob.comPlano)} de {fmtInt(cob.total)} {cob.total === 1 ? 'curso entregue' : 'cursos entregues'}</h3>
+          <h3 style={{ fontSize: 20 }}>{pessoa.nome} · {fmtInt(cob.comPlano)} de {fmtInt(cob.total)} {cob.total === 1 ? 'curso entregue (enviado)' : 'cursos entregues (enviados)'}</h3>
         </div>
         <div className="spacer" />
         <span className={'selo ' + (faltando.length ? 'laranja' : 'verde')}>{faltando.length ? `${faltando.length} ${faltando.length === 1 ? 'curso sem plano' : 'cursos sem plano'}` : 'Todos os cursos entregues'}</span>
       </div>
       {faltando.length > 0 && (
         <div className="aviso erro" style={{ flexDirection: 'column', gap: 4 }}>
-          <b className="small">Faltou plano para:</b>
+          <b className="small">Faltou plano enviado para:</b>
           <span className="small">{faltando.map((l) => `${nomeCurso(l.curso)} · ${modalidade(l.curso)}`).join(' · ')}</span>
         </div>
       )}
       <div className="cob-check">
         {[...grupos.entries()].map(([nome, linhas]) => {
-          const ok = linhas.every((l) => l.total)
+          const ok = linhas.every((l) => l.enviados)
           return (
             <div key={nome} className={'cob-check-linha ' + (ok ? 'ok' : 'falta')}>
               <span className="cob-check-icone" aria-hidden="true">{ok ? '✓' : '!'}</span>
               <b className="cob-check-nome">{nome}</b>
               <span className="cob-check-mods">
                 {linhas.map((l) => (
-                  <span key={l.curso.id} className={'selo ' + (l.total ? 'verde' : 'laranja')}>
-                    {l.total ? '✓' : '✗'} {modalidade(l.curso)} · {l.total ? `${l.total} ${l.total === 1 ? 'plano' : 'planos'}` : 'falta'}
+                  <span key={l.curso.id} className={'selo ' + (l.enviados ? 'verde' : l.total ? 'roxo' : 'laranja')}>
+                    {l.enviados ? '✓' : '✗'} {modalidade(l.curso)} · {l.enviados ? `${l.enviados} ${l.enviados === 1 ? 'plano enviado' : 'planos enviados'}` : l.total ? 'escrito, não enviado' : 'falta'}
                   </span>
                 ))}
               </span>

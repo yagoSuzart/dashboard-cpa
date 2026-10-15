@@ -10,6 +10,7 @@ import ItemPlano from '../components/ItemPlano.jsx'
 import PlanoSituacao, { SelosSituacao } from '../components/PlanoSituacao.jsx'
 import { CoberturaGeral, CoberturaMinha, CoberturaPessoa } from '../components/PlanoCobertura.jsx'
 import PlanoGabarito from '../components/PlanoGabarito.jsx'
+import PlanoCobranca from '../components/PlanoCobranca.jsx'
 import { coberturaResumida } from '../lib/cobertura.js'
 import { ESCREVE_PLANO, SELO_STATUS, SITUACOES, fmtData, autorRotulo, contarSituacoes, devolvidoAoCoordenador, nomeArea, rotuloStatus, seloPrazo, situacaoDe, urgencia, useVinculos } from '../lib/planos.js'
 import './planos.css'
@@ -29,7 +30,7 @@ export default function Planos(props) {
   const abas = [
     ...(podeEscrever || meus.length ? [{ k: 'meus', t: `Meus planos (${meus.length})` }] : []),
     ...(equipe.length ? [{ k: 'equipe', t: `Planos da equipe (${equipe.filter((p) => p.status === 'aguardando_coordenador').length} para revisar)` }] : []),
-    ...(supervisor ? [{ k: 'gabarito', t: 'Gabarito por curso' }, { k: 'acompanhamento', t: 'Acompanhamento' }, { k: 'cobertura', t: 'Cobertura' }] : []),
+    ...(supervisor ? [{ k: 'cobrar', t: 'Cobrar coordenador' }, { k: 'gabarito', t: 'Gabarito por curso' }, { k: 'acompanhamento', t: 'Acompanhamento' }, { k: 'cobertura', t: 'Cobertura' }] : []),
     { k: 'todos', t: 'Todos os planos' },
   ]
   const [aba, setAba] = useState(abas.some((a) => a.k === param) ? param : param && statusValido(param) ? 'todos' : abas[0].k)
@@ -60,6 +61,7 @@ export default function Planos(props) {
       {aba === 'meus' && <MeusPlanos {...{ perfil, base, meus, podeEscrever, mudou, aoEnviarPlano }} />}
       {aba === 'equipe' && <Equipe {...{ perfil, base, equipe, mudou }} />}
       {aba === 'acompanhamento' && <Acompanhamento {...{ perfil, base, planos, mudou }} />}
+      {aba === 'cobrar' && <PlanoCobranca base={base} />}
       {aba === 'gabarito' && <PlanoGabarito {...{ perfil, base, mudou }} />}
       {aba === 'cobertura' && <CoberturaGeral base={base} />}
       {aba === 'todos' && <Todos {...{ perfil, base, planos, status, setStatus, mudou }} />}
