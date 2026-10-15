@@ -25,15 +25,16 @@ export const ESTADO_CELULA = {
   devolvido: { t: 'Devolvido, falta reenviar', c: 'laranja' },
   nao_enviado: { t: 'Escrito, mas não enviado', c: 'roxo' },
   falta: { t: 'Falta fazer', c: 'vermelho' },
-  conferir: { t: 'A confirmar: há plano enviado em outra modalidade', c: 'amarelo' },
+  conferir: { t: 'A confirmar: há plano enviado por outra pessoa neste curso', c: 'amarelo' },
 }
 
 // Conta, por curso e por dimensão, os planos e a situação de envio de cada célula.
-// Margem de segurança (opcional): com { referencia: todos os planos, cursos: todos os cursos }, a célula que
-// daria "falta" mas tem plano ENVIADO para o mesmo curso em outra modalidade (ou por outra pessoa no mesmo
-// curso) vira "conferir": não conta como pendência até a CPA confirmar se aquele plano vale para esta modalidade.
-export function calcularCobertura(cursos, planos, { referencia = null, todosCursos = [] } = {}) {
-  const nomeDoCurso = Object.fromEntries(todosCursos.map((c) => [c.id, nomeCurso(c)]))
+// Regra da CPA: um plano para cada curso, cada modalidade de oferta e cada questionário. Plano de outra
+// modalidade NÃO cobre esta, mesmo que o curso tenha o mesmo nome.
+// Margem de segurança (opcional): com { referencia: todos os planos }, a célula que daria "falta" mas tem plano
+// ENVIADO para o mesmo curso e a mesma modalidade por outra pessoa (ex.: outro coordenador ou diretor de núcleo)
+// vira "conferir": não conta como pendência até a CPA confirmar.
+export function calcularCobertura(cursos, planos, { referencia = null } = {}) {
   const enviadosRef = (referencia || []).filter((p) => p.tipo !== 'setor' && situacaoEnvio(p) === 'enviado')
   const linhas = cursos.map((c) => {
     const doCurso = planos.filter((p) => p.curso_id === c.id)
@@ -53,13 +54,12 @@ export function calcularCobertura(cursos, planos, { referencia = null, todosCurs
       const sits = planosDim[d].map(situacaoEnvio)
       return [d, sits.includes('enviado') ? 'ok' : sits.includes('devolvido') ? 'devolvido' : sits.length ? 'nao_enviado' : 'falta']
     }))
-    // Indícios: planos enviados do mesmo curso (outra modalidade ou outro autor) que podem cobrir a célula
+    // Indícios: planos enviados por outra pessoa no mesmo curso e modalidade
     const indicios = Object.fromEntries(CATEGORIAS_PLANO.map((d) => [d, []]))
     if (enviadosRef.length) {
-      const nome = nomeCurso(c)
       for (const d of CATEGORIAS_PLANO) {
         if (estado[d] !== 'falta') continue
-        indicios[d] = enviadosRef.filter((p) => !doCurso.includes(p) && dimensoesDe(p).includes(d) && (p.curso_id === c.id || nomeDoCurso[p.curso_id] === nome))
+        indicios[d] = enviadosRef.filter((p) => !doCurso.includes(p) && dimensoesDe(p).includes(d) && p.curso_id === c.id)
         if (indicios[d].length) estado[d] = 'conferir'
       }
     }
@@ -128,7 +128,7 @@ export function coberturaPorCoordenador(base, vinculos) {
     .map((u) => {
       const ids = [...new Set(cursosDe[u.id])]
       const cursos = ids.map((id) => porCurso[id] || { id, nome: id, modalidade: '' }).sort(ordCurso)
-      const cob = calcularCobertura(cursos, planosDaCobertura(base, u.id, ids), { referencia: base.planos, todosCursos: base.cursos })
+      const cob = calcularCobertura(cursos, planosDaCobertura(base, u.id, ids), { referencia: base.planos })
       const pend = cob.linhas.reduce((s, l) => s + l.faltam.length, 0)
       return { u, cob, pend }
     })
@@ -151,7 +151,7 @@ export function mensagemCobranca(nome, cob, modalidade = (c) => c.modalidade || 
   const pend = cob.linhas.flatMap((l) => l.faltam.map((d) => ({ l, d, e: l.estado[d] })))
   const conf = cob.linhas.flatMap((l) => l.conferir.map((d) => ({ l, d })))
   const blocoConf = conf.length
-    ? '\nPara confirmar com você (há plano enviado em outra modalidade do mesmo curso; ele vale também para esta?):\n' + conf.map((it) => `• ${nomeCurso(it.l.curso)} (${modalidade(it.l.curso)}) · ${it.d}`).join('\n') + '\n'
+    ? '\nPara confirmar com você (há plano enviado por outra pessoa neste curso e modalidade; ele é o seu plano para este questionário?):\n' + conf.map((it) => `• ${nomeCurso(it.l.curso)} (${modalidade(it.l.curso)}) · ${it.d}`).join('\n') + '\n'
     : ''
   if (!pend.length && conf.length) return `Olá, ${primeiro}! Tudo bem? Conferi no Portal da CPA os planos de ação dos seus cursos. Só preciso de uma confirmação:\n` + blocoConf + `\nObrigado!`
   if (!pend.length) return `Olá, ${primeiro}! Conferi no Portal da CPA e todos os seus planos de ação já foram enviados. Obrigado!`

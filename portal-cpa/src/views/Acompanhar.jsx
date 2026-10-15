@@ -29,7 +29,7 @@ function coberturaPorCurso(base) {
   }
   return [...grupos.entries()].map(([nome, cs]) => {
     const ids = new Set(cs.map((c) => c.id))
-    const cob = calcularCobertura(cs, base.planos.filter((p) => p.tipo !== 'setor' && ids.has(p.curso_id)), { referencia: base.planos, todosCursos: base.cursos })
+    const cob = calcularCobertura(cs, base.planos.filter((p) => p.tipo !== 'setor' && ids.has(p.curso_id)), { referencia: base.planos })
     const pend = cob.linhas.reduce((s, l) => s + l.faltam.length, 0)
     return { k: nome, nome, cob, pend }
   }).sort((a, b) => b.pend - a.pend || a.nome.localeCompare(b.nome, 'pt-BR'))
@@ -245,12 +245,12 @@ function Gabarito({ x, modo, filtro, setFiltro, base, coordsDoCurso, onPdf, pess
       {filtro !== 'concluidos' && aConferir.length > 0 && (
         <div className="ac-conferir">
           <b>? Confirme antes de cobrar ({conta.conferir})</b>
-          <p className="small muted">Não há plano nesta modalidade, mas existe plano <b>enviado</b> do mesmo questionário em outra modalidade do mesmo curso (ou de outra pessoa no curso). Estes itens <b>não</b> contam como pendência; no PDF aparecem como “para confirmar”.</p>
+          <p className="small muted">O coordenador não tem plano aqui, mas outra pessoa enviou plano deste questionário para este mesmo curso e modalidade. Estes itens <b>não</b> contam como pendência; no PDF aparecem como “para confirmar”.</p>
           {aConferir.map((l) => (
             <div key={l.curso.id} className="ac-curso-pend">
               <b>{nomeCurso(l.curso)} · {modalidade(l.curso)}</b>
               <ul>
-                {l.conferir.map((d) => <li key={d}><span className="ac-cel conferir">? {d}</span> Há {textoIndicio(l.indicios[d], l.curso, base)}. Vale também para esta modalidade?</li>)}
+                {l.conferir.map((d) => <li key={d}><span className="ac-cel conferir">? {d}</span> Há {textoIndicio(l.indicios[d], l.curso, base)}. Ele conta como o plano deste questionário?</li>)}
               </ul>
             </div>
           ))}

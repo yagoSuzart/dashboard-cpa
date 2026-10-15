@@ -779,7 +779,7 @@ export async function baixarPdfPendencias({ base, pessoa, cob, conferidoEm = new
 
   let y = pdfCabecalho(doc, 'Planos de ação: o que falta entregar', pessoa.nome + ' · ' + cob.linhas.length + ' curso(s)/modalidade(s) · Situação conferida no Portal da CPA em ' + quando)
   y = paragrafo(doc, y, pend
-    ? 'Para cada curso que você coordena, a CPA espera um plano de ação ENVIADO para cada questionário. Abaixo está o gabarito do que já chegou para a análise e do que ainda falta. Só conta como entregue o plano enviado: plano escrito e não enviado (inclusive o do professor auxiliar, que depende da sua aprovação) não chega para a CPA.'
+    ? 'Para cada curso que você coordena, a CPA espera um plano de ação ENVIADO para cada questionário e para cada modalidade de oferta (Presencial, EAD e Semipresencial têm planos próprios, mesmo quando o curso tem o mesmo nome). Abaixo está o gabarito do que já chegou para a análise e do que ainda falta. Só conta como entregue o plano enviado: plano escrito e não enviado (inclusive o do professor auxiliar, que depende da sua aprovação) não chega para a CPA.'
     : 'Todos os planos de ação dos seus cursos já foram enviados para a análise da CPA. Obrigado!', { cor: PDF_GRAY_TEXT, tam: 9 }) + 2
 
   // Resumo em quatro caixas
@@ -798,7 +798,7 @@ export async function baixarPdfPendencias({ base, pessoa, cob, conferidoEm = new
   y = paragrafo(doc, y, pend + ' pendência(s) de ' + total + ' itens (curso × questionário)' + (conta.conferir ? ' · ' + conta.conferir + ' item(ns) para confirmar com você.' : '.'), { estilo: 'bold', cor: PDF_INK, tam: 9.5 }) + 1
 
   // Gabarito: cursos × questionários
-  y = secao(doc, y, 'Gabarito', 'Linhas = cursos (curso + modalidade). Colunas = questionários (Conteúdo das Disciplinas, Infraestrutura e Atendimento, Políticas Acadêmicas, Políticas de Gestão, Docência e Tutoria, Satisfação Geral). ENVIADO = já chegou para a CPA; NÃO ENVIADO = escrito e parado; DEVOLVIDO = voltou com comentário; FALTA = não há plano; CONFIRMAR = há plano em outra modalidade, precisamos confirmar se vale para esta.')
+  y = secao(doc, y, 'Gabarito', 'Linhas = cursos (curso + modalidade). Colunas = questionários (Conteúdo das Disciplinas, Infraestrutura e Atendimento, Políticas Acadêmicas, Políticas de Gestão, Docência e Tutoria, Satisfação Geral). ENVIADO = já chegou para a CPA; NÃO ENVIADO = escrito e parado; DEVOLVIDO = voltou com comentário; FALTA = não há plano; CONFIRMAR = há plano de outra pessoa neste curso e modalidade, precisamos confirmar.')
   const wDim = 22, wCurso = L - wDim * CATEGORIAS_PLANO.length
   const colunas = [{ t: 'Curso · modalidade', w: wCurso }, ...CATEGORIAS_PLANO.map((d) => ({ t: CURTO_PDF[d] || d, w: wDim, a: 'center' }))]
   const linhas = cob.linhas.map((l) => [
@@ -834,10 +834,10 @@ export async function baixarPdfPendencias({ base, pessoa, cob, conferidoEm = new
     }
   }
 
-  // Para confirmar: há plano enviado em outra modalidade do mesmo curso
+  // Para confirmar: há plano enviado por outra pessoa neste curso e modalidade
   const aConferir = cob.linhas.filter((l) => l.conferir.length)
   if (aConferir.length) {
-    y = secao(doc, y, 'Para confirmar com você', 'Não encontramos plano nestas modalidades, mas há plano enviado do mesmo questionário em outra modalidade do mesmo curso. Se ele vale também para esta modalidade, basta responder confirmando; se não, escreva e envie o plano desta modalidade.')
+    y = secao(doc, y, 'Para confirmar com você', 'Não encontramos plano seu nestes itens, mas há plano enviado por outra pessoa para o mesmo curso, modalidade e questionário. Responda confirmando se ele é o plano deste item; se não for, escreva e envie o seu.')
     for (const l of aConferir) {
       y = cabe(doc, y, 12)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...PDF_INK)
