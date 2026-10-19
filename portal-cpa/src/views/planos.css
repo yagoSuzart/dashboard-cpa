@@ -183,3 +183,21 @@
 .pq-opcao.sem { border-color: var(--green); }
 .pq-opcao.sem b { color: var(--green-ink); }
 .pq-opcao:hover { background: var(--paper-2); }
+/* Feedback para os alunos */
+.fb-itens { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.fb-item { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; text-align: left; padding: 14px 16px; border-radius: 14px; border: 2px solid var(--line); background: #fff; }
+.fb-item:hover { background: var(--paper-2); }
+.fb-item.on { border-color: var(--blue); background: var(--blue-soft); }
+.fb-item.forte.on { border-color: var(--green); background: var(--green-soft); }
+.fb-check { width: 26px; height: 26px; border-radius: 8px; border: 2px solid #c9d6e3; display: grid; place-items: center; font-weight: 700; color: #fff; background: #fff; }
+.fb-item.on .fb-check { background: var(--blue); border-color: var(--blue); }
+.fb-item.forte.on .fb-check { background: var(--green); border-color: var(--green); }
+.fb-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fb-tipo { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--blue-ink); }
+.fb-item.forte .fb-tipo { color: var(--green-ink); }
+.fb-desc { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.fb-telas { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x mandatory; }
+.fb-tela { flex: 0 0 260px; margin: 0; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+.fb-tela img { width: 100%; aspect-ratio: 1080 / 1350; border-radius: 12px; box-shadow: 0 8px 24px rgba(20, 45, 80, .25); }
+.fb-tela .btn { justify-content: center; text-decoration: none; }
+@media (max-width: 600px) { .fb-tela { flex-basis: 78%; } }
