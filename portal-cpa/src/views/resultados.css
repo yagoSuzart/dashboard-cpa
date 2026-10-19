@@ -61,3 +61,13 @@
   .prof-pontos { grid-template-columns: minmax(0, 1fr); }
   .res-hero svg { width: 120px; height: 120px; }
 }
+/* Pontos fortes e a melhorar (questionário) */
+.q6-pontos-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.q6-titulo { display: block; margin-bottom: 8px; font-size: 15px; }
+.q6-titulo.forte { color: var(--green-ink); }
+.q6-titulo.melhorar { color: var(--ember-deep); }
+.q6-pontos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.q6-pontos li { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: start; font-size: 14px; line-height: 1.4; }
+.q6-nota { display: inline-flex; justify-content: center; padding: 3px 0; border-radius: 8px; font-weight: 700; }
+.q6-nota.forte { background: var(--green-soft); color: var(--green-ink); }
+.q6-nota.melhorar { background: var(--ember-soft); color: var(--ember-ink); }

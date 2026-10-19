@@ -171,3 +171,15 @@
 .mp-sem { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 12px; background: var(--green-soft); border: 1px solid #b7e2c8; }
 .mp-sem textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-size: 14px; line-height: 1.45; resize: vertical; }
 @media (max-width: 700px) { .mp-progresso { grid-template-columns: 1fr; } }
+/* Bloco do plano no fim do questionário */
+.pq { display: flex; flex-direction: column; gap: 10px; }
+.pq-h { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pq-escolha { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pq-opcao { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 16px 18px; border-radius: 14px; border: 2px solid var(--line); background: #fff; }
+.pq-opcao b { font-size: 17px; }
+.pq-opcao span { font-size: 14px; color: var(--ink-2); line-height: 1.4; }
+.pq-opcao.plano { border-color: var(--blue); }
+.pq-opcao.plano b { color: var(--blue-ink); }
+.pq-opcao.sem { border-color: var(--green); }
+.pq-opcao.sem b { color: var(--green-ink); }
+.pq-opcao:hover { background: var(--paper-2); }

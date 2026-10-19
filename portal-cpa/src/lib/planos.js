@@ -210,8 +210,16 @@ export async function criarPlano(perfil, dados) {
 // Declaração "sem pontos a melhorar" de um curso + modalidade + questionário. Segue o mesmo envio de um plano
 // (vai para a análise da CPA; a do professor auxiliar passa antes pelo coordenador) e conta como entrega.
 export const TITULO_SEM_MELHORIA = 'Sem pontos a melhorar'
-export const TEXTO_SEM_MELHORIA =
-  'Analisamos os resultados deste questionário e os comentários dos alunos e não identificamos pontos que exijam um plano de melhoria neste momento. Os indicadores estão em bom nível, e seguiremos acompanhando e trabalhando para manter e elevar a qualidade do curso.'
+// Texto padrão: devolutiva carinhosa para os alunos (o coordenador pode ajustar antes de enviar)
+export function textoSemMelhoria(questionario) {
+  return `Queridos alunos, muito obrigado por participarem da avaliação da CPA!
+
+Lemos com atenção as notas e os comentários de vocês sobre ${questionario} e ficamos muito felizes: este é um ponto forte do nosso curso, construído junto com vocês, nossos professores e toda a equipe.
+
+Isso não significa que vamos parar por aqui. Seguiremos ouvindo as sugestões de vocês e trabalhando todos os dias para manter essa qualidade e elevar ainda mais a nossa nota no próximo ciclo.
+
+Contem sempre com a coordenação!`
+}
 export function criarDeclaracaoSemMelhoria(perfil, { curso_id, categoria, texto }) {
   return criarPlano(perfil, {
     tipo: 'curso',

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { SATISFACAO } from '../lib/config.js'
-import { carregarTurmas } from '../lib/dados.js'
-import { fmtInt, textoComentario } from '../lib/cpa.js'
+import { META, SATISFACAO } from '../lib/config.js'
+import { carregarTurmas, ciclosImportados, resultadosCursos } from '../lib/dados.js'
+import { dimensaoDaPesquisa, estatisticas, fmtInt, fmtNota, somarPorPergunta, textoComentario } from '../lib/cpa.js'
 import { cursosOrdenados, comentariosQuestionario, QUESTIONARIOS } from '../lib/criticos.js'
 import { Anel, Carregando, Erro, Vazio, Paginacao } from '../components/ui.jsx'
 import { FiltroCursos } from './Executiva.jsx'
@@ -120,6 +120,8 @@ function UmCurso({ q, curso, base, renderPlano }) {
         )}
       </section>
 
+      <PontosDoQuestionario cursoId={curso.id} categoria={categoria} />
+
       <section className="card">
         <div className="card-h">
           <div className="t">
@@ -204,5 +206,65 @@ function EixosDoQuestionario({ cod }) {
         ))}
       </div>
     </div>
+  )
+}
+
+// Pontos fortes e pontos a melhorar: as perguntas deste questionário com a maior e a menor nota no curso
+// (último ciclo importado, mesma soma da tela "Pergunta por pergunta")
+function PontosDoQuestionario({ cursoId, categoria }) {
+  const [estado, setEstado] = useState({ chave: null })
+  const chave = cursoId + '|' + categoria
+  useEffect(() => {
+    let vivo = true
+    ciclosImportados()
+      .then((cs) => (cs[0] ? resultadosCursos(cs[0].ciclo, [cursoId]) : []))
+      .then((r) => {
+        const itens = somarPorPergunta(r)
+          .filter((x) => dimensaoDaPesquisa(x.pesquisa) === categoria)
+          .map((x) => ({ k: x.survey_id + '|' + x.pergunta_posicao, pergunta: x.pergunta, ...estatisticas(x) }))
+          .filter((x) => x.media != null && x.n > 0)
+          .sort((a, b) => b.media - a.media)
+        if (vivo) setEstado({ chave, itens })
+      })
+      .catch((e) => vivo && setEstado({ chave, erro: e }))
+    return () => {
+      vivo = false
+    }
+  }, [chave, cursoId, categoria])
+  if (estado.chave !== chave) return <section className="card"><span className="small muted">Carregando os pontos fortes e a melhorar…</span></section>
+  if (estado.erro || !estado.itens.length) return null
+  const itens = estado.itens
+  const escala10 = itens[0].escala === '0a10'
+  const metade = Math.min(3, Math.ceil(itens.length / 2))
+  const fortes = itens.slice(0, metade)
+  const melhorar = itens.slice(-Math.min(3, itens.length - metade)).reverse()
+  return (
+    <section className="card">
+      <div className="card-h">
+        <div className="t">
+          <h2>Pontos fortes e pontos a melhorar</h2>
+          <p className="muted small">As perguntas deste questionário com a maior e a menor nota no curso{escala10 ? ' (escala de 0 a 10)' : ` (escala de 1 a 5; meta ${fmtNota(META, 1)})`}.</p>
+        </div>
+        <div className="spacer" />
+        <a className="small" href={'#/questionarios/' + cursoId}>Ver pergunta por pergunta →</a>
+      </div>
+      <div className="q6-pontos-grade">
+        <div><b className="q6-titulo forte">Pontos fortes</b><ListaPontos xs={fortes} tipo="forte" escala10={escala10} /></div>
+        {melhorar.length > 0 && <div><b className="q6-titulo melhorar">Pontos a melhorar</b><ListaPontos xs={melhorar} tipo="melhorar" escala10={escala10} /></div>}
+      </div>
+    </section>
+  )
+}
+
+function ListaPontos({ xs, tipo, escala10 }) {
+  return (
+    <ul className="q6-pontos">
+      {xs.map((x) => (
+        <li key={x.k} className={!escala10 && x.media < META ? 'abaixo' : ''}>
+          <span className={'q6-nota ' + tipo}>{fmtNota(x.media)}</span>
+          <span>{x.pergunta}<span className="small muted"> · {fmtInt(x.n)} respostas</span></span>
+        </li>
+      ))}
+    </ul>
   )
 }

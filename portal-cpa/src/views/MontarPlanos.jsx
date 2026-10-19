@@ -1,12 +1,12 @@
 // Montar planos: o lugar do coordenador para fazer os planos de melhoria. Um curso (curso + modalidade) por vez;
-// para cada questionário (as 5 dimensões; Satisfação Geral não tem plano) mostra a nota, o que já foi feito e o que
-// falta, com dois caminhos: montar o plano ou declarar que não há pontos a melhorar.
+// para cada questionário com plano do coordenador mostra a nota, o que já foi feito e o que falta. O card leva para a
+// página completa do questionário naquele curso (nota, pontos fortes e a melhorar, comentários), onde o coordenador
+// escolhe: montar o plano ou declarar que não há pontos a melhorar.
 import { useMemo, useState } from 'react'
 import { MODALIDADE_LABEL } from '../lib/config.js'
 import { fmtNota } from '../lib/cpa.js'
-import { CATEGORIAS_PLANO, TEXTO_SEM_MELHORIA, criarDeclaracaoSemMelhoria, rotuloStatus, statusDeEnvio } from '../lib/planos.js'
+import { CATEGORIAS_PLANO, rotuloStatus } from '../lib/planos.js'
 import { calcularCobertura, nomeCurso, ordCurso, situacaoEnvio } from '../lib/cobertura.js'
-import FormPlano from '../components/FormPlano.jsx'
 import { SeloNota, Vazio } from '../components/ui.jsx'
 import './planos.css'
 
@@ -19,7 +19,7 @@ const SITUACAO = {
   falta: { t: 'Falta montar', c: 'falta', i: '!' },
 }
 
-export default function MontarPlanos({ perfil, base, param, recarregarBase, aoEnviarPlano }) {
+export default function MontarPlanos({ perfil, base, param }) {
   const cursos = useMemo(() => base.cursos.filter((c) => perfil.cursos.includes(c.id)).sort(ordCurso), [base.cursos, perfil.cursos])
   // Todos os planos de curso desses cursos, de qualquer autor (coordenador, auxiliar, diretor de núcleo)
   const cob = useMemo(() => {
@@ -28,7 +28,6 @@ export default function MontarPlanos({ perfil, base, param, recarregarBase, aoEn
   }, [cursos, base.planos])
   const primeiroPendente = cob.linhas.find((l) => l.faltam.length)?.curso.id
   const [sel, setSel] = useState(cursos.some((c) => c.id === param) ? param : primeiroPendente || cursos[0]?.id || '')
-  const [aviso, setAviso] = useState(null)
 
   if (!cursos.length) return <Vazio>Você ainda não tem cursos vinculados. Fale com a CPA para vincular os seus cursos.</Vazio>
 
@@ -36,11 +35,6 @@ export default function MontarPlanos({ perfil, base, param, recarregarBase, aoEn
   const faltam = cob.linhas.reduce((s, l) => s + l.faltam.length, 0)
   const feitos = totalItens - faltam
   const linha = cob.linhas.find((l) => l.curso.id === sel)
-  const mudou = (msg) => {
-    setAviso(msg)
-    aoEnviarPlano?.()
-    recarregarBase()
-  }
 
   return (
     <>
@@ -69,14 +63,13 @@ export default function MontarPlanos({ perfil, base, param, recarregarBase, aoEn
           <span style={{ width: `${totalItens ? (feitos / totalItens) * 100 : 0}%` }} />
         </div>
       </div>
-      {aviso && <div className="aviso ok" role="status" onClick={() => setAviso(null)}>{aviso}</div>}
 
       <div className="ac-grade">
         <aside className="card ac-lista" aria-label="Seus cursos">
           <b>Seus cursos</b>
           <div className="ac-itens">
             {cob.linhas.map((l) => (
-              <button key={l.curso.id} type="button" className={'ac-item' + (sel === l.curso.id ? ' sel' : '')} onClick={() => { setSel(l.curso.id); setAviso(null) }}>
+              <button key={l.curso.id} type="button" className={'ac-item' + (sel === l.curso.id ? ' sel' : '')} onClick={() => setSel(l.curso.id)}>
                 <span className="ac-nome">{nomeCurso(l.curso)}<span className="small muted" style={{ display: 'block', fontWeight: 400 }}>{modalidade(l.curso)}</span></span>
                 <span className={'ac-pend' + (l.faltam.length ? '' : ' zero')}>{l.faltam.length ? `${l.faltam.length} pend.` : '✓ ok'}</span>
               </button>
@@ -95,7 +88,7 @@ export default function MontarPlanos({ perfil, base, param, recarregarBase, aoEn
                 <span className="small muted">{linha.faltam.length ? `Faltam ${linha.faltam.length} de ${CATEGORIAS_PLANO.length} questionários neste curso.` : 'Todos os questionários deste curso estão entregues.'}</span>
               </div>
               {CATEGORIAS_PLANO.map((d) => (
-                <CartaoQuestionario key={linha.curso.id + d} d={d} l={linha} base={base} perfil={perfil} onMudou={mudou} />
+                <CartaoQuestionario key={linha.curso.id + d} d={d} l={linha} base={base} perfil={perfil} />
               ))}
             </>
           )}
@@ -105,8 +98,7 @@ export default function MontarPlanos({ perfil, base, param, recarregarBase, aoEn
   )
 }
 
-function CartaoQuestionario({ d, l, base, perfil, onMudou }) {
-  const [modo, setModo] = useState('') // '' | 'plano' | 'sem'
+function CartaoQuestionario({ d, l, base, perfil }) {
   const e = l.estado[d]
   const s = SITUACAO[e]
   const nota = base.notas[l.curso.id]?.[d]
@@ -162,72 +154,13 @@ function CartaoQuestionario({ d, l, base, perfil, onMudou }) {
         </div>
       )}
 
-      {!modo && (
-        <div className="mp-acoes">
-          {e === 'falta' ? (
-            <>
-              <button className="btn escuro" onClick={() => setModo('plano')}>Montar plano</button>
-              <button className="btn" onClick={() => setModo('sem')}>Não há pontos a melhorar</button>
-            </>
-          ) : e === 'ok' ? (
-            <button className="btn sm" onClick={() => setModo('plano')}>Montar outro plano</button>
-          ) : null}
-          <a className="small" href={`#/q/${COD[d]}/${l.curso.id}`}>Ver nota e comentários deste questionário →</a>
-        </div>
-      )}
-
-      {modo === 'plano' && (
-        <>
-          <FormPlano perfil={perfil} base={base} escopo={[l.curso]} cursoInicial={l.curso.id} categoriaInicial={d}
-            titulo={`Plano de ação · ${d} · ${nomeCurso(l.curso)} (${modalidade(l.curso)})`}
-            onEnviado={() => { setModo(''); onMudou(`Plano de ${d} enviado.`) }} />
-          <button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => setModo('')}>Cancelar</button>
-        </>
-      )}
-      {modo === 'sem' && <SemMelhoria d={d} curso={l.curso} perfil={perfil} onCancelar={() => setModo('')} onEnviado={(m) => { setModo(''); onMudou(m) }} />}
+      <div className="mp-acoes">
+        <a className={'btn ' + (e === 'falta' ? 'escuro' : 'sm')} href={`#/q/${COD[d]}/${l.curso.id}`}>
+          {e === 'falta' ? 'Abrir o questionário e analisar →' : 'Abrir o questionário →'}
+        </a>
+        {e === 'falta' && <span className="small muted">Lá você vê a nota, os pontos fortes e a melhorar e os comentários, e escolhe: montar o plano ou “Não há pontos a melhorar”.</span>}
+      </div>
     </section>
   )
 }
 
-function SemMelhoria({ d, curso, perfil, onCancelar, onEnviado }) {
-  const [texto, setTexto] = useState(TEXTO_SEM_MELHORIA)
-  const [confirmo, setConfirmo] = useState(false)
-  const [enviando, setEnviando] = useState(false)
-  const [erro, setErro] = useState('')
-  const vaiPara = statusDeEnvio(perfil) === 'aguardando_coordenador' ? 'o coordenador do curso' : 'a análise da CPA'
-
-  async function enviar() {
-    if (texto.trim().length < 40) return setErro('Escreva ao menos algumas linhas explicando por que não há pontos a melhorar.')
-    if (!confirmo) return setErro('Marque a confirmação de que analisou as notas e os comentários.')
-    setEnviando(true)
-    setErro('')
-    try {
-      await criarDeclaracaoSemMelhoria(perfil, { curso_id: curso.id, categoria: d, texto: texto.trim() })
-      onEnviado(`Declaração “sem pontos a melhorar” de ${d} enviada para ${vaiPara}.`)
-    } catch (e) {
-      setErro(e.message || 'Não foi possível enviar.')
-      setEnviando(false)
-    }
-  }
-
-  return (
-    <div className="mp-sem">
-      <b>Não há pontos a melhorar em {d}</b>
-      <p className="small muted" style={{ margin: 0 }}>
-        Use somente se, depois de analisar a nota e os comentários dos alunos deste questionário em {nomeCurso(curso)} ({modalidade(curso)}), não houver
-        ponto que precise de ação. Ajuste o texto abaixo com as palavras do seu curso. Ao enviar, segue para {vaiPara} e conta como entregue.
-      </p>
-      <label className="sr-only" htmlFor={'sm-' + d}>Justificativa</label>
-      <textarea id={'sm-' + d} rows={5} value={texto} onChange={(e) => setTexto(e.target.value)} />
-      <label className="small" style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        <input type="checkbox" checked={confirmo} onChange={(e) => setConfirmo(e.target.checked)} />
-        Confirmo que analisei a nota e os comentários deste questionário e não identifiquei pontos que exijam um plano de melhoria.
-      </label>
-      {erro && <div className="aviso erro" role="alert">{erro}</div>}
-      <div className="mp-acoes">
-        <button className="btn escuro" onClick={enviar} disabled={enviando}>{enviando ? 'Enviando…' : 'Enviar declaração'}</button>
-        <button className="btn" onClick={onCancelar} disabled={enviando}>Cancelar</button>
-      </div>
-    </div>
-  )
-}

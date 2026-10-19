@@ -28,7 +28,7 @@ import Admin from './views/Admin.jsx'
 import ProximaCPA from './views/ProximaCPA.jsx'
 import Colaboradores from './views/Colaboradores.jsx'
 import AvaliarColaborador from './views/AvaliarColaborador.jsx'
-import FormPlano from './components/FormPlano.jsx'
+import PlanoNoQuestionario from './components/PlanoNoQuestionario.jsx'
 import { LE_PROPOSTA } from './lib/proxima.js'
 import { VE_COLAB } from './lib/colaboradores.js'
 import { podeVerAgenda, verificarCumprimentoEntrega } from './lib/agenda.js'
@@ -203,9 +203,8 @@ export default function App() {
     escreve && curso && perfil.cursos.includes(curso.id) && SEM_PLANO_DO_COORDENADOR[categoria] ? (
       <div className="aviso" role="note">{SEM_PLANO_DO_COORDENADOR[categoria]}</div>
     ) : escreve && curso && perfil.cursos.includes(curso.id) && CATEGORIAS_PLANO.includes(categoria) ? (
-      <FormPlano key={curso.id + categoria} perfil={perfil} base={base} escopo={[curso]} cursoInicial={curso.id} categoriaInicial={categoria}
-        titulo={`Plano de ação · ${categoria}`} comentarios={selecionados.map((c) => c.texto)} mostrarSelecao={false}
-        onEnviado={() => { limpar(); aoEnviarPlano(); recarregarBase() }} />
+      <PlanoNoQuestionario key={curso.id + categoria} perfil={perfil} base={base} curso={curso} categoria={categoria}
+        comentarios={selecionados.map((c) => c.texto)} onEnviado={() => { limpar(); aoEnviarPlano(); recarregarBase() }} />
     ) : null
 
   return (
