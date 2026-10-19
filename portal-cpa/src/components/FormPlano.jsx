@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { rotuloCurso } from '../lib/escopo.js'
 import { fmtNota } from '../lib/cpa.js'
 import { buscarComentarios } from '../lib/dados.js'
-import { DIMENSOES, SATISFACAO } from '../lib/config.js'
+import { SATISFACAO } from '../lib/config.js'
 import { CATEGORIAS_PLANO, areasDisponiveis, nomeArea, MODELOS, PRIORIDADES, criarPlano, modeloSetor, statusDeEnvio } from '../lib/planos.js'
 
 const VAZIO = { titulo: '', descricao: '', indicador: '', prioridade: 'Média', prazo: '', externa: false, area: 'nead', queixa_aluno: '', prazo_estimado: '' }
@@ -184,7 +184,8 @@ export default function FormPlano({ perfil, base, escopo, tipo = 'curso', cursoI
 function Lembrete({ base, cursoId }) {
   const [critico, setCritico] = useState({ chave: null, texto: null })
   const n = base.notas[cursoId] || {}
-  const pior = DIMENSOES.filter((d) => n[d] != null).sort((a, b) => n[a] - n[b])[0]
+  // Ponto mais frágil entre os questionários que pedem plano do coordenador (sem Satisfação Geral e Docência)
+  const pior = CATEGORIAS_PLANO.filter((d) => n[d] != null).sort((a, b) => n[a] - n[b])[0]
   useEffect(() => {
     if (!cursoId) return
     let vivo = true
