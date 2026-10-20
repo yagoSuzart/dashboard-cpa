@@ -8,7 +8,7 @@
 //     titulo, descricao, prazo, status }] })
 //   → [{ nome: 'capa' | 'acao-1' | 'forte-1' | ... | 'encerramento', canvas: HTMLCanvasElement }]
 
-export const PECA_MAX_ITENS = 4
+export const PECA_MAX_ITENS = 6
 
 const W = 1080
 const H = 1350
@@ -295,7 +295,7 @@ function acao(ctx, d, it, n, total) {
   const hCard = yBase - 32 - yCard
   caixa(ctx, P, yCard, W - 2 * P, hCard, 32, C.navy)
   eyebrow(ctx, 'O que vamos fazer', P + 48, yCard + 74, C.mint)
-  const txt = caberNaArea(ctx, it.descricao || it.titulo, W - 2 * P - 96 - 52, hCard - 150, 46, 26, (px) => F.texto(px))
+  const txt = caberNaArea(ctx, it.descricao || it.titulo, W - 2 * P - 96 - 52, hCard - 150, 46, 22, (px) => F.texto(px), 1.36)
   const y1 = yCard + 112 + txt.px
   ctx.fillStyle = C.mint
   ctx.font = F.titulo(Math.round(txt.px * 0.95))
