@@ -13,6 +13,8 @@
   };
 
   var MODULOS = window.MODULOS || [];
+  var CASOS = window.CASOS || {};
+  MODULOS.forEach(function (m) { m.casos = CASOS[m.id] || []; });
   var CHAVE = 'orallab:v1';
   var LETRAS = ['A', 'B', 'C', 'D', 'E'];
 
@@ -110,7 +112,7 @@
   // Contagens de progresso
   // ---------------------------------------------------------------------------
   function chaveQ(mid, qi) { return mid + ':' + qi; }
-  function chaveO(mid, ci, pi) { return mid + ':' + ci + ':' + pi; }
+  function chaveO(mid, ci, pi) { return 'paciente:' + mid + ':' + ci + ':' + pi; }
 
   function totalPerguntasOrais(m) {
     return m.casos.reduce(function (s, c) { return s + c.perguntas.length; }, 0);
@@ -232,7 +234,7 @@
       '</section>' +
       '<div class="grade">' +
         '<a class="cartao vidro" href="#/simulado/geral">' + ICONE.check + '<h2>Simulado rápido</h2><p>' + CONFIG.questoesSimuladoGeral + ' questões sorteadas de todos os temas, com correção explicada.</p></a>' +
-        '<button class="cartao vidro" type="button" data-acao="oral-sorteado">' + ICONE.fala + '<h2>Caso clínico surpresa</h2><p>Uma situação clínica sorteada para você responder como na banca.</p></button>' +
+        '<button class="cartao vidro" type="button" data-acao="oral-sorteado">' + ICONE.fala + '<h2>Paciente surpresa</h2><p>Um caso sorteado: o paciente pergunta e você responde direto, como na prova.</p></button>' +
         '<a class="cartao vidro" href="#/simulado/erradas">' + ICONE.alerta.replace('<svg', '<svg class="icone"') + '<h2>Revisar erros</h2><p>Refaça só as questões que você errou da última vez.</p></a>' +
         '<a class="cartao vidro" href="#/desempenho">' + ICONE.grafico + '<h2>Meu desempenho</h2><p>Veja onde você vai bem e o que precisa revisar.</p></a>' +
       '</div>' +
@@ -309,11 +311,12 @@
     }
     if (abaAtual === 'banca') {
       return '<h2>Como a banca pergunta</h2>' +
+        '<div class="destaque">' + ICONE.lampada + '<p><strong>Na prova oral:</strong> responda ao paciente em três passos e com palavras simples: <strong>o que pode ser</strong>, <strong>por que está acontecendo</strong> e <strong>o que vamos fazer</strong>.</p></div>' +
         '<div class="destaque">' + ICONE.lampada + '<p><strong>Como montar a resposta:</strong> ' + esc(m.dica) + '</p></div>' +
         '<div class="destaque alerta">' + ICONE.alerta + '<div><strong>Erros que derrubam na prova oral</strong><ul style="margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px">' +
           m.erros.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></div></div>' +
-        '<h3>Perguntas que podem cair</h3><ul style="margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px">' +
-          m.casos.map(function (c) { return c.perguntas.map(function (p) { return '<li>' + esc(p.p) + '</li>'; }).join(''); }).join('') + '</ul>';
+        '<h3>Situações para treinar</h3><ul style="margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px">' +
+          m.casos.map(function (c, ci) { return '<li><a href="#/oral/' + m.id + '/' + ci + '">' + esc(c.t) + '</a> · <span class="suave">“' + esc(c.fala) + '”</span></li>'; }).join('') + '</ul>';
     }
     return '<h2>Pontos-chave</h2>' + m.secoes.map(function (s) {
       return '<div class="secao-resumo"><h3>' + esc(s.t) + '</h3><ul>' + s.p.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
@@ -498,11 +501,11 @@
 
   function telaOralLista() {
     principal.innerHTML =
-      '<div class="cabecalho"><span class="rotulo">Prova oral simulada</span><h1>Situações clínicas</h1><p>Leia o caso, responda por escrito como se estivesse falando para a banca e compare com a resposta-modelo. O sistema mostra quais pontos esperados você citou.</p></div>' +
+      '<div class="cabecalho"><span class="rotulo">Prova oral simulada</span><h1>Atendimento ao paciente</h1><p>Um paciente (ator) faz três perguntas: o que ele tem, por que está acontecendo e o que vamos fazer. Responda direto, em palavras simples, e compare com a resposta-modelo.</p></div>' +
       MODULOS.map(function (m) {
         return '<h2 class="secao-titulo">' + esc(m.titulo) + '</h2><div class="lista-casos">' + m.casos.map(function (c, ci) {
           var feitas = c.perguntas.filter(function (_, pi) { return estado.oral[chaveO(m.id, ci, pi)]; }).length;
-          return '<a class="cartao vidro" href="#/oral/' + m.id + '/' + ci + '">' + ICONE.fala + '<h3>' + esc(c.t) + '</h3><p>' + esc(c.paciente) + '</p><p>' + c.perguntas.length + ' perguntas da banca' + (feitas ? ' · ' + feitas + ' respondida(s)' : '') + '</p></a>';
+          return '<a class="cartao vidro" href="#/oral/' + m.id + '/' + ci + '">' + ICONE.fala + '<h3>' + esc(c.t) + '</h3><p>' + esc(c.paciente) + '</p><p>' + c.perguntas.length + ' perguntas do paciente' + (feitas ? ' · ' + feitas + ' respondida(s)' : '') + '</p></a>';
         }).join('') + '</div>';
       }).join('');
   }
@@ -525,18 +528,18 @@
     var resposta;
     if (!oral.enviado) {
       resposta = '<form class="resposta vidro" id="form-oral">' +
-        '<div class="resposta-topo"><label for="texto-oral">Escreva como se estivesse falando para a banca</label>' +
+        '<div class="resposta-topo"><label for="texto-oral">Responda ao paciente como você falaria na prova</label>' +
         '<span class="relogio' + (oral.seg < 0 ? ' esgotado' : '') + '" id="relogio" role="timer" aria-live="off">' + ICONE.relogio + '<span id="relogio-txt">' + mmss(oral.seg) + '</span>&nbsp;· tempo sugerido</span></div>' +
-        '<div class="linha-chips" aria-label="Roteiro sugerido"><span class="chip chip-ouro">1. O que é / o que eu faria</span><span class="chip chip-ouro">2. Por quê</span><span class="chip chip-ouro">3. Exemplo ou conduta</span></div>' +
-        '<textarea class="area-resposta" id="texto-oral" rows="7" placeholder="Comece pela ideia principal e depois justifique…">' + esc(oral.texto) + '</textarea>' +
+        '<div class="linha-chips" aria-label="Roteiro sugerido"><span class="chip chip-ouro">1. O que pode ser</span><span class="chip chip-ouro">2. Por que está acontecendo</span><span class="chip chip-ouro">3. O que vamos fazer</span></div>' +
+        '<textarea class="area-resposta" id="texto-oral" rows="7" placeholder="Responda direto para o paciente, em palavras simples…">' + esc(oral.texto) + '</textarea>' +
         (oral.dica ? '<p class="dica-inicio"><strong>Um jeito de começar:</strong> ' + esc(p.modelo.split('. ')[0]) + '.</p>' : '') +
-        '<div class="resposta-rodape"><span class="suave" style="font-size:13px" id="contador">' + palavras + ' palavra' + (palavras === 1 ? '' : 's') + ' · respostas para a banca costumam ter de 60 a 120</span>' +
+        '<div class="resposta-rodape"><span class="suave" style="font-size:13px" id="contador">' + palavras + ' palavra' + (palavras === 1 ? '' : 's') + ' · respostas diretas costumam ter de 30 a 70</span>' +
         '<div class="acoes">' + (oral.dica ? '' : '<button class="btn btn-linha" type="button" data-acao="dica-oral">Ver um exemplo de início</button>') +
         '<button class="btn btn-ouro" type="submit">Enviar resposta</button></div></div></form>';
     } else {
       var achou = oral.achados.filter(Boolean).length;
       resposta = '<div class="avaliacao">' +
-        '<section class="vidro"><h2>O que a banca espera ouvir</h2><p class="suave" style="margin:0;font-size:14px">Você citou <strong>' + achou + ' de ' + p.esp.length + '</strong> pontos esperados.</p>' +
+        '<section class="vidro"><h2>O que não pode faltar</h2><p class="suave" style="margin:0;font-size:14px">Você citou <strong>' + achou + ' de ' + p.esp.length + '</strong> pontos esperados.</p>' +
           p.esp.map(function (e, i) {
             return '<div class="item-esperado ' + (oral.achados[i] ? 'achou' : 'faltou') + '"><span class="bolinha" aria-hidden="true">' + (oral.achados[i] ? ICONE.certo : '') + '</span><span><span class="sr-only">' + (oral.achados[i] ? 'Citado: ' : 'Faltou: ') + '</span>' + esc(e[0]) + '</span></div>';
           }).join('') +
@@ -552,7 +555,7 @@
       '<div class="topo-quiz"><a class="selo" href="#/oral" style="text-decoration:none">← Todos os casos</a><span class="chip">Pergunta ' + (oral.pi + 1) + ' de ' + c.perguntas.length + '</span></div>' +
       '<div class="layout-oral">' + ficha +
         '<div class="palco-oral">' +
-          '<div class="banca"><span class="banca-avatar" aria-hidden="true">B</span><div class="balao vidro"><span class="rotulo">Professor(a) da banca</span><p>' + esc(p.p) + '</p></div></div>' +
+          '<div class="banca"><span class="banca-avatar" aria-hidden="true">P</span><div class="balao vidro"><span class="rotulo">Paciente (ator) pergunta</span><p>' + esc(p.p) + '</p></div></div>' +
           resposta +
         '</div>' +
       '</div>';
@@ -810,7 +813,7 @@
     iniciarRelogio();
     var n = contarPalavras(oral.texto);
     var c = document.getElementById('contador');
-    if (c) c.textContent = n + ' palavra' + (n === 1 ? '' : 's') + ' · respostas para a banca costumam ter de 60 a 120';
+    if (c) c.textContent = n + ' palavra' + (n === 1 ? '' : 's') + ' · respostas diretas costumam ter de 30 a 70';
   });
 
   window.addEventListener('hashchange', render);

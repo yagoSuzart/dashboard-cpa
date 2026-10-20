@@ -1,12 +1,11 @@
 // Conteúdo de estudo montado a partir das aulas em PDF (DTM, Dor Orofacial e Cirurgia).
-// Cada módulo: resumo, termos, flashcards, questões comentadas e casos para a prova oral.
+// Cada módulo: resumo, termos, flashcards e questões comentadas.
 //
 // Formato rápido:
 //   termos:    [termo, definição]
 //   cards:     [pergunta, resposta]
 //   questoes:  { e: enunciado, a: [4 alternativas], c: índice da correta, x: [explicação de cada alternativa], g: [palavras-gatilho] }
-//   casos:     { t, paciente, fala, dados: [[rótulo, valor]], perguntas: [{ p, esp: [[item, [palavras-chave]]], modelo }] }
-// As palavras-chave são comparadas sem acento e em minúsculas, por trecho (ex.: "ressonanc" acha "ressonância").
+// Os casos da prova oral ficam em js/casos.js.
 
 window.MODULOS = [
   {
@@ -118,30 +117,6 @@ window.MODULOS = [
         c: 3,
         x: ['Errada: o temporal eleva e retrai.', 'Errada: o masseter eleva.', 'Errada: o pterigoideo medial eleva.', 'Correta: o pterigoideo lateral abre, protrui e lateraliza.'],
         g: ['abertura', 'protrusão'] }
-    ],
-    casos: [
-      { t: 'Estalido ao abrir a boca',
-        paciente: 'Paciente, 28 anos, sexo feminino',
-        fala: 'Quando eu abro a boca, alguma coisa estala aqui na frente da orelha. Não dói muito, mas me incomoda.',
-        dados: [['Local', 'Região pré-auricular direita'], ['Abertura', 'Sem limitação'], ['Ruído', 'Estalido na abertura']],
-        perguntas: [
-          { p: 'Antes de falar da disfunção, descreva para a banca os componentes intra e extra-articulares da ATM.',
-            esp: [
-              ['Superfícies articulares: cabeça da mandíbula (côndilo), fossa e eminência', ['condilo', 'cabeca da mandibula', 'fossa', 'eminencia']],
-              ['Disco articular', ['disco']],
-              ['Membrana e líquido sinovial', ['sinovial', 'sinovia']],
-              ['Cápsula e ligamentos (temporomandibular, esfenomandibular, estilomandibular)', ['capsula', 'ligamento']]
-            ],
-            modelo: 'A ATM é uma articulação sinovial, bilateral e complexa. Os componentes intra-articulares são as superfícies articulares, ou seja, a cabeça da mandíbula, a fossa mandibular e a eminência articular do temporal, além do disco articular, da membrana sinovial e do líquido sinovial. Os extra-articulares são a cápsula fibrosa e os ligamentos: o temporomandibular, que é o lateral e limita a retrusão, e os acessórios esfenomandibular e estilomandibular, que reforçam a articulação mas não participam dos movimentos.' },
-          { p: 'Qual é a função do disco articular e com quais estruturas suas bordas se relacionam?',
-            esp: [
-              ['Adaptar superfícies incongruentes e absorver choques', ['choque', 'adapt', 'incongru', 'amortec']],
-              ['Borda anterior ligada ao pterigoideo lateral', ['pterigoideo lateral', 'pterigoide lateral']],
-              ['Borda posterior ligada à zona bilaminar / retrodiscal', ['bilaminar', 'retrodiscal']],
-              ['Divide a ATM em compartimentos supra e infradiscal', ['compartimento', 'supradiscal', 'infradiscal']]
-            ],
-            modelo: 'O disco é uma fibrocartilagem rica em colágeno que fica entre o côndilo e a fossa. Como as superfícies ósseas são incongruentes, ele adapta essas superfícies e absorve os choques. Sua borda anterior se funde ao músculo pterigoideo lateral e a posterior à zona bilaminar, onde está o coxim retrodiscal, bem vascularizado e inervado. Ele ainda divide a articulação em compartimento supradiscal e infradiscal. Por isso um estalido pode indicar alteração na posição desse disco.' }
-        ] }
     ]
   },
 
@@ -259,30 +234,6 @@ window.MODULOS = [
         c: 1,
         x: ['Errada: isso é a classificação de Greenfield e Wyke.', 'Correta: ele delimita a área de movimento máximo.', 'Errada: não avalia o disco.', 'Errada: não tem relação.'],
         g: ['Posselt'] }
-    ],
-    casos: [
-      { t: 'Dor ao bocejar',
-        paciente: 'Paciente, 24 anos, sexo masculino',
-        fala: 'Toda vez que eu bocejo bem grande, dá uma dor aqui do lado do rosto e eu tenho que fechar a boca na hora.',
-        dados: [['Gatilho', 'Abertura máxima (bocejo)'], ['Mastigação', 'Sem dor'], ['Exame', 'Abertura dentro do normal']],
-        perguntas: [
-          { p: 'Qual classe de receptor de Greenfield e Wyke explica essa resposta e quais as características dela?',
-            esp: [
-              ['GW IV', ['gw iv', 'gw 4', 'tipo iv', 'tipo 4', 'classe iv']],
-              ['Nocicepção / dor', ['nocicep', 'dor']],
-              ['Altíssimo limiar', ['alto limiar', 'altissimo limiar', 'limiar alto']],
-              ['Adaptação lenta', ['adaptacao lenta']]
-            ],
-            modelo: 'Essa resposta é explicada pelos receptores GW IV da classificação de Greenfield e Wyke. Eles são nociceptores de altíssimo limiar e adaptação lenta, que só disparam em situações extremas, como uma abertura bucal muito ampla, gerando dor ou trismo como resposta protetora. Do ponto de vista dos mecanorreceptores, isso está ligado às terminações nervosas livres, que detectam estímulos potencialmente lesivos.' },
-          { p: 'Descreva o que acontece com o côndilo e o disco durante a abertura bucal até a abertura máxima.',
-            esp: [
-              ['Rotação inicial em eixo transversal', ['rotacao', 'eixo']],
-              ['Translação do côndilo para anterior', ['translacao', 'desliza', 'anterior']],
-              ['Disco acompanha o côndilo (complexo côndilo–disco)', ['disco']],
-              ['Disco fica entre côndilo e eminência na abertura', ['eminencia']]
-            ],
-            modelo: 'A abertura começa com rotação: a mandíbula gira sobre um eixo transversal que passa pelos côndilos, sem movimento do disco. Em seguida ocorre a translação: o complexo côndilo–disco desliza para anterior e inferior, e o disco passa a ficar interposto entre o côndilo e a eminência articular. Assim chega-se à abertura máxima. No fechamento, o complexo côndilo–disco retorna para a posição inicial na fossa.' }
-        ] }
     ]
   },
 
@@ -392,30 +343,6 @@ window.MODULOS = [
         c: 2,
         x: ['Errada: a aula responde "NÃO" a essa pergunta.', 'Errada: a oclusão é um dos fatores envolvidos.', 'Correta: estruturais, neuromusculares, trauma, parafunção, psicossociais, adaptação e oclusais.', 'Errada: é um entre vários fatores.'],
         g: ['interferências', 'DTM'] }
-    ],
-    casos: [
-      { t: 'Restauração alta e desconforto muscular',
-        paciente: 'Paciente, 45 anos, sexo feminino',
-        fala: 'Fiz uma restauração semana passada e desde então sinto o dente "batendo primeiro" e o rosto cansado no fim do dia.',
-        dados: [['Procedimento', 'Restauração recente em molar'], ['Queixa', 'Contato prematuro e cansaço muscular'], ['Histórico', 'Sem DTM prévia']],
-        perguntas: [
-          { p: 'Como uma interferência oclusal pode alterar a função mastigatória? Ela sozinha explica uma DTM?',
-            esp: [
-              ['Altera trajeto mandibular e distribuição de forças', ['trajeto', 'forca', 'carga']],
-              ['Mecanorreceptores e resposta neuromuscular', ['mecanorrecep', 'neuromuscular', 'receptor']],
-              ['DTM é multifatorial', ['multifatorial']],
-              ['Cita outros fatores (parafunção, psicossociais, adaptação)', ['parafun', 'psicossoc', 'adapta', 'trauma', 'emocion']]
-            ],
-            modelo: 'A interferência pode modificar o trajeto mandibular e a distribuição das forças. Os mecanorreceptores periodontais e articulares levam essa informação ao sistema nervoso central, que modula a atividade muscular, o que pode aumentar a demanda sobre alguns músculos e explicar o cansaço. Mas uma interferência sozinha não explica uma DTM: ela é multifatorial, envolvendo fatores estruturais, neuromusculares, trauma, parafunção, fatores psicossociais e a capacidade de adaptação de cada paciente, além dos oclusais.' },
-          { p: 'Quais são os quatro critérios de uma oclusão ideal?',
-            esp: [
-              ['Contatos posteriores em RC coincidindo com MIC', [' rc ', 'relacao centrica', ' mic ', 'intercuspid']],
-              ['Cargas axiais nos posteriores', ['axia', 'longo eixo']],
-              ['Guia anterior efetiva / desoclusão', ['guia anterior', 'desoclu', 'guia canina', 'guia incisal']],
-              ['Ausência de interferências (balanceio)', ['interferenc', 'balanceio']]
-            ],
-            modelo: 'Os quatro critérios são: primeiro, contatos posteriores em relação cêntrica coincidindo com a máxima intercuspidação. Segundo, as cargas nos posteriores devem ser direcionadas ao longo eixo do dente. Terceiro, uma guia anterior efetiva, que desoclua os posteriores na protrusão e na lateralidade. E quarto, ausência de interferências oclusais, principalmente no lado de balanceio. No caso dessa paciente, eu checaria o contato da restauração com papel carbono.' }
-        ] }
     ]
   },
 
@@ -523,30 +450,6 @@ window.MODULOS = [
         c: 1,
         x: ['Errada: tem também raiz motora.', 'Correta.', 'Errada: é o V par; o VII é o facial.', 'Errada: origina-se na porção anterolateral da ponte.'],
         g: ['trigêmeo'] }
-    ],
-    casos: [
-      { t: 'Exodontia do 46',
-        paciente: 'Paciente, 35 anos, sexo masculino',
-        fala: 'Esse dente de trás embaixo está todo quebrado e dói. Vai precisar tirar?',
-        dados: [['Dente', '46'], ['Indicação', 'Exodontia'], ['Exame', 'Destruição coronária extensa']],
-        perguntas: [
-          { p: 'Quais nervos você precisa anestesiar para extrair o 46 e por quê?',
-            esp: [
-              ['Alveolar inferior (polpa e periodonto do dente)', ['alveolar inferior']],
-              ['Lingual (gengiva lingual e soalho)', ['lingual']],
-              ['Bucal (gengiva vestibular de molares)', ['bucal']],
-              ['Justifica pelo território de cada nervo', ['gengiva', 'mucosa', 'tecido']]
-            ],
-            modelo: 'Para extrair o 46 eu anestesiaria o nervo alveolar inferior, que inerva as raízes e a polpa dos dentes inferiores. Também o nervo lingual, responsável pela gengiva lingual e pela mucosa do soalho bucal. E o nervo bucal, que inerva os tecidos moles vestibulares da região de molares inferiores. Como a exodontia manipula esses tecidos, o bloqueio do bucal é necessário além do alveolar inferior e do lingual.' },
-          { p: 'Após o procedimento, o paciente relata dormência no lábio inferior e no mento do mesmo lado. Qual nervo está envolvido?',
-            esp: [
-              ['Nervo mentual', ['mentual', 'mentoniano']],
-              ['Ramo do alveolar inferior', ['alveolar inferior']],
-              ['Sai pelo forame mentual', ['forame']],
-              ['Território: lábio inferior, mento e gengiva de pré-molares', ['labio', 'mento', 'pre-molar', 'pre molar']]
-            ],
-            modelo: 'A dormência no lábio inferior e no mento corresponde ao território do nervo mentual, que é ramo do alveolar inferior e se exterioriza pelo forame mentual. Ele inerva a pele do mento, a pele e a mucosa do lábio inferior e a gengiva vestibular dos pré-molares inferiores. Como o alveolar inferior foi anestesiado, essa sensação é esperada enquanto dura a anestesia; se persistir, eu investigaria lesão do nervo.' }
-        ] }
     ]
   },
 
@@ -663,39 +566,6 @@ window.MODULOS = [
         c: 1,
         x: ['Errada: é opção, mas com mais dormência, queimação e ansiedade.', 'Correta: afasta o vaso que comprime a raiz.', 'Errada: não há indicação dentária; seria iatrogenia.', 'Errada: é alternativa, não a padrão-ouro.'],
         g: ['padrão-ouro', 'cirurgia'] }
-    ],
-    casos: [
-      { t: 'Choques ao escovar os dentes',
-        paciente: 'Paciente, 62 anos, sexo feminino, aposentada',
-        fala: 'Sinto pontadas e choques elétricos insuportáveis no lado direito do rosto e na gengiva quando vou escovar os dentes ou lavar a face.',
-        dados: [['Duração', 'Poucos segundos, há 6 meses'], ['Intensidade', 'EVA 10/10'], ['Zona de gatilho', 'Sulco nasogeniano direito'], ['Dentes', 'Hígidos; molar superior com endodontia sem lesão'], ['Neurológico', 'Sensibilidade preservada'], ['ATM/músculos', 'Abertura 44 mm, sem dor à palpação']],
-        perguntas: [
-          { p: 'Qual o diagnóstico clínico provável e quais características da dor sustentam essa hipótese?',
-            esp: [
-              ['Neuralgia do trigêmeo', ['neuralgia']],
-              ['Dor em choque, curta (segundos)', ['choque', 'segundo', 'paroxis']],
-              ['Zona de gatilho / toque leve', ['gatilho', 'toque']],
-              ['Período refratário', ['refrat']],
-              ['Exame dental e neurológico normais', ['higido', 'normal', 'sem alteracao', 'neurolog']]
-            ],
-            modelo: 'O diagnóstico provável é neuralgia do trigêmeo, provavelmente do ramo maxilar. Sustentam essa hipótese a dor em choque elétrico, de poucos segundos e intensidade máxima, desencadeada por estímulo leve em uma zona de gatilho no sulco nasogeniano, com período refratário. O exame intrabucal mostra dentes hígidos, o dente tratado endodonticamente não tem lesão, a ATM e os músculos estão normais e a sensibilidade está preservada, o que afasta causa odontogênica e DTM e é compatível com a forma clássica.' },
-          { p: 'Por que o tratamento endodôntico não aliviou a dor? Como diferenciar a neuralgia de uma pulpite ou de uma DTM muscular?',
-            esp: [
-              ['A dor não era de origem dental (neuropática)', ['nao era', 'neuropat', 'nao odontog', 'nao dental']],
-              ['Pulpite: dor pulsátil, minutos a horas, estímulo térmico, achado dental', ['pulsatil', 'termic', 'frio', 'carie']],
-              ['DTM: dor em peso, horas a dias, piora com função e palpação', ['peso', 'palpa', 'cansaco', 'funcao']],
-              ['Neuralgia tem período refratário e gatilho leve', ['refrat', 'gatilho']]
-            ],
-            modelo: 'A endodontia não resolveu porque a dor não era odontogênica: é uma dor neuropática do nervo trigêmeo, então tratar o dente não muda o mecanismo. Para diferenciar: na pulpite a dor é pulsátil ou contínua, dura minutos a horas, é provocada por frio, calor ou mastigação e há achado dental como cárie ou restauração infiltrada. Na DTM muscular a dor é em peso ou cansaço, dura horas a dias e piora com a função e a palpação de masseter e temporal. A neuralgia é um choque de segundos, disparado por toque leve, com período refratário e exame normal.' },
-          { p: 'Qual exame de imagem você solicitaria, qual a conduta farmacológica de primeira escolha e o que monitorar?',
-            esp: [
-              ['Ressonância magnética', ['ressonanc', ' rm']],
-              ['Afastar causas secundárias / ver compressão', ['secundar', 'compress', 'tumor', 'esclerose']],
-              ['Carbamazepina', ['carbamazepina']],
-              ['Monitorar efeitos adversos (sódio, fígado, sangue, Stevens-Johnson)', ['stevens', 'hiponatrem', 'hepat', 'sangu', 'sonolenc', 'monitor']]
-            ],
-            modelo: 'Eu solicitaria uma ressonância magnética, recomendada para todos os casos suspeitos, para identificar compressão neurovascular e principalmente afastar causas secundárias, como tumores ou placas de esclerose múltipla. A primeira escolha é a carbamazepina, bloqueadora de canais de sódio, com dose inicial baixa e aumento gradual até controlar as crises. É preciso monitorar sonolência, vertigem, ataxia, hiponatremia, alterações sanguíneas e hepáticas e o risco de Síndrome de Stevens-Johnson, além de encaminhar para acompanhamento médico. Se falhar, considero descompressão microvascular.' }
-        ] }
     ]
   },
 
@@ -823,53 +693,6 @@ window.MODULOS = [
         c: 0,
         x: ['Correta.', 'Errada.', 'Errada.', 'Errada: ultrassom com pomada é fonoforese.'],
         g: ['termoterapia'] }
-    ],
-    casos: [
-      { t: 'Estalido, dor ao mastigar e dor de cabeça',
-        paciente: 'Paciente, 30 anos, sexo feminino',
-        fala: 'Minha mandíbula estala, dói quando eu mastigo carne e no fim do dia fico com dor de cabeça nas têmporas.',
-        dados: [['Ruído', 'Estalido na abertura'], ['Palpação', 'Dor em masseter e temporal'], ['Hábitos', 'Relata apertar os dentes'], ['Abertura', 'Sem limitação']],
-        perguntas: [
-          { p: 'Na anamnese da dor, o que você investigaria?',
-            esp: [
-              ['Localização e irradiação', ['localiza', 'irradia']],
-              ['Intensidade (escala 0 a 10)', ['intensidade', 'escala', '0 a 10']],
-              ['Duração, periodicidade e ritmo', ['duracao', 'periodic', 'ritmo', 'frequenc']],
-              ['Fatores de melhora, piora e desencadeantes', ['melhora', 'piora', 'desencade']],
-              ['Sono, perfil emocional e incapacidade', ['sono', 'emocion', 'estresse', 'incapacid']]
-            ],
-            modelo: 'Eu investigaria a localização da dor e se ela irradia, a intensidade numa escala de 0 a 10, classificando em leve, moderada ou forte, e a duração, a periodicidade e o ritmo. Também perguntaria o que melhora, o que piora e o que desencadeia a dor, como mastigar ou apertar os dentes. Por fim, a relação com o sono, o perfil emocional, os tratamentos já feitos e o quanto a dor atrapalha a rotina. Depois faria a palpação do masseter, do temporal e da ATM na abertura e no fechamento.' },
-          { p: 'Qual seria o seu plano de tratamento clínico inicial?',
-            esp: [
-              ['Repouso mandibular e dieta pastosa', ['repouso', 'dieta', 'pastosa']],
-              ['Medicação (AINE / relaxante muscular)', ['aine', 'anti-inflamat', 'antiinflamat', 'relaxante', 'analges']],
-              ['Dispositivo intraoral (placa)', ['placa', 'dispositivo']],
-              ['Adjuvantes: calor, frio, massagem, exercícios, fisioterapia', ['calor', 'termoterap', 'crioterap', 'massag', 'exercic', 'fisioter']]
-            ],
-            modelo: 'Começaria por medidas reversíveis: repouso mandibular com dieta leve ou pastosa e orientação para evitar apertar os dentes. Para a dor aguda, anti-inflamatório e, se necessário, relaxante muscular. Indicaria um dispositivo intraoral em resina acrílica, com espaço interoclusal de 2 a 3 mm e ajustes periódicos. Como adjuvantes, termoterapia de 15 minutos três vezes ao dia, massagens e exercícios terapêuticos, com apoio de fisioterapia. A cirurgia só seria considerada se o quadro fosse refratário.' }
-        ] },
-      { t: 'Boca travada aberta após bocejar',
-        paciente: 'Paciente, 27 anos, sexo feminino',
-        fala: 'Eu bocejei e minha boca não fecha mais! Já aconteceu outras vezes.',
-        dados: [['Situação', 'Boca aberta, não consegue fechar'], ['Mento', 'Desviado para a esquerda'], ['Histórico', 'Episódios anteriores']],
-        perguntas: [
-          { p: 'Qual a hipótese diagnóstica e como você faria a redução?',
-            esp: [
-              ['Luxação (recidivante) da ATM', ['luxa']],
-              ['Côndilo à frente da eminência / lado direito', ['eminencia', 'direit']],
-              ['Paciente sentado com cabeça apoiada', ['sentad', 'apoiad', 'parede']],
-              ['Polegares nos molares inferiores, força para baixo e para trás', ['polegar', 'molar', 'para baixo', 'para tras', 'posterior']]
-            ],
-            modelo: 'A hipótese é luxação recidivante da ATM: o côndilo passou à frente da eminência articular por estiramento ligamentar. Como o mento está desviado para a esquerda, a luxação é do lado direito, porque o desvio é para o lado contrário. Para reduzir, coloco a paciente sentada com a cabeça apoiada na parede, posiciono os polegares sobre os segundos molares inferiores e aplico força para baixo com discreta pressão para trás. Quanto mais cedo, mais fácil a redução.' },
-          { p: 'Como diferenciar esse quadro de um open-lock?',
-            esp: [
-              ['Open-lock: côndilo abaixo da eminência', ['abaixo']],
-              ['Open-lock: disco posterior ao côndilo na RM', ['disco posterior', 'posterior ao condilo', 'ressonanc']],
-              ['Luxação: côndilo à frente da eminência', ['frente', 'anterior']],
-              ['Tratamento do open-lock: artrocentese', ['artrocentese']]
-            ],
-            modelo: 'Os dois causam incapacidade de fechar a boca. No open-lock, a panorâmica mostra o côndilo abaixo da eminência, e a ressonância mostra o disco posicionado atrás do côndilo, por fricção aumentada entre disco e fossa; não há dor na ATM nem nos músculos, e o tratamento é artrocentese. Na luxação recidivante, o côndilo está à frente da eminência articular. Para a luxação de repetição, a eminectomia é uma opção cirúrgica.' }
-        ] }
     ]
   },
 
@@ -979,31 +802,6 @@ window.MODULOS = [
         c: 1,
         x: ['Errada.', 'Correta.', 'Errada.', 'Errada.'],
         g: ['arterite temporal'] }
-    ],
-    casos: [
-      { t: 'Suspeita de deslocamento de disco',
-        paciente: 'Paciente, 34 anos, sexo feminino',
-        fala: 'Minha mandíbula estala ao abrir e às vezes parece que trava um pouquinho antes de abrir tudo.',
-        dados: [['Ruído', 'Estalido na abertura e no fechamento'], ['Histórico', 'Usa marca-passo? a confirmar'], ['Hipótese', 'Deslocamento de disco com redução']],
-        perguntas: [
-          { p: 'Qual exame de imagem você pediria e por quê?',
-            esp: [
-              ['Ressonância magnética', ['ressonanc']],
-              ['Mostra o disco / tecidos moles', ['disco', 'tecido mole', 'tecidos moles']],
-              ['Sem radiação ionizante, não invasiva', ['radiacao', 'invasiv']],
-              ['Boca fechada e aberta / recaptura (DP)', ['boca fechada', 'abertura', 'recaptur', 'densidade de protons', ' dp ']]
-            ],
-            modelo: 'Eu pediria uma ressonância magnética, porque é o exame que mostra diretamente o disco articular e os tecidos moles, sem radiação ionizante e de forma não invasiva. Pediria imagens em boca fechada e em abertura máxima: na sequência de densidade de prótons dá para ver o disco anteriorizado em boca fechada e se ele é recapturado na abertura, o que confirma um deslocamento com redução. Radiografias e tomografia mostram osso, mas não o disco.' },
-          { p: 'O que você precisa perguntar à paciente antes de encaminhá-la para a RM?',
-            esp: [
-              ['Marca-passo', ['marca-passo', 'marcapasso', 'marca passo']],
-              ['Clipes de aneurisma / metais / corpos estranhos', ['clipe', 'metal', 'corpo estranho', 'corpos estranhos']],
-              ['Implantes otológicos / próteses auriculares', ['otolog', 'auricular']],
-              ['Gestação (menos de 12 semanas)', ['gestant', 'gravid', 'gestacao']],
-              ['Claustrofobia (sedação)', ['claustrof', 'sedac']]
-            ],
-            modelo: 'Antes da ressonância eu perguntaria se ela usa marca-passo cardíaco, se tem clipes de aneurisma ou hemostáticos metálicos, corpos estranhos no olho ou no cérebro, implantes otológicos ou próteses auriculares, porque são contraindicações. Também perguntaria se está grávida, já que gestantes com menos de 12 semanas não devem fazer o exame, e se tem claustrofobia, que pode exigir sedação.' }
-        ] }
     ]
   },
 
@@ -1126,30 +924,6 @@ window.MODULOS = [
         c: 1,
         x: ['Errada: placa é para fase inicial.', 'Correta.', 'Errada: é adjuvante.', 'Errada: não tem relação.'],
         g: ['fase avançada', 'aderência'] }
-    ],
-    casos: [
-      { t: 'Travamento com limitação de abertura',
-        paciente: 'Paciente, 32 anos, sexo feminino',
-        fala: 'Antes minha mandíbula estalava. Agora parou de estalar, mas não consigo abrir a boca direito e dói do lado direito.',
-        dados: [['Abertura', '27 mm'], ['Trajetória', 'Deflexão para a direita'], ['Histórico', 'Estalido prévio, tratado sem acompanhamento'], ['Tratamento clínico', 'Placa por 4 meses sem melhora']],
-        perguntas: [
-          { p: 'Qual a hipótese diagnóstica e qual o mecanismo?',
-            esp: [
-              ['Deslocamento anterior do disco sem redução', ['sem reducao']],
-              ['Evolução do deslocamento com redução (estalido prévio)', ['com reducao', 'evolu', 'estal']],
-              ['Pterigoideo lateral força o disco anteromedialmente', ['pterigoid', 'anteromedial', 'anterior']],
-              ['Limitação de abertura e deflexão para o lado afetado', ['limita', 'deflex', '25', '30']]
-            ],
-            modelo: 'A hipótese é deslocamento anterior do disco sem redução à direita. O estalido anterior indica que havia um deslocamento com redução, que evoluiu sem tratamento adequado. Na translação, o disco é forçado anteromedialmente pela hiperatividade do pterigoideo lateral e deixa de ser recapturado, por isso o estalido parou. O movimento passa a ser só de rotação, a abertura fica em 25 a 30 mm, a mandíbula desvia para o lado afetado e há compressão dos tecidos retrodiscais, causando dor.' },
-          { p: 'Como o tratamento clínico falhou, qual seria a conduta?',
-            esp: [
-              ['Artrocentese como opção minimamente invasiva', ['artrocentese']],
-              ['Viscossuplementação (hialuronato de sódio)', ['viscossup', 'viscosup', 'hialuron']],
-              ['Artroscopia', ['artroscop']],
-              ['Cirurgia aberta (discopexia) se avançado/aderências', ['discopex', 'cirurgia aberta', 'aderenc']]
-            ],
-            modelo: 'Como é um caso refratário ao tratamento clínico, o próximo passo é a artrocentese: lavagem do compartimento superior com Ringer lactato para afastar disco e fossa, liberar aderências e remover mediadores inflamatórios, podendo associar viscossuplementação com hialuronato de sódio. Se não houver melhora, a artroscopia permite diagnosticar e tratar sob visão direta. Em fase avançada, com aderências e degeneração, indica-se cirurgia aberta por acesso pré-auricular, como a discopexia.' }
-        ] }
     ]
   }
 ];
