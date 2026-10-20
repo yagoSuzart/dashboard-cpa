@@ -1,7 +1,7 @@
 // Deixa o OralLab funcionando sem internet depois do primeiro acesso.
 // Arquivos do site: busca na rede primeiro (para pegar atualizações) e usa a cópia salva se estiver offline.
 // Ao publicar uma versão nova, troque o número abaixo.
-var VERSAO = 'orallab-v4';
+var VERSAO = 'orallab-v5';
 var ARQUIVOS = [
   './',
   'index.html',

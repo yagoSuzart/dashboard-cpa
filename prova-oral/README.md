@@ -1,6 +1,6 @@
 # OralLab · Prova Oral de Odontologia
 
-Site de estudo para a prova oral de **DTM, Dor Orofacial e Cirurgia**: resumos, perguntas e respostas, flashcards, simulados com correção explicada e casos com paciente-ator.
+Site de estudo para a prova oral de **DTM, Dor Orofacial e Cirurgia**: resumos, perguntas e respostas, flashcards, simulados com correção explicada e casos com paciente-ator e respostas prontas.
 
 Não precisa de login nem de servidor: são só arquivos HTML, CSS e JavaScript. O progresso de cada aluno fica salvo no navegador dele.
 
@@ -11,7 +11,7 @@ Não precisa de login nem de servidor: são só arquivos HTML, CSS e JavaScript.
 | `index.html` | Página do site |
 | `css/estilo.css` | Visual (cores bordô/marsala, vidro espelhado, animações) |
 | `js/dados.js` | Conteúdo dos temas: resumos, termos, flashcards e questões |
-| `js/casos.js` | Prova oral: casos em que o paciente (ator) pergunta o que tem, por que acontece e o que fazer |
+| `js/casos.js` | Prova oral: casos em que o paciente (ator) pergunta o que tem, por que acontece e o que fazer, com a resposta pronta para ler |
 | `js/perguntas.js` | Perguntas e respostas: pergunta, resposta direta e um "por quê" curto |
 | `js/app.js` | Funcionamento (navegação, simulado, prova oral, desempenho) |
 | `manifest.webmanifest`, `icones/` | Permitem instalar o OralLab na tela do celular, como um app |

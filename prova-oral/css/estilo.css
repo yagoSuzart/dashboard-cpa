@@ -299,26 +299,23 @@ button.cartao { text-align: left; cursor: pointer; font: inherit; }
 .balao { padding: 20px 24px; border-radius: 6px 24px 24px 24px; display: flex; flex-direction: column; gap: 6px; }
 .balao p { margin: 0; font-family: var(--fonte-titulo); font-size: clamp(20px, 2.4vw, 25px); line-height: 1.35; }
 
-.resposta { padding: 26px; display: flex; flex-direction: column; gap: 14px; }
-.resposta-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.resposta-topo label { font-weight: 700; }
-.relogio { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(20, 2, 8, .3); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.relogio svg { width: 16px; height: 16px; fill: none; stroke: var(--dourado); stroke-width: 2; stroke-linecap: round; }
-.relogio.esgotado { color: var(--errado-texto); }
-.area-resposta { width: 100%; min-height: 170px; padding: 14px 16px; line-height: 1.6; resize: vertical; }
-.resposta-rodape { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.dica-inicio { margin: 0; padding: 12px 14px; border-radius: 12px; background: rgba(243, 217, 177, .12); font-size: 15px; }
-
-.avaliacao { display: flex; flex-wrap: wrap; gap: 20px; }
-.avaliacao > section { flex: 1 1 300px; min-width: 0; padding: 24px; display: flex; flex-direction: column; gap: 12px; animation: entra .5s ease-out both; }
-.avaliacao h2 { font-size: 18px; font-family: var(--fonte-texto); }
+/* Passos do caso: pergunta do paciente + como responder + pontos */
+.passo { padding: 24px; display: flex; flex-direction: column; gap: 16px; animation: entra .5s ease-out both; }
+.passo:nth-child(2) { animation-delay: .08s; }
+.passo:nth-child(3) { animation-delay: .16s; }
+.passo-topo { display: flex; align-items: center; gap: 10px; }
+.passo-num { width: 30px; height: 30px; border-radius: 50%; background: var(--dourado); color: var(--tinta); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.passo .balao { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .16); padding: 14px 18px; }
+.passo .balao p { font-size: clamp(19px, 2.2vw, 22px); }
+.resposta-pronta { padding: 16px 18px; border-radius: 16px; background: rgba(159, 227, 193, .1); border: 1px solid rgba(159, 227, 193, .35); display: flex; flex-direction: column; gap: 6px; }
+.resposta-pronta .rotulo { color: var(--certo-texto); }
+.resposta-pronta p { margin: 0; font-size: 16px; line-height: 1.65; }
+.pontos { display: flex; flex-direction: column; gap: 10px; }
+.navega-casos { justify-content: space-between; }
 .item-esperado { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; }
 .item-esperado .bolinha { flex: 0 0 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(251, 241, 236, .5); display: flex; align-items: center; justify-content: center; margin-top: 1px; }
 .item-esperado .bolinha svg { width: 14px; height: 14px; fill: none; stroke: var(--tinta); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .item-esperado.achou .bolinha { background: var(--certo); border-color: var(--certo); }
-.item-esperado.faltou { color: var(--creme-75); }
-.modelo { margin: 0; font-size: 15px; line-height: 1.65; color: rgba(251, 241, 236, .93); }
-
 .lista-casos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
 
 /* Perguntas e respostas */
@@ -391,7 +388,8 @@ td .barra { width: 120px; display: inline-block; vertical-align: middle; margin-
   .flutuante { display: none; }
   .lateral { max-width: none; }
   .ficha { max-width: none; }
-  .questao, .painel, .resposta { padding: 20px; }
+  .questao, .painel, .passo { padding: 20px; }
+  .passo .banca-avatar { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

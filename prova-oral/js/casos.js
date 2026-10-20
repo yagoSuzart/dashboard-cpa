@@ -1,9 +1,9 @@
-// Casos da prova oral: um paciente (ator) faz três perguntas diretas.
+// Casos da prova oral: um paciente (ator) faz três perguntas diretas e o site mostra como responder.
 //   1. O que pode ser?   2. Por que está acontecendo?   3. O que vamos fazer?
 // As respostas-modelo são curtas e faladas para o paciente, em palavras simples.
 //
-// Formato: { t, paciente, fala, dados: [[rótulo, valor]], perguntas: [{ p, esp: [[item, [palavras-chave]]], modelo }] }
-// As palavras-chave são comparadas sem acento e em minúsculas, por trecho (ex.: "ressonanc" acha "ressonância").
+// Formato: { t, paciente, fala, dados: [[rótulo, valor]], perguntas: [{ p, esp: [[ponto que não pode faltar, [palavras-chave]]], modelo }] }
+// O site mostra a pergunta, a resposta-modelo (modelo) e os pontos (esp). As palavras-chave ficam guardadas caso se volte a corrigir respostas escritas.
 
 window.CASOS = {
   'anatomia-atm': [

@@ -7,7 +7,6 @@
   // ---------------------------------------------------------------------------
   var CONFIG = {
     codigoTurma: 'ODONTO26',
-    tempoSugeridoSeg: 120,
     questoesSimuladoGeral: 10,
     tentativasPorQuestao: 3
   };
@@ -26,7 +25,7 @@
   // Progresso salvo no navegador
   // ---------------------------------------------------------------------------
   function estadoVazio() {
-    return { nome: '', turma: '', estudados: {}, questoes: {}, oral: {} };
+    return { nome: '', turma: '', estudados: {}, questoes: {}, casosLidos: {} };
   }
 
   function lerEstado() {
@@ -59,11 +58,6 @@
     return String(texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   }
 
-  function contarPalavras(texto) {
-    var t = String(texto || '').trim();
-    return t ? t.split(/\s+/).length : 0;
-  }
-
   function embaralhar(lista) {
     var a = lista.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -85,13 +79,6 @@
     return s.toUpperCase();
   }
 
-  function mmss(seg) {
-    var s = Math.abs(seg);
-    var m = Math.floor(s / 60);
-    var r = s % 60;
-    return (seg < 0 ? '-' : '') + String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
-  }
-
   function porcento(a, b) { return b ? Math.round((a / b) * 100) : 0; }
 
   var DENTE = 'M20 10C30 0 40 8 50 6C60 8 70 0 80 10C92 22 92 46 84 58C80 66 78 80 74 100C72 112 64 114 62 102L56 74C54 68 46 68 44 74L38 102C36 114 28 112 26 100C22 80 20 66 16 58C8 46 8 22 20 10Z';
@@ -105,7 +92,6 @@
     alerta: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>',
     certo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
     errado: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
-    relogio: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>',
     pessoa: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>'
   };
 
@@ -113,28 +99,18 @@
   // Contagens de progresso
   // ---------------------------------------------------------------------------
   function chaveQ(mid, qi) { return mid + ':' + qi; }
-  function chaveO(mid, ci, pi) { return 'paciente:' + mid + ':' + ci + ':' + pi; }
-
-  function totalPerguntasOrais(m) {
-    return m.casos.reduce(function (s, c) { return s + c.perguntas.length; }, 0);
-  }
 
   function progressoModulo(m) {
-    var qFeitas = 0, qCertas = 0, oFeitas = 0, oPontos = 0, oTotal = 0;
+    var qFeitas = 0, qCertas = 0, oFeitas = 0;
     m.questoes.forEach(function (_, qi) {
       var r = estado.questoes[chaveQ(m.id, qi)];
       if (r) { qFeitas++; if (r.primeira) qCertas++; }
     });
-    m.casos.forEach(function (c, ci) {
-      c.perguntas.forEach(function (p, pi) {
-        var r = estado.oral[chaveO(m.id, ci, pi)];
-        if (r) { oFeitas++; oPontos += r.melhor; oTotal += r.total; }
-      });
-    });
-    var nOral = totalPerguntasOrais(m);
+    m.casos.forEach(function (_, ci) { if (estado.casosLidos[m.id + ':' + ci]) oFeitas++; });
+    var nOral = m.casos.length;
     var estudado = estado.estudados[m.id] ? 1 : 0;
     var geral = Math.round(((estudado + qFeitas / m.questoes.length + (nOral ? oFeitas / nOral : 0)) / 3) * 100);
-    return { estudado: !!estudado, qFeitas: qFeitas, qCertas: qCertas, qTotal: m.questoes.length, oFeitas: oFeitas, oTotal: nOral, oPontos: oPontos, oPossiveis: oTotal, geral: geral };
+    return { estudado: !!estudado, qFeitas: qFeitas, qCertas: qCertas, qTotal: m.questoes.length, oFeitas: oFeitas, oTotal: nOral, geral: geral };
   }
 
   // ---------------------------------------------------------------------------
@@ -276,12 +252,12 @@
           '<div class="numero"><strong>' + estudados + '/' + MODULOS.length + '</strong><span>temas estudados</span></div>' +
           '<div class="numero"><strong>' + qFeitas + '</strong><span>questões respondidas</span></div>' +
           '<div class="numero"><strong>' + porcento(qCertas, qFeitas) + '%</strong><span>acertos de primeira</span></div>' +
-          '<div class="numero"><strong>' + oFeitas + '</strong><span>respostas orais treinadas</span></div>' +
+          '<div class="numero"><strong>' + oFeitas + '</strong><span>casos de prova oral lidos</span></div>' +
         '</div>' +
       '</section>' +
       '<div class="grade">' +
         '<a class="cartao vidro" href="#/simulado/geral">' + ICONE.check + '<h2>Simulado rápido</h2><p>' + CONFIG.questoesSimuladoGeral + ' questões sorteadas de todos os temas, com correção explicada.</p></a>' +
-        '<button class="cartao vidro" type="button" data-acao="oral-sorteado">' + ICONE.fala + '<h2>Paciente surpresa</h2><p>Um caso sorteado: o paciente pergunta e você responde direto, como na prova.</p></button>' +
+        '<button class="cartao vidro" type="button" data-acao="oral-sorteado">' + ICONE.fala + '<h2>Paciente surpresa</h2><p>Um caso sorteado, com as perguntas do paciente e como responder.</p></button>' +
         '<a class="cartao vidro" href="#/perguntas">' + ICONE.livro + '<h2>Perguntas e respostas</h2><p>O que pode cair, com a resposta direta e o porquê.</p></a>' +
         '<a class="cartao vidro" href="#/simulado/erradas">' + ICONE.alerta.replace('<svg', '<svg class="icone"') + '<h2>Revisar erros</h2><p>Refaça só as questões que você errou da última vez.</p></a>' +
         '<a class="cartao vidro" href="#/desempenho">' + ICONE.grafico + '<h2>Meu desempenho</h2><p>Veja onde você vai bem e o que precisa revisar.</p></a>' +
@@ -331,7 +307,7 @@
           '<section class="painel vidro" id="painel-aba" role="tabpanel" aria-labelledby="aba-' + abaAtual + '">' + painelAba(m) + '</section>' +
           '<div class="acoes">' +
             '<a class="btn btn-ouro" href="#/simulado/' + m.id + '">Testar este tema (' + m.questoes.length + ' questões)</a>' +
-            '<a class="btn btn-linha" href="#/oral/' + m.id + '/0">Treinar a resposta oral</a>' +
+            '<a class="btn btn-linha" href="#/oral/' + m.id + '/0">Ver casos da prova oral</a>' +
             '<button class="btn btn-linha" type="button" data-acao="marcar-estudado" data-mid="' + m.id + '">' + (p.estudado ? '✓ Estudado' : 'Marcar como estudado') + '</button>' +
           '</div>' +
           (idx < MODULOS.length - 1 ? '<a href="#/modulo/' + MODULOS[idx + 1].id + '" style="align-self:flex-end;min-height:44px;display:flex;align-items:center">Próximo tema: ' + esc(MODULOS[idx + 1].titulo) + ' →</a>' : '') +
@@ -582,25 +558,31 @@
         (erradas.length ? '<div class="caixa-escura" style="text-align:left;max-width:640px;width:100%"><span class="rotulo">Para revisar</span><ul style="margin:0;padding-left:20px">' + erradas.map(function (it) { return '<li>' + esc(it.m.questoes[it.qi].e) + ' <span class="suave">(' + esc(it.m.titulo) + ')</span></li>'; }).join('') + '</ul></div>' : '') +
         '<div class="acoes" style="justify-content:center"><button class="btn btn-ouro" type="button" data-acao="refazer">Fazer de novo</button>' +
         (erradas.length ? '<a class="btn btn-linha" href="#/simulado/erradas">Revisar só as erradas</a>' : '') +
-        '<a class="btn btn-linha" href="#/oral">Treinar prova oral</a></div>' +
+        '<a class="btn btn-linha" href="#/oral">Ver casos da prova oral</a></div>' +
       '</section>';
   }
 
   // ---------------------------------------------------------------------------
-  // Prova oral (resposta escrita)
+  // Prova oral: casos com o paciente (ator) e as respostas prontas para ler
   // ---------------------------------------------------------------------------
-  var oral = null;
-  var timer = null;
+  var PASSOS = ['O que pode ser', 'Por que está acontecendo', 'O que vamos fazer'];
 
-  function pararRelogio() { if (timer) { clearInterval(timer); timer = null; } }
+  function todosOsCasos() {
+    var lista = [];
+    MODULOS.forEach(function (m) { m.casos.forEach(function (_, ci) { lista.push({ m: m, ci: ci }); }); });
+    return lista;
+  }
+
+  function chaveCaso(mid, ci) { return mid + ':' + ci; }
 
   function telaOralLista() {
     principal.innerHTML =
-      '<div class="cabecalho"><span class="rotulo">Prova oral simulada</span><h1>Atendimento ao paciente</h1><p>Um paciente (ator) faz três perguntas: o que ele tem, por que está acontecendo e o que vamos fazer. Responda direto, em palavras simples, e compare com a resposta-modelo.</p></div>' +
+      '<div class="cabecalho"><span class="rotulo">Prova oral</span><h1>Atendimento ao paciente</h1><p>Em cada caso, o paciente (ator) faz três perguntas: o que ele tem, por que está acontecendo e o que vamos fazer. Leia como responder, de forma direta e em palavras simples.</p></div>' +
+      '<div class="linha-chips" style="margin-bottom:8px">' + PASSOS.map(function (t, i) { return '<span class="chip chip-ouro">' + (i + 1) + '. ' + t + '</span>'; }).join('') + '</div>' +
       MODULOS.map(function (m) {
         return '<h2 class="secao-titulo">' + esc(m.titulo) + '</h2><div class="lista-casos">' + m.casos.map(function (c, ci) {
-          var feitas = c.perguntas.filter(function (_, pi) { return estado.oral[chaveO(m.id, ci, pi)]; }).length;
-          return '<a class="cartao vidro" href="#/oral/' + m.id + '/' + ci + '">' + ICONE.fala + '<h3>' + esc(c.t) + '</h3><p>' + esc(c.paciente) + '</p><p>' + c.perguntas.length + ' perguntas do paciente' + (feitas ? ' · ' + feitas + ' respondida(s)' : '') + '</p></a>';
+          var lido = estado.casosLidos[chaveCaso(m.id, ci)];
+          return '<a class="cartao vidro" href="#/oral/' + m.id + '/' + ci + '">' + ICONE.fala + '<h3>' + esc(c.t) + '</h3><p>' + esc(c.paciente) + '</p><p>' + (lido ? '✓ Lido' : 'Ler o caso') + '</p></a>';
         }).join('') + '</div>';
       }).join('');
   }
@@ -609,11 +591,14 @@
     var m = modulo(mid);
     ci = parseInt(ci, 10) || 0;
     if (!m || !m.casos[ci]) { ir('oral'); return; }
-    if (!oral || oral.mid !== mid || oral.ci !== ci) oral = { mid: mid, ci: ci, pi: 0, texto: '', enviado: false, achados: [], dica: false, seg: CONFIG.tempoSugeridoSeg };
     var c = m.casos[ci];
-    var p = c.perguntas[oral.pi];
-    var palavras = contarPalavras(oral.texto);
-    var ultima = oral.pi === c.perguntas.length - 1;
+
+    if (!estado.casosLidos[chaveCaso(mid, ci)]) { estado.casosLidos[chaveCaso(mid, ci)] = true; salvar(); }
+
+    var lista = todosOsCasos();
+    var pos = 0;
+    lista.forEach(function (it, i) { if (it.m.id === mid && it.ci === ci) pos = i; });
+    var ant = lista[pos - 1], prox = lista[pos + 1];
 
     var ficha = '<section class="ficha vidro"><span class="rotulo">Situação clínica · ' + esc(m.titulo) + '</span>' +
       '<div class="paciente"><span class="paciente-icone">' + ICONE.pessoa + '</span><div><strong style="display:block">' + esc(c.paciente) + '</strong><span class="suave" style="font-size:13px">' + esc(c.t) + '</span></div></div>' +
@@ -621,72 +606,26 @@
       '<details class="dados-caso"' + (window.innerWidth > 720 ? ' open' : '') + '><summary>Ver dados do caso</summary>' +
         '<div class="dados">' + c.dados.map(function (d) { return '<div><span>' + esc(d[0]) + '</span><strong>' + esc(d[1]) + '</strong></div>'; }).join('') + '</div></details></section>';
 
-    var resposta;
-    if (!oral.enviado) {
-      resposta = '<form class="resposta vidro" id="form-oral">' +
-        '<div class="resposta-topo"><label for="texto-oral">Responda ao paciente como você falaria na prova</label>' +
-        '<span class="relogio' + (oral.seg < 0 ? ' esgotado' : '') + '" id="relogio" role="timer" aria-live="off">' + ICONE.relogio + '<span id="relogio-txt">' + mmss(oral.seg) + '</span>&nbsp;· tempo sugerido</span></div>' +
-        '<div class="linha-chips" aria-label="Roteiro sugerido"><span class="chip chip-ouro">1. O que pode ser</span><span class="chip chip-ouro">2. Por que está acontecendo</span><span class="chip chip-ouro">3. O que vamos fazer</span></div>' +
-        '<textarea class="area-resposta" id="texto-oral" rows="7" placeholder="Responda direto para o paciente, em palavras simples…">' + esc(oral.texto) + '</textarea>' +
-        (oral.dica ? '<p class="dica-inicio"><strong>Um jeito de começar:</strong> ' + esc(p.modelo.split('. ')[0]) + '.</p>' : '') +
-        '<div class="resposta-rodape"><span class="suave" style="font-size:13px" id="contador">' + palavras + ' palavra' + (palavras === 1 ? '' : 's') + ' · respostas diretas costumam ter de 30 a 70</span>' +
-        '<div class="acoes">' + (oral.dica ? '' : '<button class="btn btn-linha" type="button" data-acao="dica-oral">Ver um exemplo de início</button>') +
-        '<button class="btn btn-ouro" type="submit">Enviar resposta</button></div></div></form>';
-    } else {
-      var achou = oral.achados.filter(Boolean).length;
-      resposta = '<div class="avaliacao">' +
-        '<section class="vidro"><h2>O que não pode faltar</h2><p class="suave" style="margin:0;font-size:14px">Você citou <strong>' + achou + ' de ' + p.esp.length + '</strong> pontos esperados.</p>' +
-          p.esp.map(function (e, i) {
-            return '<div class="item-esperado ' + (oral.achados[i] ? 'achou' : 'faltou') + '"><span class="bolinha" aria-hidden="true">' + (oral.achados[i] ? ICONE.certo : '') + '</span><span><span class="sr-only">' + (oral.achados[i] ? 'Citado: ' : 'Faltou: ') + '</span>' + esc(e[0]) + '</span></div>';
-          }).join('') +
-          '<p class="suave" style="margin:0;font-size:12px">A verificação procura palavras-chave no seu texto. É um apoio para você se avaliar, não uma nota oficial.</p></section>' +
-        '<section class="vidro"><h2>Resposta-modelo</h2><p class="modelo">' + esc(p.modelo) + '</p></section>' +
-        '<section class="vidro" style="flex-basis:100%"><h2>Sua resposta</h2><p class="modelo" style="white-space:pre-wrap">' + esc(oral.texto) + '</p>' +
-          '<div class="acoes"><button class="btn btn-linha" type="button" data-acao="refazer-oral">Reescrever minha resposta</button>' +
-          (ultima ? '<a class="btn btn-ouro" href="#/oral">Concluir caso</a>' : '<button class="btn btn-ouro" type="button" data-acao="proxima-oral">Próxima pergunta →</button>') + '</div></section>' +
+    var passos = c.perguntas.map(function (p, i) {
+      return '<article class="passo vidro">' +
+        '<div class="passo-topo"><span class="passo-num" aria-hidden="true">' + (i + 1) + '</span><span class="rotulo">' + esc(PASSOS[i] || 'Pergunta ' + (i + 1)) + '</span></div>' +
+        '<div class="banca"><span class="banca-avatar" aria-hidden="true">P</span><div class="balao"><span class="rotulo">Paciente pergunta</span><p>' + esc(p.p) + '</p></div></div>' +
+        '<div class="resposta-pronta"><span class="rotulo">Como responder</span><p>' + esc(p.modelo) + '</p></div>' +
+        '<div class="pontos"><span class="rotulo">Não pode faltar</span>' + p.esp.map(function (e) {
+          return '<div class="item-esperado achou"><span class="bolinha" aria-hidden="true">' + ICONE.certo + '</span><span>' + esc(e[0]) + '</span></div>';
+        }).join('') + '</div>' +
+      '</article>';
+    }).join('');
+
+    var navegar = '<div class="acoes navega-casos">' +
+      (ant ? '<a class="btn btn-linha" href="#/oral/' + ant.m.id + '/' + ant.ci + '">← Caso anterior</a>' : '') +
+      (prox ? '<a class="btn btn-ouro" href="#/oral/' + prox.m.id + '/' + prox.ci + '">Próximo caso →</a>' : '<a class="btn btn-ouro" href="#/oral">Ver todos os casos</a>') +
+      '<a class="btn-texto" href="#/perguntas/' + m.id + '" style="min-height:48px;display:flex;align-items:center">Perguntas e respostas deste tema</a>' +
       '</div>';
-    }
 
     principal.innerHTML =
-      '<div class="topo-quiz"><a class="selo" href="#/oral" style="text-decoration:none">← Todos os casos</a><span class="chip">Pergunta ' + (oral.pi + 1) + ' de ' + c.perguntas.length + '</span></div>' +
-      '<div class="layout-oral">' + ficha +
-        '<div class="palco-oral">' +
-          '<div class="banca"><span class="banca-avatar" aria-hidden="true">P</span><div class="balao vidro"><span class="rotulo">Paciente (ator) pergunta</span><p>' + esc(p.p) + '</p></div></div>' +
-          resposta +
-        '</div>' +
-      '</div>';
-  }
-
-  function avaliarOral() {
-    var m = modulo(oral.mid);
-    var p = m.casos[oral.ci].perguntas[oral.pi];
-    var texto = ' ' + normalizar(oral.texto).replace(/[^a-z0-9-]+/g, ' ') + ' ';
-    oral.achados = p.esp.map(function (e) {
-      return e[1].some(function (kw) { return texto.indexOf(normalizar(kw)) >= 0; });
-    });
-    oral.enviado = true;
-    pararRelogio();
-    var k = chaveO(oral.mid, oral.ci, oral.pi);
-    var achou = oral.achados.filter(Boolean).length;
-    var r = estado.oral[k] || { melhor: 0, vezes: 0 };
-    r.vezes++;
-    r.melhor = Math.max(r.melhor, achou);
-    r.total = p.esp.length;
-    estado.oral[k] = r;
-    salvar();
-  }
-
-  function iniciarRelogio() {
-    if (timer || !oral || oral.enviado) return;
-    timer = setInterval(function () {
-      if (!oral) { pararRelogio(); return; }
-      oral.seg--;
-      var t = document.getElementById('relogio-txt');
-      var r = document.getElementById('relogio');
-      if (!t) { pararRelogio(); return; }
-      t.textContent = mmss(oral.seg);
-      if (oral.seg < 0) r.classList.add('esgotado');
-    }, 1000);
+      '<div class="topo-quiz"><a class="selo" href="#/oral" style="text-decoration:none">← Todos os casos</a><span class="chip">Caso ' + (pos + 1) + ' de ' + lista.length + '</span></div>' +
+      '<div class="layout-oral">' + ficha + '<div class="palco-oral">' + passos + navegar + '</div></div>';
   }
 
   // ---------------------------------------------------------------------------
@@ -696,19 +635,18 @@
     var linhas = MODULOS.map(function (m) {
       var p = progressoModulo(m);
       var acerto = porcento(p.qCertas, p.qFeitas);
-      var oralPct = porcento(p.oPontos, p.oPossiveis);
       var situacao = !p.qFeitas ? 'Começar' : (acerto >= 80 ? 'Dominando' : (acerto >= 50 ? 'Revisar pontos' : 'Rever o resumo'));
       return '<tr><td><a href="#/modulo/' + m.id + '">' + esc(m.titulo) + '</a></td>' +
         '<td>' + (p.estudado ? '✓' : '—') + '</td>' +
         '<td>' + p.qFeitas + '/' + p.qTotal + '</td>' +
         '<td><span class="barra"><span style="width:' + acerto + '%"></span></span>' + (p.qFeitas ? acerto + '%' : '—') + '</td>' +
-        '<td>' + (p.oFeitas ? oralPct + '% dos pontos' : '—') + '</td>' +
+        '<td>' + p.oFeitas + '/' + p.oTotal + '</td>' +
         '<td>' + situacao + '</td></tr>';
     }).join('');
 
     principal.innerHTML =
-      '<div class="cabecalho"><span class="rotulo">Meu desempenho</span><h1>Onde você está</h1><p>"Acertos" considera só a primeira tentativa de cada questão. Na prova oral, vale a sua melhor resposta.</p></div>' +
-      '<section class="painel vidro"><div class="tabela-wrap"><table><thead><tr><th>Tema</th><th>Estudado</th><th>Questões</th><th>Acertos</th><th>Prova oral</th><th>Situação</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+      '<div class="cabecalho"><span class="rotulo">Meu desempenho</span><h1>Onde você está</h1><p>"Acertos" considera só a primeira tentativa de cada questão.</p></div>' +
+      '<section class="painel vidro"><div class="tabela-wrap"><table><thead><tr><th>Tema</th><th>Estudado</th><th>Questões</th><th>Acertos</th><th>Casos lidos</th><th>Situação</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
         '<div class="acoes"><a class="btn btn-ouro" href="#/simulado/erradas">Revisar erros</a></div></section>' +
       '<h2 class="secao-titulo">Continuar em outro aparelho</h2>' +
       '<section class="painel vidro">' +
@@ -757,7 +695,7 @@
   function render() {
     var rota = rotaAtual();
     var chave = rota.join('/');
-    if (chave !== ultimaRota) { pararRelogio(); window.scrollTo(0, 0); }
+    if (chave !== ultimaRota) window.scrollTo(0, 0);
     ultimaRota = chave;
 
     desenharTopo(rota);
@@ -858,22 +796,7 @@
       case 'oral-sorteado':
         var m = MODULOS[Math.floor(Math.random() * MODULOS.length)];
         var destino = 'oral/' + m.id + '/' + Math.floor(Math.random() * m.casos.length);
-        oral = null;
         if (location.hash === '#/' + destino) render(); else ir(destino);
-        break;
-      case 'dica-oral':
-        guardarTextoOral();
-        oral.dica = true;
-        telaOral(oral.mid, oral.ci);
-        break;
-      case 'refazer-oral':
-        oral.enviado = false; oral.seg = CONFIG.tempoSugeridoSeg;
-        telaOral(oral.mid, oral.ci);
-        break;
-      case 'proxima-oral':
-        oral.pi++; oral.texto = ''; oral.enviado = false; oral.dica = false; oral.seg = CONFIG.tempoSugeridoSeg;
-        window.scrollTo(0, 0);
-        telaOral(oral.mid, oral.ci);
         break;
       case 'copiar-progresso':
         var codigo = codigoProgresso();
@@ -901,35 +824,8 @@
     }
   });
 
-  function guardarTextoOral() {
-    var t = document.getElementById('texto-oral');
-    if (t && oral) oral.texto = t.value;
-  }
-
   document.addEventListener('submit', function (ev) {
     if (ev.target.id === 'form-entrada') { ev.preventDefault(); entrar(ev.target); }
-    if (ev.target.id === 'form-oral') {
-      ev.preventDefault();
-      guardarTextoOral();
-      if (contarPalavras(oral.texto) < 5) {
-        var c = document.getElementById('contador');
-        c.textContent = 'Escreva pelo menos uma ou duas frases antes de enviar.';
-        document.getElementById('texto-oral').focus();
-        return;
-      }
-      avaliarOral();
-      telaOral(oral.mid, oral.ci);
-      window.scrollTo(0, 0);
-    }
-  });
-
-  document.addEventListener('input', function (ev) {
-    if (ev.target.id !== 'texto-oral' || !oral) return;
-    oral.texto = ev.target.value;
-    iniciarRelogio();
-    var n = contarPalavras(oral.texto);
-    var c = document.getElementById('contador');
-    if (c) c.textContent = n + ' palavra' + (n === 1 ? '' : 's') + ' · respostas diretas costumam ter de 30 a 70';
   });
 
   window.addEventListener('hashchange', render);
