@@ -140,7 +140,28 @@
   // ---------------------------------------------------------------------------
   // Cabeçalho
   // ---------------------------------------------------------------------------
+  var ICONE_MENU = {
+    inicio: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    conteudos: '<path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 8h6M9 12h4"/>',
+    perguntas: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17h.01"/>',
+    simulado: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 12 3 3 5-6"/>',
+    oral: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8 11h8M8 14h5"/>'
+  };
+
+  function desenharBarraInferior(secao) {
+    var barra = document.getElementById('barra-inferior');
+    if (!barra) return;
+    if (!estado.nome) { barra.hidden = true; barra.innerHTML = ''; return; }
+    var itens = [['inicio', 'Início'], ['conteudos', 'Temas'], ['perguntas', 'Perguntas'], ['simulado', 'Simulado'], ['oral', 'Prova oral']];
+    barra.hidden = false;
+    barra.innerHTML = itens.map(function (it) {
+      var atual = secao === it[0] || (it[0] === 'inicio' && secao === 'desempenho');
+      return '<a href="#/' + it[0] + '"' + (atual ? ' aria-current="page"' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true">' + ICONE_MENU[it[0]] + '</svg><span>' + it[1] + '</span></a>';
+    }).join('');
+  }
+
   function desenharTopo(rota) {
+    desenharBarraInferior(rota[0] === 'modulo' ? 'conteudos' : rota[0]);
     if (!estado.nome) { topo.innerHTML = marcaHTML(); return; }
     var itens = [
       ['inicio', 'Início'], ['conteudos', 'Conteúdos'], ['perguntas', 'Perguntas'], ['simulado', 'Simulados'], ['oral', 'Prova Oral'], ['desempenho', 'Desempenho']
@@ -150,7 +171,7 @@
       '<nav class="menu" aria-label="Principal">' + itens.map(function (it) {
         return '<a href="#/' + it[0] + '"' + (secao === it[0] ? ' aria-current="page"' : '') + '>' + it[1] + '</a>';
       }).join('') + '</nav>' +
-      '<div class="usuario vidro"><span class="avatar" aria-hidden="true">' + esc(iniciais(estado.nome)) + '</span><span>' + esc(estado.nome) + '</span>' +
+      '<div class="usuario vidro"><a class="avatar" href="#/desempenho" aria-label="Meu desempenho" title="Meu desempenho">' + esc(iniciais(estado.nome)) + '</a><span class="usuario-nome">' + esc(estado.nome) + '</span>' +
       '<button class="btn-texto" type="button" data-acao="trocar-nome" style="min-height:44px">Trocar</button></div>';
   }
 
@@ -210,6 +231,31 @@
   // ---------------------------------------------------------------------------
   // Início
   // ---------------------------------------------------------------------------
+  var pedidoInstalacao = null;
+  window.addEventListener('beforeinstallprompt', function (ev) {
+    ev.preventDefault();
+    pedidoInstalacao = ev;
+    if (rotaAtual()[0] === 'inicio' && estado.nome) render();
+  });
+
+  function appInstalado() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  }
+
+  function dicaInstalar() {
+    if (estado.dicaInstalarFechada || appInstalado() || window.innerWidth > 900) return '';
+    var iphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    var como = pedidoInstalacao
+      ? '<button class="btn btn-ouro" type="button" data-acao="instalar">Instalar o OralLab</button>'
+      : (iphone
+        ? '<p style="margin:0">No iPhone: toque em <strong>Compartilhar</strong> (quadrado com seta) e depois em <strong>Adicionar à Tela de Início</strong>.</p>'
+        : '<p style="margin:0">No Android: toque nos <strong>três pontinhos</strong> do navegador e depois em <strong>Adicionar à tela inicial</strong> ou <strong>Instalar app</strong>.</p>');
+    return '<section class="painel vidro dica-instalar"><div style="display:flex;flex-direction:column;gap:8px"><span class="rotulo">Use como aplicativo</span>' +
+      '<h2 style="font-size:20px">Coloque o OralLab na tela do seu celular</h2>' + como +
+      '<p class="suave" style="margin:0;font-size:13px">Depois do primeiro acesso, ele funciona até sem internet.</p></div>' +
+      '<button class="btn-texto" type="button" data-acao="fechar-dica" style="min-height:44px;align-self:flex-start">Agora não</button></section>';
+  }
+
   function telaInicio() {
     var estudados = 0, qFeitas = 0, qCertas = 0, qTotal = 0, oFeitas = 0;
     var cards = MODULOS.map(function (m) {
@@ -223,7 +269,7 @@
         '<p>' + p.geral + '% concluído</p></a>';
     }).join('');
 
-    principal.innerHTML =
+    principal.innerHTML = dicaInstalar() +
       '<section class="boas-vindas vidro">' +
         '<div style="display:flex;flex-direction:column;gap:8px"><span class="rotulo">Sala de estudo</span><h1>Olá, ' + esc(estado.nome) + '!</h1><p class="suave" style="margin:0">Escolha um tema, teste o que aprendeu e treine a resposta para a banca.</p></div>' +
         '<div class="numeros">' +
@@ -500,6 +546,13 @@
     if (certo || quiz.tentadas.length >= CONFIG.tentativasPorQuestao) finalizarQuestao(certo);
     quiz.escolhida = null;
     telaSimulado(quiz.id);
+    mostrarExplicacaoNoCelular();
+  }
+
+  function mostrarExplicacaoNoCelular() {
+    if (window.innerWidth > 720) return;
+    var ex = document.querySelector('.explica');
+    if (ex) ex.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function finalizarQuestao(certo) {
@@ -565,7 +618,8 @@
     var ficha = '<section class="ficha vidro"><span class="rotulo">Situação clínica · ' + esc(m.titulo) + '</span>' +
       '<div class="paciente"><span class="paciente-icone">' + ICONE.pessoa + '</span><div><strong style="display:block">' + esc(c.paciente) + '</strong><span class="suave" style="font-size:13px">' + esc(c.t) + '</span></div></div>' +
       '<p class="fala">“' + esc(c.fala) + '”</p>' +
-      '<div class="dados">' + c.dados.map(function (d) { return '<div><span>' + esc(d[0]) + '</span><strong>' + esc(d[1]) + '</strong></div>'; }).join('') + '</div></section>';
+      '<details class="dados-caso"' + (window.innerWidth > 720 ? ' open' : '') + '><summary>Ver dados do caso</summary>' +
+        '<div class="dados">' + c.dados.map(function (d) { return '<div><span>' + esc(d[0]) + '</span><strong>' + esc(d[1]) + '</strong></div>'; }).join('') + '</div></details></section>';
 
     var resposta;
     if (!oral.enviado) {
@@ -737,6 +791,17 @@
         Array.prototype.forEach.call(itens, function (d) { d.open = abrir; });
         alvo.textContent = abrir ? 'Fechar todas' : 'Abrir todas';
         break;
+      case 'instalar':
+        if (pedidoInstalacao) {
+          pedidoInstalacao.prompt();
+          pedidoInstalacao.userChoice.then(function () { pedidoInstalacao = null; render(); });
+        }
+        break;
+      case 'fechar-dica':
+        estado.dicaInstalarFechada = true;
+        salvar();
+        render();
+        break;
       case 'trocar-nome':
         estado.nome = '';
         salvar();
@@ -778,6 +843,7 @@
       case 'revelar':
         finalizarQuestao(false);
         telaSimulado(quiz.id);
+        mostrarExplicacaoNoCelular();
         break;
       case 'proxima':
         if (quiz.i >= quiz.itens.length - 1) { quiz.fim = true; }
@@ -868,4 +934,8 @@
 
   window.addEventListener('hashchange', render);
   render();
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
 })();

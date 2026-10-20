@@ -22,7 +22,6 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
@@ -110,8 +109,13 @@ button, input, textarea { font: inherit; }
 .menu a:hover { background: rgba(255, 255, 255, .1); color: var(--creme); }
 .menu a[aria-current="page"] { background: var(--creme); color: var(--tinta); font-weight: 700; }
 
-.usuario { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 6px; border-radius: 999px; }
-.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--dourado); color: var(--tinta); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex: 0 0 34px; }
+.usuario { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 999px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--dourado); color: var(--tinta); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex: 0 0 34px; text-decoration: none; }
+a.avatar:hover { color: var(--tinta); filter: brightness(1.05); }
+
+/* Menu fixo embaixo (só no celular) */
+.barra-inferior { display: none; }
+.dica-instalar { margin-bottom: 20px; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .usuario span { font-size: 14px; }
 
 main { animation: entra .5s ease-out both; }
@@ -279,6 +283,11 @@ button.cartao { text-align: left; cursor: pointer; font: inherit; }
 .paciente-icone { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 16px; background: rgba(243, 217, 177, .2); display: flex; align-items: center; justify-content: center; }
 .paciente-icone svg { width: 26px; fill: none; stroke: var(--dourado); stroke-width: 1.8; stroke-linecap: round; }
 .fala { margin: 0; font-size: 15px; font-style: italic; color: rgba(251, 241, 236, .93); }
+.dados-caso summary { list-style: none; cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 8px; color: var(--dourado); font-weight: 600; font-size: 14px; }
+.dados-caso summary::-webkit-details-marker { display: none; }
+.dados-caso summary::after { content: "+"; font-size: 20px; transition: transform .25s ease; }
+.dados-caso[open] summary::after { transform: rotate(45deg); }
+.dados-caso[open] summary { margin-bottom: 8px; }
 .dados { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .dados div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(20, 2, 8, .28); }
 .dados span { color: var(--creme-75); }
@@ -347,7 +356,35 @@ td .barra { width: 120px; display: inline-block; vertical-align: middle; margin-
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
 
 @media (max-width: 720px) {
-  .app { padding: 16px 16px 48px; }
+  .app { padding: max(14px, env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom)); }
+  .topo { margin-bottom: 18px; flex-wrap: nowrap; }
+  .menu { display: none; }
+  .usuario-nome { display: none; }
+  .avatar { width: 44px; height: 44px; flex-basis: 44px; font-size: 15px; }
+  .marca-nome { font-size: 20px; }
+  .marca-sub { display: none; }
+  .ficha { padding: 20px; gap: 12px; }
+  .dica-instalar h2 { font-size: 18px !important; }
+  .barra-inferior {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    background: rgba(42, 7, 16, .88); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-top: 1px solid rgba(255, 255, 255, .14);
+  }
+  .barra-inferior[hidden] { display: none; }
+  .barra-inferior a {
+    min-height: 54px; border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    color: var(--creme-75); text-decoration: none; font-size: 11px; font-weight: 600;
+  }
+  .barra-inferior a[aria-current="page"] { color: var(--dourado); background: rgba(243, 217, 177, .13); }
+  .barra-inferior svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .rodape { margin-top: 32px; }
+  .boas-vindas { padding: 22px; }
+  .numero { min-width: 0; flex: 1 1 calc(50% - 7px); padding: 12px 14px; }
+  .numero strong { font-size: 24px; }
+  .cabecalho h1 { font-size: 30px; }
   .entrada { min-height: auto; gap: 24px; }
   .entrada-arte { height: 300px; order: -1; }
   .dente-heroi { width: 150px; }

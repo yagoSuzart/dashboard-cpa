@@ -1,0 +1,17 @@
+{
+  "name": "OralLab · Prova Oral de Odontologia",
+  "short_name": "OralLab",
+  "description": "Resumos, perguntas e respostas, simulados e casos com paciente-ator para a prova oral.",
+  "lang": "pt-BR",
+  "start_url": "./#/inicio",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2A0710",
+  "theme_color": "#2A0710",
+  "icons": [
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
