@@ -312,6 +312,27 @@ button.cartao { text-align: left; cursor: pointer; font: inherit; }
 
 .lista-casos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
 
+/* Perguntas e respostas */
+.filtro-temas { margin-bottom: 24px; }
+.filtro-temas .chip { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; color: var(--creme); text-decoration: none; border: 1px solid rgba(255, 255, 255, .2); }
+.filtro-temas .chip:hover { background: rgba(255, 255, 255, .18); color: var(--creme); }
+.filtro-temas .chip.ativo { background: var(--creme); color: var(--tinta); font-weight: 700; border-color: var(--creme); }
+.bloco-pr { margin-bottom: 22px; }
+.lista-pr { display: flex; flex-direction: column; gap: 10px; }
+.pr { border-radius: 16px; background: rgba(20, 2, 8, .25); border: 1px solid rgba(255, 255, 255, .12); transition: border-color .25s ease, background .25s ease; }
+.pr[open] { border-color: rgba(243, 217, 177, .45); background: rgba(20, 2, 8, .35); }
+.pr summary { list-style: none; cursor: pointer; min-height: 56px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; font-weight: 600; }
+.pr summary::-webkit-details-marker { display: none; }
+.pr summary::after { content: "+"; margin-left: auto; font-size: 22px; color: var(--dourado); transition: transform .25s ease; }
+.pr[open] summary::after { transform: rotate(45deg); }
+.pr-num { flex: 0 0 28px; height: 28px; border-radius: 50%; background: rgba(243, 217, 177, .18); color: var(--dourado); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.pr-corpo { padding: 0 18px 16px 60px; display: flex; flex-direction: column; gap: 8px; animation: entra .35s ease-out both; }
+.pr-corpo p { margin: 0; }
+.pr-resposta strong { color: var(--certo-texto); }
+.pr-porque { font-size: 15px; color: rgba(251, 241, 236, .85); }
+.pr-porque strong { color: var(--dourado); }
+@media (max-width: 720px) { .pr-corpo { padding-left: 18px; } }
+
 /* Desempenho */
 .tabela-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 560px; }

@@ -14,7 +14,8 @@
 
   var MODULOS = window.MODULOS || [];
   var CASOS = window.CASOS || {};
-  MODULOS.forEach(function (m) { m.casos = CASOS[m.id] || []; });
+  var PERGUNTAS = window.PERGUNTAS || {};
+  MODULOS.forEach(function (m) { m.casos = CASOS[m.id] || []; m.pr = PERGUNTAS[m.id] || []; });
   var CHAVE = 'orallab:v1';
   var LETRAS = ['A', 'B', 'C', 'D', 'E'];
 
@@ -142,7 +143,7 @@
   function desenharTopo(rota) {
     if (!estado.nome) { topo.innerHTML = marcaHTML(); return; }
     var itens = [
-      ['inicio', 'Início'], ['conteudos', 'Conteúdos'], ['simulado', 'Simulados'], ['oral', 'Prova Oral'], ['desempenho', 'Desempenho']
+      ['inicio', 'Início'], ['conteudos', 'Conteúdos'], ['perguntas', 'Perguntas'], ['simulado', 'Simulados'], ['oral', 'Prova Oral'], ['desempenho', 'Desempenho']
     ];
     var secao = rota[0] === 'modulo' ? 'conteudos' : rota[0];
     topo.innerHTML = marcaHTML() +
@@ -217,7 +218,7 @@
       return '<a class="cartao vidro" href="#/modulo/' + m.id + '">' +
         '<span class="rotulo">' + esc(m.disciplina) + '</span>' +
         '<h3>' + esc(m.titulo) + '</h3>' +
-        '<p>' + m.questoes.length + ' questões · ' + m.cards.length + ' flashcards · ' + totalPerguntasOrais(m) + ' perguntas orais</p>' +
+        '<p>' + m.pr.length + ' perguntas e respostas · ' + m.questoes.length + ' questões · ' + m.casos.length + ' casos</p>' +
         '<div class="barra" role="img" aria-label="Progresso ' + p.geral + '%"><span style="width:' + p.geral + '%"></span></div>' +
         '<p>' + p.geral + '% concluído</p></a>';
     }).join('');
@@ -235,6 +236,7 @@
       '<div class="grade">' +
         '<a class="cartao vidro" href="#/simulado/geral">' + ICONE.check + '<h2>Simulado rápido</h2><p>' + CONFIG.questoesSimuladoGeral + ' questões sorteadas de todos os temas, com correção explicada.</p></a>' +
         '<button class="cartao vidro" type="button" data-acao="oral-sorteado">' + ICONE.fala + '<h2>Paciente surpresa</h2><p>Um caso sorteado: o paciente pergunta e você responde direto, como na prova.</p></button>' +
+        '<a class="cartao vidro" href="#/perguntas">' + ICONE.livro + '<h2>Perguntas e respostas</h2><p>O que pode cair, com a resposta direta e o porquê.</p></a>' +
         '<a class="cartao vidro" href="#/simulado/erradas">' + ICONE.alerta.replace('<svg', '<svg class="icone"') + '<h2>Revisar erros</h2><p>Refaça só as questões que você errou da última vez.</p></a>' +
         '<a class="cartao vidro" href="#/desempenho">' + ICONE.grafico + '<h2>Meu desempenho</h2><p>Veja onde você vai bem e o que precisa revisar.</p></a>' +
       '</div>' +
@@ -271,7 +273,7 @@
         return '<a href="#/modulo/' + mm.id + '"' + (mm.id === m.id ? ' aria-current="page"' : '') + '><span class="marcador' + (feito ? ' feito' : '') + '" aria-hidden="true">' + (feito ? '✓' : '') + '</span>' + (i + 1) + '. ' + esc(mm.titulo) + '</a>';
       }).join('') + '</nav>';
 
-    var abas = [['resumo', 'Resumo'], ['flashcards', 'Flashcards'], ['termos', 'Termos'], ['banca', 'Como a banca pergunta']];
+    var abas = [['resumo', 'Resumo'], ['perguntas', 'Perguntas e respostas'], ['flashcards', 'Flashcards'], ['termos', 'Termos'], ['banca', 'Como a banca pergunta']];
 
     principal.innerHTML =
       '<div class="layout-modulo">' + lateral +
@@ -304,6 +306,11 @@
         '<div class="acoes"><button class="btn btn-linha" type="button" data-acao="flash-anterior"' + (flash.i === 0 ? ' disabled' : '') + '>← Anterior</button>' +
         '<button class="btn btn-ouro" type="button" data-acao="flash-proximo"' + (flash.i === total - 1 ? ' disabled' : '') + '>Próximo →</button></div>';
     }
+    if (abaAtual === 'perguntas') {
+      return '<div class="topo-quiz" style="margin:0"><h2>Perguntas e respostas</h2>' + botaoAbrirTodas() + '</div>' +
+        '<p class="suave" style="margin:0">Tente responder de cabeça e depois toque na pergunta para conferir.</p>' +
+        listaPR(m.pr);
+    }
     if (abaAtual === 'termos') {
       return '<h2>Termos para usar na fala</h2><div class="termos">' + m.termos.map(function (t) {
         return '<div class="termo"><strong>' + esc(t[0]) + '</strong><span>' + esc(t[1]) + '</span></div>';
@@ -322,6 +329,41 @@
       return '<div class="secao-resumo"><h3>' + esc(s.t) + '</h3><ul>' + s.p.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
     }).join('') +
     '<div class="destaque">' + ICONE.lampada + '<p><strong>Dica para a fala:</strong> ' + esc(m.dica) + '</p></div>';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Perguntas e respostas
+  // ---------------------------------------------------------------------------
+  function listaPR(lista) {
+    return '<div class="lista-pr">' + lista.map(function (item, i) {
+      return '<details class="pr"><summary><span class="pr-num" aria-hidden="true">' + (i + 1) + '</span><span class="pr-pergunta">' + esc(item[0]) + '</span></summary>' +
+        '<div class="pr-corpo"><p class="pr-resposta"><strong>Resposta:</strong> ' + esc(item[1]) + '</p>' +
+        '<p class="pr-porque"><strong>Por quê?</strong> ' + esc(item[2]) + '</p></div></details>';
+    }).join('') + '</div>';
+  }
+
+  function botaoAbrirTodas() {
+    return '<button class="btn-texto" type="button" data-acao="abrir-todas" style="min-height:44px">Abrir todas</button>';
+  }
+
+  function telaPerguntas(filtro) {
+    var lista = filtro ? MODULOS.filter(function (m) { return m.id === filtro; }) : MODULOS;
+    if (!lista.length) { ir('perguntas'); return; }
+    var total = MODULOS.reduce(function (s, m) { return s + m.pr.length; }, 0);
+    principal.innerHTML =
+      '<div class="cabecalho"><span class="rotulo">Revisão rápida</span><h1>Perguntas e respostas</h1>' +
+        '<p>' + total + ' perguntas que podem cair, com a resposta direta e um "por quê" curto. Tente responder de cabeça antes de abrir.</p></div>' +
+      '<nav class="linha-chips filtro-temas" aria-label="Filtrar por tema">' +
+        '<a class="chip' + (filtro ? '' : ' ativo') + '" href="#/perguntas"' + (filtro ? '' : ' aria-current="page"') + '>Todos os temas</a>' +
+        MODULOS.map(function (m) {
+          return '<a class="chip' + (filtro === m.id ? ' ativo' : '') + '" href="#/perguntas/' + m.id + '"' + (filtro === m.id ? ' aria-current="page"' : '') + '>' + esc(m.titulo) + '</a>';
+        }).join('') +
+      '</nav>' +
+      lista.map(function (m) {
+        return '<section class="painel vidro bloco-pr"><div class="topo-quiz" style="margin:0"><h2>' + esc(m.titulo) + '</h2>' + botaoAbrirTodas() + '</div>' +
+          listaPR(m.pr) +
+          '<div class="acoes"><a class="btn btn-linha" href="#/modulo/' + m.id + '">Ver o resumo</a><a class="btn btn-linha" href="#/simulado/' + m.id + '">Testar com questões</a></div></section>';
+      }).join('');
   }
 
   // ---------------------------------------------------------------------------
@@ -669,6 +711,7 @@
 
     switch (rota[0]) {
       case 'conteudos': telaConteudos(); break;
+      case 'perguntas': telaPerguntas(rota[1]); break;
       case 'modulo': telaModulo(rota[1]); break;
       case 'simulado': rota[1] ? telaSimulado(rota[1]) : telaSimuladoEscolha(); break;
       case 'oral': rota[1] ? telaOral(rota[1], rota[2]) : telaOralLista(); break;
@@ -687,6 +730,13 @@
     var rota = rotaAtual();
 
     switch (acao) {
+      case 'abrir-todas':
+        var bloco = alvo.closest('.painel');
+        var itens = bloco.querySelectorAll('details.pr');
+        var abrir = Array.prototype.some.call(itens, function (d) { return !d.open; });
+        Array.prototype.forEach.call(itens, function (d) { d.open = abrir; });
+        alvo.textContent = abrir ? 'Fechar todas' : 'Abrir todas';
+        break;
       case 'trocar-nome':
         estado.nome = '';
         salvar();

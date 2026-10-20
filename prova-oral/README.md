@@ -1,6 +1,6 @@
 # OralLab · Prova Oral de Odontologia
 
-Site de estudo para a prova oral de **DTM, Dor Orofacial e Cirurgia**: resumos, flashcards, simulados com correção explicada e casos clínicos com resposta escrita.
+Site de estudo para a prova oral de **DTM, Dor Orofacial e Cirurgia**: resumos, perguntas e respostas, flashcards, simulados com correção explicada e casos com paciente-ator.
 
 Não precisa de login nem de servidor: são só arquivos HTML, CSS e JavaScript. O progresso de cada aluno fica salvo no navegador dele.
 
@@ -12,13 +12,14 @@ Não precisa de login nem de servidor: são só arquivos HTML, CSS e JavaScript.
 | `css/estilo.css` | Visual (cores bordô/marsala, vidro espelhado, animações) |
 | `js/dados.js` | Conteúdo dos temas: resumos, termos, flashcards e questões |
 | `js/casos.js` | Prova oral: casos em que o paciente (ator) pergunta o que tem, por que acontece e o que fazer |
+| `js/perguntas.js` | Perguntas e respostas: pergunta, resposta direta e um "por quê" curto |
 | `js/app.js` | Funcionamento (navegação, simulado, prova oral, desempenho) |
 
 ## Ajustes rápidos
 
 - **Código da turma**: no início de `js/app.js`, troque `codigoTurma: 'ODONTO26'`. Deixe `''` para não pedir código.
   O código é só um filtro simples: quem tiver o link e o código entra.
-- **Conteúdo**: edite `js/dados.js` (temas) e `js/casos.js` (prova oral). O formato está explicado no topo de cada arquivo.
+- **Conteúdo**: edite `js/dados.js` (temas), `js/perguntas.js` (perguntas e respostas) e `js/casos.js` (prova oral). O formato está explicado no topo de cada arquivo.
 
 ## Publicar no Cloudflare Pages (sem programação)
 
