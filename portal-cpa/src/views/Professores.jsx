@@ -11,6 +11,32 @@ import './resultados.css'
 const POR_PAGINA = 8
 const DOCENCIA = 'Docência e Tutoria'
 
+// Cursos (do recorte que a pessoa enxerga) em que o professor foi avaliado
+const cursosDoProfessor = (base, nome, escopo) => {
+  const k = nome.trim().toUpperCase()
+  return [...new Set(base.professores.filter((p) => p.nome.trim().toUpperCase() === k && escopo.includes(p.curso_id)).map((p) => p.curso_id))]
+}
+
+// Botão "PDF para o professor": devolutiva no padrão da CPA para enviar ao docente
+function BotaoPdfProfessor({ base, nome, cursoIds }) {
+  const [estado, setEstado] = useState(null)
+  async function baixar() {
+    setEstado({ t: 'Gerando o PDF…' })
+    try {
+      const pdf = await import('../lib/pdf.js')
+      setEstado({ t: await pdf.baixarPdfProfessor({ base, nome, cursoIds }), c: 'ok' })
+    } catch (e) {
+      setEstado({ t: e.message || 'Não foi possível gerar o PDF.', c: 'erro' })
+    }
+  }
+  return (
+    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <button type="button" className="btn sm" onClick={baixar} disabled={estado && !estado.c}>📄 PDF para o professor</button>
+      {estado && <span className={'small ' + (estado.c === 'erro' ? 'erro-txt' : 'muted')} role="status">{estado.t}</span>}
+    </span>
+  )
+}
+
 // "Por professor" — como no sistema anterior, não aparece para Professor(a) Auxiliar.
 export default function Professores({ perfil, base: base0, escopo, param }) {
   // Com a planilha da CPA importada, usa a nota de cada professor calculada dela (todos os professores
@@ -59,15 +85,15 @@ export default function Professores({ perfil, base: base0, escopo, param }) {
       </section>
       <FiltroCursos cursos={doEscopo} modalidade={modalidade} curso={curso} onModalidade={trocarModalidade} onCurso={setCurso} comTodos idPrefixo="prof" />
       {curso ? (
-        <UmCurso key={curso} curso={base.cursos.find((c) => c.id === curso)} base={base} />
+        <UmCurso key={curso} curso={base.cursos.find((c) => c.id === curso)} base={base} escopo={escopo} />
       ) : (
-        <TodosProfessores key={modalidade} base={base} cursos={modalidade ? doEscopo.filter((c) => c.modalidade === modalidade) : doEscopo} onCurso={setCurso} />
+        <TodosProfessores key={modalidade} base={base} escopo={escopo} cursos={modalidade ? doEscopo.filter((c) => c.modalidade === modalidade) : doEscopo} onCurso={setCurso} />
       )}
     </>
   )
 }
 
-function UmCurso({ curso, base }) {
+function UmCurso({ curso, base, escopo }) {
   const profs = useMemo(
     () => base.professores.filter((p) => p.curso_id === curso.id).map((p) => ({ ...p, nota: Number(p.nota) })),
     [base.professores, curso.id],
@@ -174,7 +200,8 @@ function UmCurso({ curso, base }) {
             {!lista.length && <Vazio>Nenhum professor encontrado com esse nome neste curso.</Vazio>}
             {!verTodos && <Paginacao pagina={pag} total={lista.length} porPagina={POR_PAGINA} onPagina={setPagina} />}
             {visiveis.map((p, i) => (
-              <CartaoProfessor key={p.nome + p.disciplina + i} p={p} unidade={base.unidadeProf} comentarios={coment ? porProf[p.nome] || [] : null} />
+              <CartaoProfessor key={p.nome + p.disciplina + i} p={p} unidade={base.unidadeProf} comentarios={coment ? porProf[p.nome] || [] : null}
+                pdf={<BotaoPdfProfessor base={base} nome={p.nome} cursoIds={cursosDoProfessor(base, p.nome, escopo)} />} />
             ))}
             {!verTodos && <Paginacao pagina={pag} total={lista.length} porPagina={POR_PAGINA} onPagina={setPagina} />}
           </section>
@@ -184,7 +211,7 @@ function UmCurso({ curso, base }) {
   )
 }
 
-function CartaoProfessor({ p, comentarios, unidade }) {
+function CartaoProfessor({ p, comentarios, unidade, pdf }) {
   const [aberto, setAberto] = useState(false)
   const [pagina, setPagina] = useState(0)
   const meta = (c) => (c.turma ? 'Turma ' + c.turma : '')
@@ -198,6 +225,7 @@ function CartaoProfessor({ p, comentarios, unidade }) {
         </div>
         <span className="num">{fmtNota(p.nota)}</span>
       </div>
+      {pdf}
       {comentarios == null ? (
         <Carregando texto="Carregando comentários…" />
       ) : (
@@ -235,7 +263,7 @@ function CartaoProfessor({ p, comentarios, unidade }) {
 
 
 // Todos os professores do recorte: um por linha, com os cursos e disciplinas em que foram avaliados
-function TodosProfessores({ base, cursos, onCurso }) {
+function TodosProfessores({ base, cursos, escopo, onCurso }) {
   const [busca, setBusca] = useState('')
   const [pagina, setPagina] = useState(0)
   const [aberto, setAberto] = useState(null)
@@ -294,6 +322,7 @@ function TodosProfessores({ base, cursos, onCurso }) {
               </button>
               {aberto === p.nome && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+                  <BotaoPdfProfessor base={base} nome={p.nome} cursoIds={cursosDoProfessor(base, p.nome, escopo)} />
                   {p.avaliacoes.map((a, i) => (
                     <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                       <span className="small" style={{ flex: 1, minWidth: 200 }}>{rotuloCurso(porId[a.curso_id])} · {a.disciplina || '—'} · {fmtInt(a.respondentes)} {base.unidadeProf}</span>

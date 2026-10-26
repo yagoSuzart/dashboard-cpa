@@ -875,3 +875,117 @@ export async function baixarPdfPendencias({ base, pessoa, cob, conferidoEm = new
   doc.save('CPA_pendencias_' + String(pessoa.nome).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.pdf')
   return 'PDF de pendências de ' + pessoa.nome + ' gerado (' + pend + ' pendência' + (pend === 1 ? '' : 's') + ').'
 }
+
+// ---------- devolutiva para o professor ----------
+// PDF que a CPA (ou a coordenação) envia ao professor: a nota dele, por disciplina avaliada, pergunta por pergunta
+// e os comentários dos alunos sobre ele. Não mostra turma, sala nem curso. Só entram os cursos de cursoIds (os que
+// quem baixa enxerga no Portal).
+function escaparIlike(s) {
+  return String(s).replace(/[\\%_]/g, (c) => '\\' + c)
+}
+async function linhasDoProfessor(tabela, campos, nome, cursoIds, ciclo) {
+  const out = []
+  for (let de = 0; de < 20000; de += 1000) {
+    let q = sb.from(tabela).select(campos).ilike('professor', escaparIlike(nome)).in('curso_id', cursoIds)
+    if (ciclo) q = q.eq('ciclo', ciclo)
+    const { data, error } = await q.order('id').range(de, de + 999)
+    if (error) throw error
+    out.push(...data)
+    if (data.length < 1000) break
+  }
+  return out
+}
+
+export async function baixarPdfProfessor({ base, nome, cursoIds } = {}) {
+  if (!nome || !cursoIds?.length) throw new Error('Professor sem avaliação nos seus cursos.')
+  const ciclo = (await ciclosImportados().catch(() => []))[0]?.ciclo || null
+  const [doc, porCurso, perguntas, comentarios] = await Promise.all([
+    novoDocumento(),
+    ciclo ? sb.from('cpa_resultado_professor').select('curso_id, disciplina, professor, n, soma').eq('ciclo', ciclo).ilike('professor', escaparIlike(nome)).in('curso_id', cursoIds).then((r) => { if (r.error) throw r.error; return r.data }) : [],
+    ciclo ? linhasDoProfessor('cpa_resultados', 'id, curso_id, survey_id, pergunta_posicao, pergunta, escala, n, soma', nome, cursoIds, ciclo) : [],
+    linhasDoProfessor('comentarios', 'id, curso_id, texto', nome, cursoIds),
+  ])
+  // Sem planilha importada, usa as notas por professor que já estavam no banco
+  const notas = porCurso.length
+    ? porCurso.filter((l) => l.n > 0).map((l) => ({ curso_id: l.curso_id, disciplina: l.disciplina, nota: Number(l.soma) / l.n, n: l.n }))
+    : (base.professores || []).filter((p) => cursoIds.includes(p.curso_id) && p.nome.trim().toUpperCase() === nome.trim().toUpperCase())
+      .map((p) => ({ curso_id: p.curso_id, disciplina: p.disciplina, nota: Number(p.nota), n: Number(p.respondentes) || 0 }))
+  if (!notas.length && !comentarios.length) throw new Error('Não há avaliação deste professor nos cursos que você acompanha.')
+  // Por disciplina (a mesma disciplina em cursos diferentes vira uma linha só, média ponderada)
+  const md = new Map()
+  for (const x of notas) {
+    const k = (x.disciplina || '—').trim()
+    const g = md.get(k) || { disciplina: k, soma: 0, n: 0, simples: [] }
+    g.soma += x.nota * x.n
+    g.n += x.n
+    g.simples.push(x.nota)
+    md.set(k, g)
+  }
+  const porDisciplina = [...md.values()].map((g) => ({ disciplina: g.disciplina, nota: g.n ? g.soma / g.n : g.simples.reduce((a, b) => a + b, 0) / g.simples.length }))
+    .sort((a, b) => a.disciplina.localeCompare(b.disciplina, 'pt-BR'))
+  const totalN = notas.reduce((s, x) => s + x.n, 0)
+  const geral = totalN ? notas.reduce((s, x) => s + x.nota * x.n, 0) / totalN : notas.reduce((s, x) => s + x.nota, 0) / (notas.length || 1)
+
+  // Pergunta por pergunta (todas as turmas, disciplinas e cursos do professor)
+  const mp = new Map()
+  for (const r of perguntas) {
+    if (r.escala === '0a10' || !r.n) continue
+    const k = r.survey_id + '|' + r.pergunta_posicao
+    const g = mp.get(k) || { pergunta: r.pergunta, n: 0, soma: 0, pos: r.pergunta_posicao }
+    g.n += Number(r.n) || 0
+    g.soma += Number(r.soma) || 0
+    if ((r.pergunta || '').length > (g.pergunta || '').length) g.pergunta = r.pergunta
+    mp.set(k, g)
+  }
+  const porPergunta = [...mp.values()].filter((g) => g.n).map((g) => ({ ...g, media: g.soma / g.n })).sort((a, b) => a.pos - b.pos)
+
+  let y = pdfCabecalho(doc, 'Devolutiva da CPA ao docente', 'Prof(a). ' + nome + (ciclo ? ' · Avaliação ' + ciclo : '') + ' · Gerado em ' + hoje())
+  y = paragrafo(doc, y, 'Prezado(a) professor(a), esta é a devolutiva da avaliação institucional da CPA com a percepção dos alunos sobre as suas aulas. As respostas são anônimas: nenhum aluno é identificado. Use este retorno para reconhecer o que está funcionando bem e para planejar ajustes junto à coordenação do curso. Obrigado pelo seu trabalho!', { cor: PDF_GRAY_TEXT, tam: 9.5 }) + 2
+
+  // Resumo
+  y = cabe(doc, y, 24)
+  const caixas = [[fmtNota(geral), 'Nota geral (1 a 5)', corNota(geral)], [String(porDisciplina.length), porDisciplina.length === 1 ? 'Disciplina avaliada' : 'Disciplinas avaliadas', null], [String(comentarios.length), 'Comentários dos alunos', null]]
+  const wc = (L - 2 * 4) / 3
+  caixas.forEach(([v, t, cor], i) => {
+    const x = M + i * (wc + 4)
+    doc.setFillColor(...(cor ? cor.f : PDF_CARD_BG)); doc.roundedRect(x, y, wc, 20, 2.5, 2.5, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(...(cor ? cor.t : PDF_INK))
+    doc.text(v, x + 4, y + 10)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+    doc.text(t, x + 4, y + 16)
+  })
+  y += 26
+
+  if (porDisciplina.length) {
+    y = secao(doc, y, 'Nota por disciplina avaliada', 'Média das respostas dos alunos (escala de 1 a 5; meta institucional ' + fmtNota(META, 1) + ').')
+    y = tabela(doc, y, [{ t: 'Disciplina', w: 150 }, { t: 'Nota', w: 30, a: 'center' }],
+      porDisciplina.map((x) => [x.disciplina, { v: fmtNota(x.nota), cor: corNota(x.nota), b: true }]))
+  }
+
+  if (porPergunta.length) {
+    const ord = [...porPergunta].sort((a, b) => b.media - a.media)
+    const k = Math.min(3, Math.ceil(ord.length / 2))
+    y = secao(doc, y, 'Pontos fortes e pontos a melhorar', 'As perguntas com a maior e a menor nota nas suas avaliações.')
+    const lista = (titulo, xs, cor) => {
+      y = paragrafo(doc, y, titulo, { estilo: 'bold', cor, tam: 10 })
+      xs.forEach((x) => { y = paragrafo(doc, y, fmtNota(x.media) + '  ·  ' + x.pergunta, { tam: 9.5 }) })
+      y += 2
+    }
+    lista('Pontos fortes', ord.slice(0, k), PDF_GREEN)
+    if (ord.length > k) lista('Pontos a melhorar', ord.slice(-Math.min(3, ord.length - k)).reverse(), [194, 87, 31])
+    y = secao(doc, y, 'Pergunta por pergunta')
+    y = tabela(doc, y, [{ t: 'Pergunta', w: 150 }, { t: 'Nota', w: 30, a: 'center' }],
+      porPergunta.map((x) => [x.pergunta, { v: fmtNota(x.media), cor: corNota(x.media), b: true }]))
+  }
+
+  y = secao(doc, y, 'O que os alunos escreveram (' + comentarios.length + ')', comentarios.length ? 'Comentários reproduzidos como os alunos escreveram, sem identificação.' : 'Nenhum comentário escrito sobre você neste ciclo.')
+  y = pdfComentariosEmCards(doc, M, L, y, comentarios.map((c) => String(c.texto || '').trim()).filter(Boolean))
+
+  y = cabe(doc, y + 2, 30)
+  pdfCaixaDestaque(doc, M, y, L, 25, PDF_GREEN, [234, 247, 239], 'Obrigado!',
+    'A avaliação da CPA é uma ferramenta de melhoria contínua. Em caso de dúvidas sobre esta devolutiva, procure a coordenação do seu curso ou a CPA da UniFECAF.')
+
+  pdfRodapeTodasPaginas(doc)
+  doc.save('CPA_professor_' + nome.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '.pdf')
+  return 'PDF de ' + nome + ' gerado. Agora é só enviar ao professor.'
+}
