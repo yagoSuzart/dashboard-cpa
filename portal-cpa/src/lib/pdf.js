@@ -877,8 +877,8 @@ export async function baixarPdfPendencias({ base, pessoa, cob, conferidoEm = new
 }
 
 // ---------- devolutiva para o professor ----------
-// PDF que a CPA (ou a coordenação) envia ao professor: a nota dele, por disciplina avaliada, pergunta por pergunta
-// e os comentários dos alunos sobre ele. Não mostra turma, sala nem curso. Só entram os cursos de cursoIds (os que
+// PDF que a CPA (ou a coordenação) envia ao professor: a nota dele por curso, modalidade e disciplina avaliada,
+// pergunta por pergunta e os comentários dos alunos sobre ele (agrupados por curso). Não mostra turma nem sala. Só entram os cursos de cursoIds (os que
 // quem baixa enxerga no Portal).
 function escaparIlike(s) {
   return String(s).replace(/[\\%_]/g, (c) => '\\' + c)
@@ -911,18 +911,9 @@ export async function baixarPdfProfessor({ base, nome, cursoIds } = {}) {
     : (base.professores || []).filter((p) => cursoIds.includes(p.curso_id) && p.nome.trim().toUpperCase() === nome.trim().toUpperCase())
       .map((p) => ({ curso_id: p.curso_id, disciplina: p.disciplina, nota: Number(p.nota), n: Number(p.respondentes) || 0 }))
   if (!notas.length && !comentarios.length) throw new Error('Não há avaliação deste professor nos cursos que você acompanha.')
-  // Por disciplina (a mesma disciplina em cursos diferentes vira uma linha só, média ponderada)
-  const md = new Map()
-  for (const x of notas) {
-    const k = (x.disciplina || '—').trim()
-    const g = md.get(k) || { disciplina: k, soma: 0, n: 0, simples: [] }
-    g.soma += x.nota * x.n
-    g.n += x.n
-    g.simples.push(x.nota)
-    md.set(k, g)
-  }
-  const porDisciplina = [...md.values()].map((g) => ({ disciplina: g.disciplina, nota: g.n ? g.soma / g.n : g.simples.reduce((a, b) => a + b, 0) / g.simples.length }))
-    .sort((a, b) => a.disciplina.localeCompare(b.disciplina, 'pt-BR'))
+  // Uma linha por curso + modalidade + disciplina (professor que dá aula em mais de um curso aparece em cada um)
+  const porDisciplina = [...notas].sort((a, b) => cursoLabel(base, a.curso_id).localeCompare(cursoLabel(base, b.curso_id), 'pt-BR') || String(a.disciplina).localeCompare(String(b.disciplina), 'pt-BR'))
+  const nCursos = new Set(notas.map((x) => x.curso_id)).size
   const totalN = notas.reduce((s, x) => s + x.n, 0)
   const geral = totalN ? notas.reduce((s, x) => s + x.nota * x.n, 0) / totalN : notas.reduce((s, x) => s + x.nota, 0) / (notas.length || 1)
 
@@ -944,7 +935,7 @@ export async function baixarPdfProfessor({ base, nome, cursoIds } = {}) {
 
   // Resumo
   y = cabe(doc, y, 24)
-  const caixas = [[fmtNota(geral), 'Nota geral (1 a 5)', corNota(geral)], [String(porDisciplina.length), porDisciplina.length === 1 ? 'Disciplina avaliada' : 'Disciplinas avaliadas', null], [String(comentarios.length), 'Comentários dos alunos', null]]
+  const caixas = [[fmtNota(geral), 'Nota geral (1 a 5)', corNota(geral)], [String(porDisciplina.length), (porDisciplina.length === 1 ? 'Disciplina avaliada' : 'Disciplinas avaliadas') + ' em ' + nCursos + (nCursos === 1 ? ' curso' : ' cursos'), null], [String(comentarios.length), 'Comentários dos alunos', null]]
   const wc = (L - 2 * 4) / 3
   caixas.forEach(([v, t, cor], i) => {
     const x = M + i * (wc + 4)
@@ -957,9 +948,9 @@ export async function baixarPdfProfessor({ base, nome, cursoIds } = {}) {
   y += 26
 
   if (porDisciplina.length) {
-    y = secao(doc, y, 'Nota por disciplina avaliada', 'Média das respostas dos alunos (escala de 1 a 5; meta institucional ' + fmtNota(META, 1) + ').')
-    y = tabela(doc, y, [{ t: 'Disciplina', w: 150 }, { t: 'Nota', w: 30, a: 'center' }],
-      porDisciplina.map((x) => [x.disciplina, { v: fmtNota(x.nota), cor: corNota(x.nota), b: true }]))
+    y = secao(doc, y, 'Nota por curso e disciplina avaliada', 'Média das respostas dos alunos (escala de 1 a 5; meta institucional ' + fmtNota(META, 1) + ').')
+    y = tabela(doc, y, [{ t: 'Curso · modalidade', w: 75 }, { t: 'Disciplina', w: 80 }, { t: 'Nota', w: 25, a: 'center' }],
+      porDisciplina.map((x) => [cursoLabel(base, x.curso_id), x.disciplina || '—', { v: fmtNota(x.nota), cor: corNota(x.nota), b: true }]))
   }
 
   if (porPergunta.length) {
@@ -978,8 +969,18 @@ export async function baixarPdfProfessor({ base, nome, cursoIds } = {}) {
       porPergunta.map((x) => [x.pergunta, { v: fmtNota(x.media), cor: corNota(x.media), b: true }]))
   }
 
+  y = cabe(doc, y, comentarios.length ? 50 : 24)
   y = secao(doc, y, 'O que os alunos escreveram (' + comentarios.length + ')', comentarios.length ? 'Comentários reproduzidos como os alunos escreveram, sem identificação.' : 'Nenhum comentário escrito sobre você neste ciclo.')
-  y = pdfComentariosEmCards(doc, M, L, y, comentarios.map((c) => String(c.texto || '').trim()).filter(Boolean))
+  const porCursoC = new Map()
+  for (const c of comentarios) {
+    if (!porCursoC.has(c.curso_id)) porCursoC.set(c.curso_id, [])
+    porCursoC.get(c.curso_id).push(c)
+  }
+  for (const [cid, cs] of [...porCursoC].sort((a, b) => cursoLabel(base, a[0]).localeCompare(cursoLabel(base, b[0]), 'pt-BR'))) {
+    y = cabe(doc, y + 4, 18)
+    y = paragrafo(doc, y, cursoLabel(base, cid) + ' · ' + cs.length + ' comentário(s)', { estilo: 'bold', cor: PDF_INK, tam: 10 })
+    y = pdfComentariosEmCards(doc, M, L, y, cs.map((c) => String(c.texto || '').trim()).filter(Boolean))
+  }
 
   y = cabe(doc, y + 2, 30)
   pdfCaixaDestaque(doc, M, y, L, 25, PDF_GREEN, [234, 247, 239], 'Obrigado!',
