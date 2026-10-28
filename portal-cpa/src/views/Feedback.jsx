@@ -71,7 +71,7 @@ export default function Feedback({ perfil, base }) {
     try {
       const geradas = await gerarPeca({ curso: curso.nome, modalidade, coordenador: perfil.nome, itens })
       setTelas(geradas.map((t) => ({ nome: t.nome, url: t.canvas.toDataURL('image/png') })))
-      setAviso({ tipo: 'ok', texto: `Feedback pronto! São ${geradas.length} imagens: envie todas juntas no WhatsApp ou baixe para postar.` })
+      setAviso({ tipo: 'ok', texto: `Feedback de ${curso.nome} ${modalidade} pronto! São ${geradas.length} imagens: envie só para as turmas de ${curso.nome} ${modalidade}. Depois, escolha o próximo curso da lista.` })
     } catch (e) {
       setAviso({ tipo: 'erro', texto: e?.message || 'Não foi possível montar o feedback.' })
     } finally {
@@ -96,18 +96,36 @@ export default function Feedback({ perfil, base }) {
           <Vazio>Você ainda não tem curso vinculado.</Vazio>
         ) : (
           <>
-            <div className="campo" style={{ maxWidth: 520 }}>
-              <label htmlFor="peca-curso">Curso</label>
-              <select id="peca-curso" value={cursoId} onChange={(e) => trocarCurso(e.target.value)}>
-                {cursos.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome} ({MODALIDADE_LABEL[c.modalidade] || c.modalidade})</option>
-                ))}
-              </select>
+            <div className="fb-regra" role="note">
+              <b>Um feedback para cada curso e cada modalidade.</b>
+              <span>
+                Os alunos de cada modalidade avaliaram uma realidade diferente. Gere as imagens separadas — por exemplo,{' '}
+                <b>Administração Presencial</b> e <b>Administração EAD</b> são dois feedbacks — e envie cada um só para as turmas daquela modalidade.
+              </span>
             </div>
 
             <div className="card-h">
               <div className="t">
-                <strong>1. Escolha até {PECA_MAX_ITENS} itens aprovados</strong>
+                <strong>1. Escolha o curso e a modalidade</strong>
+                <span className="small muted">Faça um feedback para cada um da lista.</span>
+              </div>
+            </div>
+            <div className="fb-cursos" role="group" aria-label="Curso e modalidade">
+              {cursos.map((c) => {
+                const n = (meus || []).filter((it) => it.curso_id === c.id && (it.status === 'aprovado' || it.status === 'concluido')).length
+                return (
+                  <button key={c.id} type="button" className={'fb-curso' + (c.id === cursoId ? ' on' : '')} aria-pressed={c.id === cursoId} onClick={() => trocarCurso(c.id)}>
+                    <b>{c.nome}</b>
+                    <span className="fb-modal">{MODALIDADE_LABEL[c.modalidade] || c.modalidade}</span>
+                    <span className="small muted">{meus ? (n ? `${n} ${n === 1 ? 'item aprovado' : 'itens aprovados'}` : 'nada aprovado ainda') : '…'}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="card-h">
+              <div className="t">
+                <strong>2. Escolha até {PECA_MAX_ITENS} itens aprovados de {curso ? `${curso.nome} ${modalidade}` : 'o curso'}</strong>
                 <span className="small muted">Cada plano vira uma tela “Ação”; cada “Não há pontos a melhorar” vira uma tela “Ponto forte”.</span>
               </div>
               <div className="spacer" />
@@ -139,7 +157,7 @@ export default function Feedback({ perfil, base }) {
 
             <div className="filtros">
               <button type="button" className="btn escuro" onClick={montar} disabled={gerando}>
-                {gerando ? 'Montando…' : '2. Montar feedback'}
+                {gerando ? 'Montando…' : `3. Montar feedback de ${curso ? curso.nome + ' ' + modalidade : 'o curso'}`}
               </button>
               {aviso && <div className={'aviso' + (aviso.tipo ? ' ' + aviso.tipo : '')} role={aviso.tipo === 'erro' ? 'alert' : 'status'} style={{ flex: 1 }}>{aviso.texto}</div>}
             </div>
@@ -147,7 +165,7 @@ export default function Feedback({ perfil, base }) {
             {telas.length > 0 && (
               <>
                 <div className="filtros">
-                  <button type="button" className="btn escuro" onClick={() => compartilhar(telas, cursoId).catch(() => {})}>3. Enviar no WhatsApp</button>
+                  <button type="button" className="btn escuro" onClick={() => compartilhar(telas, cursoId).catch(() => {})}>4. Enviar no WhatsApp</button>
                   <button type="button" className="btn" onClick={() => telas.forEach((t, i) => setTimeout(() => baixarUrl(t.url, 'CPA_' + cursoId + '_' + t.nome + '.png'), i * 400))}>Baixar todas as imagens</button>
                   <span className="small muted">No celular, “Enviar no WhatsApp” abre o compartilhamento com as {telas.length} imagens juntas. No computador, elas são baixadas para você anexar.</span>
                 </div>
