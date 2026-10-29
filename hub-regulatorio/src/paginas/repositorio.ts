@@ -81,7 +81,7 @@ function itemGrade(a: ArquivoDrive): HtmlSeguro {
 function conteudo(itens: ArquivoDrive[], vazio: HtmlSeguro): HtmlSeguro {
   const termo = chave(estado.filtro)
   const visiveis = termo ? itens.filter((a) => chave(a.name).includes(termo)) : itens
-  if (!visiveis.length) return termo ? estadoVazio('Nada com esse nome nesta pasta', 'Tente “Buscar em todo o Drive”.', '🔍') : vazio
+  if (!visiveis.length) return termo ? estadoVazio('Nada com esse nome nesta pasta', 'Tente “Buscar no conteúdo dos arquivos”, que procura também dentro dos documentos.', '🔍') : vazio
   if (estado.visao === 'grade') return html`<div class="file-grid">${visiveis.map(itemGrade)}</div>`
   return html`<div class="table-wrap"><table class="data">
     <caption class="sr-only">Conteúdo da pasta</caption>
@@ -141,9 +141,9 @@ export function paginaRepositorio(el: HTMLElement, ctx: Contexto) {
         <form class="toolbar" role="search" aria-label="Buscar arquivos">
           <div class="field field-grow">
             <label for="f-arquivo">Filtrar nesta pasta</label>
-            <input class="input" id="f-arquivo" type="search" value="${estado.filtro}" placeholder="Nome do arquivo…" autocomplete="off" />
+            <input class="input" id="f-arquivo" type="search" value="${estado.filtro}" placeholder="Nome ou palavra (Enter busca dentro dos documentos)…" autocomplete="off" />
           </div>
-          <button type="submit" class="btn btn-ghost" ${logado ? '' : html`disabled`}>🔎 Buscar em todo o Drive</button>
+          <button type="submit" class="btn btn-ghost" ${logado ? '' : html`disabled`}>🔎 Buscar no conteúdo dos arquivos</button>
           <div class="toolbar-end">
             <div class="seg" role="group" aria-label="Modo de exibição">
               <button type="button" data-visao="lista" aria-pressed="${estado.visao === 'lista'}">☰ Lista</button>
@@ -171,7 +171,7 @@ export function paginaRepositorio(el: HTMLElement, ctx: Contexto) {
 
     if (estado.busca) {
       itensAtuais = estado.busca.itens
-      montar(area(), conteudo(itensAtuais, estadoVazio('Nenhum arquivo encontrado', `Nada com “${estado.busca.termo}” no nome.`, '🔍')))
+      montar(area(), html`<p class="result-count">${itensAtuais.length}${itensAtuais.length === 200 ? '+' : ''} arquivo(s) com “${estado.busca.termo}” no nome ou no texto, do mais para o menos relevante. O Drive não informa o trecho encontrado: abra o arquivo e use Ctrl+F.</p>${conteudo(itensAtuais, estadoVazio('Nenhum arquivo encontrado', `Nenhum arquivo com “${estado.busca.termo}” no nome ou no texto.`, '🔍'))}`)
       return
     }
     if (!pasta) {

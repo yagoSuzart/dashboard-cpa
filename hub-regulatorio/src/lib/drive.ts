@@ -134,14 +134,15 @@ async function chamar<T>(caminho: string, params: Record<string, string>): Promi
 /** Texto seguro dentro de uma consulta do Drive ('...'). */
 const textoConsulta = (s: string) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 
-async function listar(q: string, limite = 1000): Promise<ArquivoDrive[]> {
+async function listar(q: string, limite = 1000, ordenar = true): Promise<ArquivoDrive[]> {
   const out: ArquivoDrive[] = []
   let pageToken = ''
   do {
     const r = await chamar<{ files: ArquivoDrive[]; nextPageToken?: string }>('/files', {
       q,
       fields: `nextPageToken,files(${CAMPOS})`,
-      orderBy: 'folder,name_natural',
+      // Buscas no conteúdo (fullText) não aceitam ordenação: o Drive devolve por relevância
+      ...(ordenar ? { orderBy: 'folder,name_natural' } : {}),
       pageSize: '200',
       supportsAllDrives: 'true',
       includeItemsFromAllDrives: 'true',
@@ -158,9 +159,13 @@ export function listarPasta(pastaId: string): Promise<ArquivoDrive[]> {
   return listar(`'${textoConsulta(pastaId)}' in parents and trashed = false`)
 }
 
-/** Busca por nome em tudo o que a pessoa pode ver no Drive. */
+/**
+ * Busca no NOME e no CONTEÚDO dos arquivos (texto de PDFs, Docs, Word, planilhas…) em tudo
+ * o que a pessoa pode ver no Drive. Quem indexa o texto é o próprio Google Drive (sem IA no Hub).
+ * Resultado em ordem de relevância, até 200 itens.
+ */
 export function buscarNoDrive(termo: string): Promise<ArquivoDrive[]> {
-  return listar(`name contains '${textoConsulta(termo)}' and trashed = false`, 200)
+  return listar(`fullText contains '${textoConsulta(termo)}' and trashed = false`, 200, false)
 }
 
 // ---------------------------------------------------------------------

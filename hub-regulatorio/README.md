@@ -14,7 +14,7 @@ e acessa o Google Drive com o login de quem está usando.
 | **Cursos** (`#/cursos`) | Busca, filtros (modalidade, situação, grau, conceitos), ordenação, paginação, exportar CSV | 1 |
 | **Ficha do curso** (`#/cursos/<id>`) | Todos os dados do curso, atos, prazos, coordenação, avaliação in loco, links | 1 |
 | **Polos** (`#/polos`) | 712 polos com busca, filtros (UF, região, situação), ordenação, paginação, CSV e detalhe | 1 |
-| **Repositório** (`#/repositorio`) | Pastas do Google Drive: navegar, lista/grade, buscar, abrir, enviar arquivos | 3 (esboço) |
+| **Repositório** (`#/repositorio`) | Pastas do Google Drive: navegar, lista/grade, buscar no nome e **dentro do texto** dos documentos (índice do próprio Drive), abrir, enviar arquivos | 3 (esboço) |
 | **Diligências** / **Acessos** | Só o planejamento, sem dados | 4 e 5 |
 
 ## Como rodar no computador
