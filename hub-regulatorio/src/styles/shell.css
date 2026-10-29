@@ -1,0 +1,69 @@
+/* =========================================================
+   App shell: menu lateral fixo + barra superior com breadcrumb
+   ========================================================= */
+.shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+/* ---------- Menu lateral ---------- */
+.sidebar {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  background: var(--navy-deep); color: #fff;
+  display: flex; flex-direction: column; padding: var(--sp-4) var(--sp-3);
+}
+.brand { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-1) var(--sp-2) var(--sp-4); border-bottom: 1px solid rgba(255, 255, 255, .12); margin-bottom: var(--sp-3); text-decoration: none; color: #fff; }
+.brand svg { width: 38px; height: 38px; flex-shrink: 0; }
+.brand-name { font-family: var(--font-title); font-weight: 700; font-size: 16px; line-height: 1.1; }
+.brand-sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255, 255, 255, .65); }
+
+.nav-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255, 255, 255, .6); padding: var(--sp-3) var(--sp-2) var(--sp-1); }
+.nav { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.nav a {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 9px var(--sp-3); border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, .85); text-decoration: none; font-size: 14px; font-weight: 500;
+}
+.nav a:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+.nav a[aria-current="page"] { background: rgba(255, 255, 255, .14); color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 var(--green); }
+.nav a:focus-visible { box-shadow: 0 0 0 3px rgba(0, 177, 210, .7); }
+.nav .ico { width: 20px; text-align: center; font-size: 15px; flex-shrink: 0; }
+.nav .code { margin-left: auto; font-family: var(--font-mono); font-size: 9.5px; color: rgba(255, 255, 255, .5); }
+.nav .ext { margin-left: auto; font-size: 11px; color: rgba(255, 255, 255, .5); }
+
+.sidebar-foot { margin-top: auto; padding: var(--sp-4) var(--sp-2) 0; font-size: 11px; color: rgba(255, 255, 255, .55); line-height: 1.5; }
+
+/* ---------- Coluna principal ---------- */
+.main-col { min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  position: sticky; top: 0; z-index: 20; height: var(--topbar-h);
+  display: flex; align-items: center; gap: var(--sp-3);
+  background: var(--paper); border-bottom: 1px solid var(--line);
+  padding: 0 var(--sp-6);
+}
+.menu-btn { display: none; border: 1px solid var(--line-strong); background: var(--paper); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 16px; color: var(--navy); }
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; font-size: 13px; }
+.crumbs li { display: flex; align-items: center; gap: 6px; color: var(--slate); }
+.crumbs li + li::before { content: "/"; color: var(--line-strong); }
+.crumbs a { color: var(--slate); text-decoration: none; font-weight: 600; }
+.crumbs a:hover { color: var(--blue); text-decoration: underline; }
+.crumbs [aria-current="page"] { color: var(--navy); font-weight: 700; }
+.topbar-end { margin-left: auto; display: flex; align-items: center; gap: var(--sp-3); font-size: 12px; color: var(--slate); }
+
+.content { padding: var(--sp-6); max-width: 1320px; width: 100%; margin: 0 auto; flex: 1; }
+.content:focus { outline: none; }
+.foot { padding: var(--sp-4) var(--sp-6); font-size: 11.5px; color: var(--slate); border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+
+.scrim { display: none; }
+
+/* ---------- Celular / tablet ---------- */
+@media (max-width: 960px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 50;
+    transform: translateX(-100%); transition: transform .2s ease; visibility: hidden;
+  }
+  .shell.menu-aberto .sidebar { transform: none; visibility: visible; }
+  .shell.menu-aberto .scrim { display: block; position: fixed; inset: 0; background: rgba(0, 20, 50, .5); z-index: 40; }
+  .menu-btn { display: inline-flex; }
+  .topbar { padding: 0 var(--sp-4); }
+  .topbar-end { display: none; }
+  .content { padding: var(--sp-4); }
+}

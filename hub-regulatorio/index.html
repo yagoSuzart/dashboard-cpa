@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Hub Regulatório · UniFECAF</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Roboto+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+    <div class="shell" id="shell">
+      <nav class="sidebar" id="menu" aria-label="Menu principal">
+        <a class="brand" href="#/">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M30 12 H78 A6 6 0 0 1 84 18 V38 L68 54 V24 H30 Z" fill="#B5D4F4" />
+            <path d="M88 46 V80 A6 6 0 0 1 82 86 H58 L46 70 H76 V46 Z" fill="#7F9FC7" />
+            <path d="M70 90 H22 A6 6 0 0 1 16 84 V56 L32 46 V76 H60 Z" fill="#A7DEC2" />
+            <rect x="38" y="38" width="24" height="24" rx="3" fill="none" stroke="#FFFFFF" stroke-width="3" />
+            <rect x="45" y="45" width="10" height="10" rx="1.5" fill="#17A460" />
+          </svg>
+          <span>
+            <span class="brand-name">UniFECAF</span><br />
+            <span class="brand-sub">Hub Regulatório</span>
+          </span>
+        </a>
+        <div id="menu-itens"></div>
+        <div class="sidebar-foot">Dados oficiais devem ser sempre validados nas fontes primárias (e-MEC, D.O.U.).</div>
+      </nav>
+      <div class="scrim" id="scrim" aria-hidden="true"></div>
+
+      <div class="main-col">
+        <header class="topbar">
+          <button class="menu-btn" id="menu-btn" aria-controls="menu" aria-expanded="false" aria-label="Abrir menu">☰</button>
+          <nav class="crumbs" aria-label="Você está em" id="migalhas"></nav>
+          <div class="topbar-end" id="topo-status"></div>
+        </header>
+        <main class="content" id="conteudo" tabindex="-1"></main>
+        <footer class="foot">
+          <span>UniFECAF · Setor Regulatório · Hub Regulatório</span>
+          <span>Esboço v0.1 — leitura do Supabase; edição ainda pelo painel do banco.</span>
+        </footer>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
