@@ -199,3 +199,27 @@ dl.ficha dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; white
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--sp-4); }
 .stack { display: flex; flex-direction: column; gap: var(--sp-5); }
 .section-title { font-family: var(--font-title); font-size: 15px; font-weight: 700; color: var(--navy); margin: 0 0 var(--sp-3); }
+
+/* ---------- Repositório (estilo Drive) ---------- */
+.drive-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 var(--sp-3); padding: 0; list-style: none; font-size: 14px; }
+.drive-crumbs li { display: flex; align-items: center; gap: 4px; }
+.drive-crumbs li + li::before { content: "›"; color: var(--slate); }
+.drive-crumbs button { background: none; border: 0; padding: 4px 8px; border-radius: var(--radius-sm); color: var(--slate); font-weight: 600; }
+.drive-crumbs button:hover { background: var(--gray-soft); color: var(--navy); }
+.drive-crumbs [aria-current="page"] { padding: 4px 8px; color: var(--navy); font-weight: 700; font-family: var(--font-title); }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden; }
+.seg button { border: 0; background: var(--paper); padding: 7px 12px; font-size: 13px; color: var(--slate); }
+.seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+.dropzone { position: relative; border-radius: var(--radius); }
+.dropzone.is-over::after { content: "Solte para enviar a esta pasta"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(14, 119, 204, .1); border: 2px dashed var(--blue); border-radius: var(--radius); color: var(--blue-ink); font-weight: 700; z-index: 2; }
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--sp-3); }
+.file-tile { display: flex; flex-direction: column; gap: var(--sp-2); background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4); text-align: left; color: inherit; text-decoration: none; min-height: 118px; font: inherit; }
+.file-tile:hover { border-color: var(--blue); }
+.file-tile .file-ico { font-size: 30px; line-height: 1; }
+.file-tile .file-name { font-weight: 600; font-size: 13.5px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.file-tile .file-meta { margin-top: auto; font-size: var(--fs-xs); color: var(--slate); }
+.file-row-name { display: flex; align-items: center; gap: var(--sp-2); }
+.file-row-name .file-ico { font-size: 18px; }
+.uploads { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.uploads li { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: var(--sp-2) var(--sp-3); font-size: 13px; display: grid; grid-template-columns: 1fr 160px auto; gap: var(--sp-3); align-items: center; }
+.uploads progress { width: 100%; height: 8px; accent-color: var(--green); }
