@@ -54,7 +54,7 @@ function desenharMenu(secaoAtual: string) {
       <ul class="nav">
         ${CONFIG.atalhos.map(
           (a) => html`<li><a href="${a.url}" target="_blank" rel="noopener">
-            <span class="ico" aria-hidden="true">↗</span>${a.nome}<span class="ext">(nova aba)</span></a></li>`,
+            <span class="ico" aria-hidden="true">↗</span>${a.nome}<span class="sr-only"> (abre em nova aba)</span></a></li>`,
         )}
       </ul>`,
   )

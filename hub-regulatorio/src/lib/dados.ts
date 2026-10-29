@@ -134,6 +134,8 @@ async function todas<T>(tabela: string, colunas: string, ordem: string): Promise
 function enriquecerCurso(c: CursoBanco): Curso {
   return {
     ...c,
+    // A planilha às vezes grava o código como número ("1627421.0")
+    codigo_emec: c.codigo_emec?.trim().replace(/\.0+$/, '') || null,
     ativo: (c.status ?? '').toLowerCase() === 'ativo',
     modalidadeCurta: modalidadeCurta(c.modalidade),
     ccC: conceito(c.cc),

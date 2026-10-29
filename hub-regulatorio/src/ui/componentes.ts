@@ -1,5 +1,7 @@
 // Componentes visuais reutilizáveis. Todos devolvem HTML seguro (ver lib/html.ts).
 import { html, montar, type HtmlSeguro } from '../lib/html'
+import type { Conceito } from '../lib/normaliza'
+import { CONFIG } from '../config'
 
 export type Tom = 'ok' | 'info' | 'warn' | 'alert' | 'mod' | 'neutro'
 
@@ -118,4 +120,20 @@ export function abrirModal(o: { titulo: string; codigo?: string; corpo: HtmlSegu
   dlg.showModal()
   dlg.querySelector<HTMLElement>('[data-fechar]')?.focus()
   return { fechar, elemento: dlg }
+}
+
+// ---------------------------------------------------------------------
+//  Etiquetas regulatórias
+// ---------------------------------------------------------------------
+
+/** Etiqueta de conceito MEC: vermelho abaixo de 3, amarelo abaixo da meta (4), verde na meta. */
+export function tagConceito(c: Conceito): HtmlSeguro {
+  if (c.nota === null) return tag(c.texto.startsWith('Sem') ? 'S/C' : c.texto === 'Não há' ? 'Não há' : '—', 'neutro', c.texto)
+  const tom: Tom = c.nota < CONFIG.conceitos.minimoSatisfatorio ? 'alert' : c.nota < CONFIG.conceitos.metaInstitucional ? 'warn' : 'ok'
+  return tag(c.texto, tom, `Conceito ${c.texto}`)
+}
+
+/** Etiqueta de situação (ativo / inativo). */
+export function tagSituacao(ativo: boolean, texto: string): HtmlSeguro {
+  return tag(texto, ativo ? 'ok' : 'neutro')
 }
