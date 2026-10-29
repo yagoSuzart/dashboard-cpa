@@ -1,0 +1,12 @@
+// Publicação como Cloudflare Worker só com arquivos estáticos (sem backend). Ver README.
+// ATENÇÃO: o "name" define o endereço: <name>.yago-brito.workers.dev.
+// "hub-regulatorio-unifecaf" é o endereço do Consult atual; publicar com esse nome SUBSTITUI o Consult.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hub-regulatorio-v2",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

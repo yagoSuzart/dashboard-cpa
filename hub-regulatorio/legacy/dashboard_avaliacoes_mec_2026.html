@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Avaliações MEC 2026 · UniFECAF</title>
+<style>
+  :root{
+    --navy:#152238;
+    --navy-2:#1F3554;
+    --paper:#F3F4F7;
+    --card:#FFFFFF;
+    --ink:#1B2130;
+    --muted:#626B80;
+    --line:#E2E5EC;
+    --good:#1E6B4F;
+    --good-bg:#E4F2EA;
+    --good-line:#BFE0CD;
+    --warn:#96601B;
+    --warn-bg:#FBF0DA;
+    --warn-line:#EFD8A4;
+    --bad:#A5342E;
+    --bad-bg:#FBE7E5;
+    --bad-line:#F0C3BE;
+    --teal:#0E5C56;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 80px;}
+
+  .masthead{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    color:#EDEFF4;
+    border-radius:14px;
+    padding:28px 30px;
+    margin-bottom:22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .masthead::after{
+    content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;
+    border-radius:50%;border:1px solid rgba(255,255,255,.12);
+  }
+  .masthead::before{
+    content:"";position:absolute;right:10px;top:40px;width:140px;height:140px;
+    border-radius:50%;border:1px solid rgba(255,255,255,.10);
+  }
+  .eyebrow{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9FB0C9;
+    font-weight:600;margin-bottom:8px;
+  }
+  h1{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:28px;margin:0 0 6px;font-weight:600;letter-spacing:.2px;
+  }
+  .masthead p{margin:0;color:#C6D0E0;font-size:14px;max-width:640px;line-height:1.5;}
+  .goal-pill{
+    display:inline-flex;align-items:center;gap:8px;margin-top:16px;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+    padding:7px 14px;border-radius:999px;font-size:13px;color:#EDEFF4;
+  }
+  .goal-pill b{color:#fff;}
+
+  .status-strip{display:grid;grid-template-columns:1.1fr 1.3fr 1fr;gap:14px;margin-bottom:22px;}
+  .status-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;}
+  .status-card .sc-eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:8px;}
+  .status-card .sc-main{display:flex;align-items:baseline;gap:8px;}
+  .status-card .sc-num{font-family:Georgia,serif;font-size:28px;font-weight:700;}
+  .status-card .sc-sub{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .status-card.highlight{border-color:#F0C36A;background:linear-gradient(135deg,#FFF9EE 0%,#FFFFFF 60%);}
+  .status-card.highlight .sc-num{color:var(--warn);}
+  .status-card .mini-scores{display:flex;gap:8px;margin-top:10px;}
+  .status-card .mini-score{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;}
+  .meta-section{margin-bottom:22px;}
+  .meta-section-label{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .meta-section-label .line{flex:1;height:1px;background:var(--line);}
+  .pct-badge{display:inline-flex;align-items:center;font-size:13px;font-weight:800;padding:4px 12px;border-radius:99px;
+    background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);margin-left:10px;}
+  .cursos-strip{grid-template-columns:1fr;}
+  .polos-strip{grid-template-columns:1fr 1.4fr;}
+
+  .tabs{display:flex;gap:10px;margin:22px 0 18px;}
+  .tab{
+    flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;cursor:pointer;transition:.15s;position:relative;
+  }
+  .tab:hover{border-color:#c7cede;}
+  .tab.active{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy) inset;}
+  .tab .tname{font-family:Georgia,serif;font-size:16px;font-weight:600;color:var(--ink);}
+  .tab .tmeta{font-size:12px;color:var(--muted);margin-top:3px;}
+  .tab .tscore{
+    position:absolute;right:16px;top:14px;font-family:Georgia,serif;font-size:22px;font-weight:700;
+  }
+  .status-tag{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;
+    padding:2px 8px;border-radius:6px;margin-top:6px;
+  }
+
+  .toolbar{display:flex;justify-content:flex-end;margin-bottom:10px;}
+  .toolbar button{
+    background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:7px 13px;font-size:12.5px;color:var(--navy);cursor:pointer;font-weight:600;
+  }
+  .toolbar button:hover{border-color:var(--navy);}
+
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  .summary-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+  .final-card{display:flex;align-items:center;gap:16px;}
+  .dial{
+    width:74px;height:74px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .dial span{
+    background:var(--card);width:56px;height:56px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:Georgia,serif;font-weight:700;font-size:17px;
+  }
+  .final-card .flabel{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;}
+  .final-card .fsub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  .dim-card .dlabel{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:8px;}
+  .dim-card .dscore{font-family:Georgia,serif;font-size:26px;font-weight:700;margin-bottom:8px;}
+  .bar-track{height:7px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:99px;}
+
+  .dim-section{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+  .dim-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid var(--line);background:#FAFBFC;gap:12px;
+  }
+  .dim-head h2{font-family:Georgia,serif;font-size:16.5px;margin:0;color:var(--ink);}
+  .dim-head .avg{font-family:Georgia,serif;font-weight:700;font-size:17px;margin-left:auto;}
+  .dim-toggle{
+    background:none;border:1px solid var(--line);border-radius:6px;font-size:11.5px;color:var(--muted);
+    padding:4px 10px;cursor:pointer;white-space:nowrap;
+  }
+  .dim-toggle:hover{border-color:var(--navy);color:var(--navy);}
+
+  table.ind{width:100%;border-collapse:collapse;}
+  table.ind td, table.ind th{padding:10px 20px;font-size:13.2px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.ind th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#FCFCFD;}
+  table.ind tr:last-child td{border-bottom:none;}
+  .code{color:var(--muted);font-variant-numeric:tabular-nums;width:48px;}
+  .score-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:24px;border-radius:6px;font-weight:700;font-size:13px;
+  }
+  .ind-name{font-weight:500;}
+  .comment-row td{background:#FAFBFD;font-size:12.8px;color:#3A4257;line-height:1.6;padding:2px 20px 16px 20px;border-bottom:1px solid var(--line);}
+  .comment-row.hidden{display:none;}
+  .toggle-btn{
+    background:none;border:1px solid var(--line);border-radius:6px;font-size:11px;color:var(--muted);
+    padding:2px 8px;cursor:pointer;white-space:nowrap;
+  }
+  .toggle-btn:hover{border-color:var(--navy);color:var(--navy);}
+  .nsa-row td{color:#B4B9C6;font-style:italic;}
+
+  .analysis{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:26px 28px;margin-top:30px;
+  }
+  .analysis h2{
+    font-family:Georgia,serif;font-size:21px;margin:0 0 4px;color:var(--navy);
+  }
+  .analysis .lead{color:var(--muted);font-size:13.5px;margin-bottom:20px;max-width:800px;line-height:1.6;}
+
+  .risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+  .risk-card{border-radius:10px;padding:16px 18px;border:1px solid;}
+  .risk-card.critical{background:var(--bad-bg);border-color:var(--bad-line);}
+  .risk-card.watch{background:var(--warn-bg);border-color:var(--warn-line);}
+  .risk-card h3{margin:0 0 8px;font-size:14px;font-family:Georgia,serif;}
+  .risk-card.critical h3{color:var(--bad);}
+  .risk-card.watch h3{color:var(--warn);}
+  .risk-card ul{margin:0;padding-left:18px;font-size:13px;line-height:1.65;color:var(--ink);}
+
+  .action-table{width:100%;border-collapse:collapse;margin-top:6px;}
+  .action-table th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    padding:8px 12px;border-bottom:2px solid var(--line);
+  }
+  .action-table td{padding:11px 12px;font-size:13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5;}
+  .prio{
+    display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap;
+  }
+  .prio.p1{background:var(--bad-bg);color:var(--bad);}
+  .prio.p2{background:var(--warn-bg);color:var(--warn);}
+  .prio.p3{background:var(--good-bg);color:var(--good);}
+
+  .note{
+    margin-top:20px;padding:14px 18px;background:#F3F6FF;border:1px solid #D9E1F5;border-radius:10px;
+    font-size:13px;color:#2C3B63;line-height:1.6;
+  }
+  footer.credit{text-align:center;font-size:11.5px;color:#9AA1B2;margin-top:26px;}
+
+  @media(max-width:860px){
+    .summary-grid{grid-template-columns:1fr 1fr;}
+    .risk-grid{grid-template-columns:1fr;}
+    .tabs{flex-direction:column;}
+  }
+
+  .view-tabs{display:flex;gap:10px;margin-bottom:20px;}
+  .view-tab{padding:11px 20px;border-radius:10px;border:1px solid var(--line);background:var(--card);
+    font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;transition:.15s;}
+  .view-tab:hover{border-color:#c7cede;}
+  .view-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .view-panel{display:none;}
+  .view-panel.active{display:block;animation:fade .25s ease;}
+
+  .pd-banner{background:#EEF2FF;border:1px solid #D7DEFB;border-radius:12px;padding:16px 20px;
+    margin-bottom:18px;font-size:13px;color:#2C3B63;line-height:1.65;}
+
+  .modality-toggle{display:flex;gap:8px;margin-bottom:16px;}
+  .mod-btn{padding:8px 18px;border-radius:8px;border:1px solid var(--line);background:var(--card);
+    font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);}
+  .mod-btn:hover{border-color:#c7cede;}
+  .mod-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .stat-num{font-family:Georgia,serif;font-size:27px;font-weight:700;}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+
+  .inst-table-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:8px;}
+  table.inst{width:100%;border-collapse:collapse;}
+  table.inst th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+    background:#FAFBFC;padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);}
+  table.inst td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  table.inst tbody tr.data-row:hover{background:#FAFBFD;cursor:pointer;}
+  .area-tag{font-size:10.5px;color:var(--muted);}
+  .delta-up{color:var(--good);font-weight:700;}
+  .delta-down{color:var(--bad);font-weight:700;}
+  .delta-flat{color:var(--muted);font-weight:700;}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;}
+  .chip.ok{background:var(--good-bg);color:var(--good);}
+  .chip.risk{background:var(--bad-bg);color:var(--bad);}
+  .expand-row{display:none;}
+  .expand-row.show{display:table-row;}
+  .pd-mini-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:4px 14px 16px;background:#FAFBFD;}
+  .pd-mini{border:1px solid var(--line);border-radius:8px;padding:8px 10px;text-align:center;background:#fff;}
+  .pd-mini.risk{border-color:var(--bad-line);background:var(--bad-bg);}
+  .pd-mini .pcode{font-size:10px;color:var(--muted);font-weight:700;display:block;margin-bottom:5px;}
+  .pd-mini .pvals{font-size:12.5px;font-weight:600;}
+  .chev{display:inline-block;transition:transform .15s;color:var(--muted);margin-right:8px;font-size:11px;}
+  .chev.open{transform:rotate(90deg);}
+  .course-name-cell{font-weight:600;}
+  .no-data{color:#B4B9C6;font-style:italic;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">Metas Institucionais · Setor Regulatório</div>
+    <h1>Dashboard de Avaliações MEC 2026</h1>
+    <p>Acompanhamento das metas institucionais do setor regulatório: o conceito das avaliações de reconhecimento de curso já realizadas em 2026 — Serviço Social (Bacharelado EAD) e Farmácia (Bacharelado EAD) — e o cronograma de visitas virtuais in loco aos polos de apoio presencial do Centro Universitário UniFECAF.</p>
+    <div class="goal-pill">🎯 Meta institucional: conceito final <b>4 ou 5</b> em todas as avaliações do MEC</div>
+  </div>
+
+  <div class="meta-section">
+    <div class="meta-section-label">📚 Cursos — Avaliações de Reconhecimento<div class="line"></div></div>
+    <div class="status-strip cursos-strip">
+      <div class="status-card">
+        <div class="sc-eyebrow">Avaliações concluídas em 2026 · Situação frente à meta</div>
+        <div class="sc-main"><span class="sc-num">2</span><span style="font-size:14px;color:var(--ink);font-weight:600;">avaliações concluídas</span><span class="sc-num" style="color:var(--warn);font-size:20px;margin-left:18px;">1 de 2</span><span style="font-size:14px;color:var(--ink);font-weight:600;">dentro da meta (4 ou 5)</span></div>
+        <div class="mini-scores">
+          <span class="mini-score" style="background:var(--good-bg);color:var(--good);">Serviço Social 4,81 ✓ meta atingida</span>
+          <span class="mini-score" style="background:var(--bad-bg);color:var(--bad);">Farmácia 3,03 ✗ abaixo da meta</span>
+        </div>
+        <div class="sc-sub" style="margin-top:10px;">Serviço Social já bate a meta institucional. Farmácia está abaixo e com plano de ação em andamento — ver análise completa mais abaixo.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta-section">
+    <div class="meta-section-label">📍 Polos — Avaliação Virtual In Loco<div class="line"></div></div>
+    <div class="status-strip polos-strip">
+      <div class="status-card">
+        <div class="sc-eyebrow">Polos ativos</div>
+        <div class="sc-main"><span class="sc-num">272</span></div>
+        <div class="sc-sub">Total de polos de apoio presencial ativos no Centro Universitário UniFECAF.</div>
+      </div>
+      <div class="status-card highlight">
+        <div class="sc-eyebrow">🗓️ Agendados para Avaliação Virtual In Loco</div>
+        <div class="sc-main"><span class="sc-num">24</span><span class="pct-badge">8,8% do total</span></div>
+        <div class="sc-sub">Já estamos com <b>24 dos 272 polos ativos agendados para Avaliação Virtual In Loco</b> — próxima frente de trabalho da CPA, com o mesmo padrão de acompanhamento indicador a indicador usado nas avaliações de curso acima.</div>
+      </div>
+    </div>
+  </div>
+
+  
+<div class="tabs">
+    <div class="tab active" data-target="ss" onclick="showTab('ss')">
+      <div class="tname">Serviço Social · EAD</div>
+      <div class="tmeta">Protocolo 202204570 · Visita 27–29/05/2026</div>
+      <div class="status-tag" style="background:var(--good-bg);color:var(--good);">✓ Meta atingida</div>
+      <div class="tscore" style="color:var(--good);">4,81</div>
+    </div>
+    <div class="tab" data-target="fa" onclick="showTab('fa')">
+      <div class="tname">Farmácia · EAD</div>
+      <div class="tmeta">Protocolo 202520840 · Visita 24–26/06/2026</div>
+      <div class="status-tag" style="background:var(--bad-bg);color:var(--bad);">✗ Abaixo da meta</div>
+      <div class="tscore" style="color:var(--bad);">3,03</div>
+    </div>
+  </div>
+
+  <div id="panel-ss" class="panel active"></div>
+  <div id="panel-fa" class="panel"></div>
+
+  <div class="analysis">
+    <h2>Análise crítica e plano de ação</h2>
+    <p class="lead">Leitura combinada dos dois relatórios com foco no que ameaça a meta de conceito 4–5. Farmácia já está abaixo da meta (3,03) e concentra a maior urgência; Serviço Social atingiu a meta (4,81), mas carrega itens no limiar que podem derrubar o conceito na próxima renovação se não forem tratados agora.</p>
+
+    <div class="risk-grid">
+      <div class="risk-card critical">
+        <h3>🔴 Crítico — Farmácia (curso abaixo da meta)</h3>
+        <ul>
+          <li><b>Estrutura curricular (nota 1):</b> carga horária dos eixos formativos não bate com os percentuais mínimos da DCN (Res. CNE/CES nº 6/2017), e aulas práticas contam como carga obrigatória na matriz mas não são de presença obrigatória — alunos relataram nunca ter participado.</li>
+          <li><b>Bibliografia básica e complementar (nota 1 nas duas):</b> livros com mais de 10 anos sem justificativa, sem relatório de adequação do NDE, acervo físico incompatível com 6.500 vagas.</li>
+          <li><b>Número de vagas (nota 2):</b> 6.500 vagas autorizadas para apenas 14 docentes e 7 tutores — dimensionamento incompatível, citado explicitamente pelos avaliadores em mais de um indicador.</li>
+          <li><b>Laboratórios de formação básica/específica (nota 2):</b> sem comprovação de uso regular, sem equipe técnica documentada, sem equipamentos citados nas DCN (encapsuladora, centrífuga, analisador bioquímico etc.).</li>
+          <li><b>Colegiado de curso e NDE (notas 2 e 3):</b> ausência de atas assinadas, listas de presença e portaria de designação vigente.</li>
+        </ul>
+      </div>
+      <div class="risk-card watch">
+        <h3>🟡 Atenção — Serviço Social (dentro da meta, mas com pontos frágeis)</h3>
+        <ul>
+          <li><b>Produção científica, cultural, artística ou tecnológica (nota 2):</b> mesmo ponto fraco do curso de Farmácia. De 12 docentes, a produção comprovada está concentrada em poucos nomes — risco direto em qualquer renovação futura.</li>
+          <li><b>Bibliografia básica e complementar (nota 4 nas duas):</b> mesma causa-raiz de Farmácia, em grau menor — comissão não conseguiu visualizar o acesso virtual específico da área na plataforma Pearson.</li>
+          <li><b>Experiência docente no ensino superior e em EAD (nota 4):</b> ausência de reconhecimento formal pela produção docente.</li>
+          <li>Estes três itens são exatamente os que impedem o curso de chegar a conceito 5 pleno — e são os mesmos que já reprovam Farmácia.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="font-family:Georgia,serif;font-size:15px;margin:0 0 10px;">Causas-raiz recorrentes nos dois cursos</h3>
+    <table class="action-table">
+      <thead>
+        <tr><th style="width:26%;">Causa-raiz</th><th style="width:14%;">Cursos afetados</th><th>Ação recomendada</th><th style="width:16%;">Responsável sugerido</th><th style="width:9%;">Prioridade</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Acervo bibliográfico desatualizado</b> (obras &gt;10 anos sem justificativa acadêmica; sem relatório de adequação do NDE vinculando bibliografia × vagas × exemplares/licenças)</td>
+          <td>Farmácia (1,1/1,1) e Serviço Social (4/4)</td>
+          <td>NDE de cada curso produz e assina relatório formal de adequação da bibliografia básica/complementar por unidade curricular, com plano de substituição de títulos antigos e verificação de licenças simultâneas Pearson × nº de matriculados.</td>
+          <td>NDE + Biblioteca/CRA</td>
+          <td><span class="prio p1">Prioridade 1</span></td>
+        </tr>
+        <tr>
+          <td><b>Baixa produção científica docente</b> comprovada nos últimos 3 anos</td>
+          <td>Farmácia e Serviço Social (ambos nota 2)</td>
+          <td>Campanha interna de submissão à Revista Lispector e editais de iniciação científica, com meta mínima de produção por docente e prazo para atualização do Lattes antes da próxima visita.</td>
+          <td>Coordenação de Pesquisa + Coordenadores de curso</td>
+          <td><span class="prio p1">Prioridade 1</span></td>
+        </tr>
+        <tr>
+          <td><b>Documentação de governança acadêmica incompleta</b> (atas de NDE, Colegiado e Tutoria sem assinatura, sem lista de presença ou sem periodicidade regular registrada)</td>
+          <td>Farmácia (NDE=3, Colegiado=2, Tutoria=3)</td>
+          <td>Padronizar template de ata com lista de presença obrigatória, calendário fixo de reuniões (mínimo previsto no regulamento) e repositório único no Drive institucional, replicando o padrão já bem avaliado em Serviço Social.</td>
+          <td>Secretaria Acadêmica + Coordenação de curso</td>
+          <td><span class="prio p2">Prioridade 2</span></td>
+        </tr>
+        <tr>
+          <td><b>Dimensionamento de vagas incompatível com corpo docente/tutorial e infraestrutura</b></td>
+          <td>Farmácia (6.500 vagas / 14 docentes / 7 tutores); Serviço Social também citado como ponto de atenção pela comissão apesar da nota 5</td>
+          <td>Atualizar estudo de vagas com dimensionamento objetivo (nº de estudantes por docente/tutor, capacidade de laboratórios e polos), justificando redução de vagas ou plano de expansão de quadro compatível com o novo marco regulatório.</td>
+          <td>Pró-Reitoria Acadêmica + NDE</td>
+          <td><span class="prio p1">Prioridade 1</span></td>
+        </tr>
+        <tr>
+          <td><b>Atividades práticas presenciais facultativas</b> apesar de contarem como carga horária obrigatória na matriz (Farmácia)</td>
+          <td>Farmácia</td>
+          <td>Tornar a presença nas práticas obrigatória e controlada (lista de presença/registro no AVA), com plano de reposição para quem já cursou o período sem tê-las cumprido, antes de qualquer nova avaliação.</td>
+          <td>Coordenação do curso + NEAD</td>
+          <td><span class="prio p1">Prioridade 1</span></td>
+        </tr>
+        <tr>
+          <td><b>Distribuição de carga horária por eixo formativo fora do percentual mínimo da DCN</b> (Farmácia)</td>
+          <td>Farmácia</td>
+          <td>Reformular a matriz curricular vigente para atingir 50% Cuidado em Saúde / 40% Tecnologia e Inovação / 10% Gestão, com parecer jurídico-pedagógico do NDE antes de submeter ao e-MEC.</td>
+          <td>NDE + Coordenação do curso</td>
+          <td><span class="prio p1">Prioridade 1</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <b>Leitura para a meta de fim de ano:</b> Farmácia precisa de um plano de saneamento formal antes de qualquer nova visita — o conceito 3,03 está abaixo da meta em todas as três dimensões, e vários indicadores tiraram nota 1 e 2 (estrutura curricular, bibliografia, laboratórios, vagas). Serviço Social já cumpre a meta, mas produção científica e bibliografia são os únicos pontos que seguram o curso em 4,81 em vez de 5,0 — resolver esses dois itens agora custa pouco e blinda o curso para a próxima renovação. Priorize as ações marcadas como <span class="prio p1" style="vertical-align:middle;">Prioridade 1</span> ainda neste semestre, já que a maioria depende de decisões internas (NDE, biblioteca, matriz curricular) e não de investimento estrutural pesado.
+    </div>
+  </div>
+
+  <footer class="credit">Elaborado a partir dos Relatórios de Avaliação e-MEC — Protocolos 202204570 (Serviço Social) e 202520840 (Farmácia).</footer>
+
+</div>
+
+<script>
+const courses = {
+ss: {
+  title: "Serviço Social — Bacharelado EAD",
+  final: "4,81",
+  finalColor: "var(--good)",
+  dims: [
+    { key:"D1", name:"Dimensão 1 — Organização Didático-Pedagógica", score:5.00,
+      indicators:[
+        ["1.1","Políticas institucionais no âmbito do curso",5,"PDI e PPC articulados; a tríade ensino-pesquisa-extensão é reconhecida pelo colegiado e pelos discentes. Destaque para os núcleos de estudo (Marielle Franco, Lélia Gonzalez), a revista científica própria 'Lispector' e editais de produção acadêmica com premiação financeira."],
+        ["1.2","Objetivos do curso",5,"Objetivos alinhados ao perfil do egresso e às demandas sociais contemporâneas. O Projeto de Inovação Acadêmica (PIA 3.0) fortalece a atualização curricular e a aproximação com o mercado de trabalho e a inovação."],
+        ["1.3","Perfil profissional do egresso",5,"Perfil coerente com as DCN da ABEPSS e o Código de Ética do Assistente Social. Matriz curricular inclui minicertificações via blockchain (badges) e disciplinas ligadas à empregabilidade e ao LinkedIn dos estudantes."],
+        ["1.4","Estrutura curricular",5,"Flexibilidade garantida por eletivas (LIBRAS, Saúde Mental, Gênero e Diversidade), interdisciplinaridade via extensão vinculada aos ODS da ONU, e carga horária de 3.230h — acima do mínimo das DCN."],
+        ["1.5","Conteúdos curriculares",5,"Conteúdos organizados em formação básica, específica, complementar e livre, com disciplinas atualizadas sobre racismo, violência contra a mulher e população LGBTQIA+. Participação em eventos do CRESS/CBAS conta como atividade complementar."],
+        ["1.6","Metodologia",5,"Encontros síncronos (4 por mês, por disciplina), AVA interativo para autogestão acadêmica, núcleos de estudo e prática extensionista territorial citada pelos próprios discentes em reunião."],
+        ["1.7","Estágio curricular supervisionado",5,"630h divididas em 3 estágios (150h de campo + 60h de supervisão acadêmica cada), em conformidade com a Resolução 533 do CFESS. Convênios com prefeituras (Guarujá, Cachoeiro de Itapemirim) comprovados em drive."],
+        ["1.10","Atividades complementares",5,"Regulamento exige diversificação semestral e de modalidade das atividades; diversas evidências (seminários, oficinas, imersões de carreira) comprovadas com fotos e relatórios no drive."],
+        ["1.11","Trabalho de Conclusão de Curso (TCC)",5,"Artigo científico monográfico produzido no 8º período, critérios de avaliação claros (peso do orientador 40% + banca 60%), repositório de TCCs público e acessível online."],
+        ["1.12","Apoio ao discente",5,"NAP com acompanhamento psicopedagógico e nivelamento; 3 modalidades de intercâmbio internacional (Colômbia, México, Paraguai, Equador); canais de Ouvidoria, CPA e Central do Aluno bem estabelecidos."],
+        ["1.13","Gestão do curso e avaliação interna/externa",5,"CPA atuante com representação de docentes, discentes, corpo técnico e sociedade civil. Melhorias concretas já implementadas a partir de feedbacks, como a troca do Zoom pelo Meet nos encontros síncronos."],
+        ["1.14","Atividades de tutoria",5,"Os 12 docentes do curso também atuam como tutores, com atribuições claras no PPC e reuniões periódicas de alinhamento pedagógico entre docentes, tutores e coordenação."],
+        ["1.15","Conhecimentos, habilidades e atitudes da tutoria",5,"Tutores capacitados para identificar dificuldades dos alunos e adaptar a linguagem à turma; feedback contínuo via AVA citado pela comissão como central na relação com os estudantes."],
+        ["1.16","Tecnologias de Informação e Comunicação (TIC)",5,"Infraestrutura robusta: 848 dispositivos de uso exclusivo dos alunos, 4 links de internet, 51 pontos de wifi, parceria Google for Education e biblioteca virtual 'Persons'."],
+        ["1.17","Ambiente Virtual de Aprendizagem (AVA)",5,"Plataforma Desire2Learn (D2L)/Brightspace com gamificação (badges), agentes inteligentes de acompanhamento e recursos de acessibilidade; contrato vigente até fevereiro de 2027."],
+        ["1.18","Material didático",5,"Produção padronizada com validação da coordenação e da equipe multidisciplinar, uso do Looker Studio para gestão do processo, e acessibilidade (VLibras, Dosvox) com adaptações registradas para alunos PcD."],
+        ["1.19","Procedimentos de acompanhamento e avaliação",5,"Avaliação formativa e contínua, com dois modelos de composição de nota entre questionários, trabalhos e provas; ferramentas UnifecafOne, Mentor e Toolbox usadas para acompanhamento do desempenho docente e discente."],
+      ]},
+    { key:"D2", name:"Dimensão 2 — Corpo Docente e Tutorial", score:4.67,
+      indicators:[
+        ["2.1","Núcleo Docente Estruturante (NDE)",5,"Composição validada por contratos e diplomas digitalizados; atuação contínua na atualização do PPC documentada em atas e no Plano de Ação do NDE."],
+        ["2.2","Equipe multidisciplinar",5,"Formalizada por resolução institucional (Resolução nº 55/2026), com fluxo de produção de materiais e espaços de trabalho verificados in loco pela comissão."],
+        ["2.3","Atuação do coordenador",5,"Plano de ação documentado e compartilhado, indicadores de desempenho disponíveis no relatório da CPA, reuniões semestrais confirmadas por atas de colegiado e relatos de docentes e tutores."],
+        ["2.4","Regime de trabalho do coordenador",5,"Tempo integral comprovado por carteira de trabalho digitalizada; participação em colegiados superiores e articulação com docentes, tutores e equipe multidisciplinar bem documentada."],
+        ["2.5","Corpo docente",5,"Incentivo à leitura atualizada e participação em núcleos temáticos (Marielle Franco, Vozes Marçal de Souza) aos sábados; planos individualizados comprovam foco no perfil do egresso."],
+        ["2.6","Regime de trabalho do corpo docente",5,"Plano Individual de Trabalho detalha carga de docência, atendimento, colegiado e correções. Regime do curso: 15,38% integral, 46,15% parcial, 38,46% horista."],
+        ["2.7","Experiência profissional do docente",5,"Comprovada por Lattes e CTPS; docentes atuam em habitação, assistência social, saúde, área jurídica e OSCs, validado pelos relatos dos próprios discentes durante a visita."],
+        ["2.9","Experiência no exercício da docência superior",4,"Corpo docente qualificado e experiente, com flexibilidade didática e vivências práticas (visitas técnicas ao CRESS) relatadas pelos alunos, mas não foi evidenciado reconhecimento institucional pela produção docente — motivo isolado da nota 4."],
+        ["2.10","Experiência no exercício da docência em EAD",4,"Boa seleção e articulação de conteúdos alinhados ao perfil do egresso, incentivo à pesquisa e às competências transversais, porém sem elementos adicionais que justificassem nota máxima."],
+        ["2.11","Experiência de tutoria em EAD",5,"Tutores com formação e experiência compatíveis com a modalidade a distância, participando de processos permanentes de capacitação e atualização pedagógica."],
+        ["2.12","Atuação do colegiado de curso",5,"Atas assinadas disponíveis no drive, reunião trimestral confirmada (ex.: Ata nº 02/2026, de 17/04/2026), com foco no acompanhamento dos processos de avaliação e qualidade acadêmica."],
+        ["2.13","Titulação e formação do corpo de tutores",5,"7 tutores do curso, sendo 4 mestres (57,14%) e 3 especialistas (42,86%), com aderência comprovada entre a graduação do tutor e a unidade curricular mediada."],
+        ["2.14","Experiência do corpo de tutores em EAD",5,"Currículos Lattes, carteiras de trabalho e certificados confirmam conhecimento em metodologias ativas; tutores recorrem ao NAP quando identificam alunos com dificuldade de aprendizagem."],
+        ["2.15","Interação tutores/docentes/coordenação",5,"Reuniões sistemáticas documentadas em atas de NDE e de Colegiado; relatórios da CPA usados para identificar problemas e ajustar continuamente a comunicação entre os interlocutores."],
+        ["2.16","Produção científica, cultural, artística ou tecnológica",2,"De 12 docentes-tutores, apenas 6 têm produção comprovada no período, concentrada em poucos nomes (destaque para uma docente com 13 produções e outra com 5); os demais têm 1–2 produções ou nenhuma. É o pior indicador do curso."],
+      ]},
+    { key:"D3", name:"Dimensão 3 — Infraestrutura", score:4.80,
+      indicators:[
+        ["3.1","Espaço de trabalho para docentes em tempo integral",5,"Cerca de 20 baias equipadas com computador individual, estúdio de gravação de aulas, armários com tranca e área de convivência com café, frigobar e micro-ondas."],
+        ["3.2","Espaço de trabalho para o coordenador",5,"Sala individual com duas mesas, armário com tranca e ar-condicionado; sala comum disponível nas proximidades para reuniões e atendimentos em grupo."],
+        ["3.3","Sala coletiva de professores",5,"Mesas para planejamento pedagógico, dois sofás, TV de 40', frigobar, bebedouro e ar-condicionado; armário disponível para guarda de materiais."],
+        ["3.4","Salas de aula",5,"Capacidade de 45 a 70 carteiras com braço, mobiliário adaptado para pessoas obesas e canhotas, data show e lousa; o NAP resolve sob demanda a ausência de sinalização visual para cadeirantes."],
+        ["3.5","Acesso a equipamentos de informática",5,"Laboratórios com 33 a 44 computadores, equipe de 15 profissionais de TI para manutenção, wifi gratuito e plano de expansão de TI documentado no drive."],
+        ["3.6","Bibliografia básica por UC",4,"Acervo físico tombado e atualizado (validado pelo NDE), mas a comissão não conseguiu visualizar o acesso virtual específico às obras de Serviço Social na plataforma Pearson, restringindo a comprovação ao acervo físico."],
+        ["3.7","Bibliografia complementar por UC",4,"Mesma causa do item 3.6: contrato com Biblioteca Virtual Pearson existe, mas o acesso digital específico da área não pôde ser demonstrado durante a visita."],
+        ["3.8","Laboratórios didáticos de formação básica",5,"2 laboratórios de metodologias ativas (incluindo a 'Sala Google'), usados em eventos híbridos como a Semana de comemoração dos 90 anos da profissão."],
+        ["3.14","Processo de controle de produção/distribuição de material didático",5,"Fluxo formal com Resolução nº 55/2026, plano de contingência ativo e sistema informatizado de acompanhamento; alunos confirmaram poder baixar 100% do material do AVA."],
+        ["3.16","Comitê de Ética em Pesquisa (CEP)",5,"CEP reconhecido pela CONEP (ofício nº 206/2025), regulamentado pelo CONSU desde novembro de 2024, prestando atendimento também a instituições parceiras."],
+      ]},
+  ]
+},
+fa: {
+  title: "Farmácia — Bacharelado EAD",
+  final: "3,03",
+  finalColor: "var(--bad)",
+  dims: [
+    { key:"D1", name:"Dimensão 1 — Organização Didático-Pedagógica", score:3.00,
+      indicators:[
+        ["1.1","Políticas institucionais no âmbito do curso",2,"Extensão e pesquisa previstas no PDI/PPC, mas sem evidência de execução presencial nos polos: não há comprovação de acompanhamento docente/tutorial presencial da carga extensionista, e não houve nenhuma atividade de pesquisa/iniciação científica desde 2023."],
+        ["1.2","Objetivos do curso",3,"Objetivos coerentes com as DCN, mas sem evidência de que considerem as especificidades socioeconômicas e epidemiológicas de cada polo de oferta."],
+        ["1.3","Perfil profissional do egresso",2,"Perfil descrito não contempla explicitamente competências de análises clínicas/toxicológicas, cosméticos e alimentos, previstas nas DCN do curso."],
+        ["1.4","Estrutura curricular",1,"Pior nota do relatório. Distribuição de carga horária entre eixos (Cuidado em Saúde, Tecnologia e Inovação, Gestão) não atende aos percentuais mínimos da Resolução CNE/CES nº 6/2017. Além disso, docentes e discentes confirmaram que a participação nas atividades práticas — contadas como carga obrigatória — não é, na prática, obrigatória; há alunos que nunca participaram."],
+        ["1.5","Conteúdos curriculares",2,"Conteúdos parcialmente desatualizados (poucas referências a farmacogenômica, saúde digital, testes remotos) e mesma incompatibilidade de carga horária por eixo do item 1.4."],
+        ["1.6","Metodologia",2,"Metodologias ativas mencionadas nos planos de ensino, mas sem evidência de aplicação efetiva; aulas práticas presenciais são facultativas na prática, mesmo com 'convites' formais, fragilizando a articulação teoria-prática exigida pela DCN."],
+        ["1.7","Estágio curricular supervisionado",3,"Carga horária (850h/20%) atende à DCN, mas alunos de alguns polos relataram dificuldade para conseguir campos de estágio no SUS por falta de convênio local, tendo que buscar campos por conta própria."],
+        ["1.10","Atividades complementares",3,"Regulamento não exige cumprimento em todas as três modalidades previstas, permitindo integralizar as 50h sem nenhuma vivência de prática profissional farmacêutica; comprovação de execução baseada apenas em relatos, sem registro documental robusto."],
+        ["1.11","Trabalho de Conclusão de Curso (TCC)",3,"Bem regulamentado, mas sem manual institucional atualizado de apoio (além das normas da Revista Lispector); ainda sem execução real, pois a turma mais adiantada está no 7º período."],
+        ["1.12","Apoio ao discente",2,"NAP conta com uma única psicopedagoga para ~63 mil alunos da IES, sem evidência de atendimento específico ao curso; curso não possui monitoria nem ações efetivas de intermediação de estágio não obrigatório."],
+        ["1.13","Gestão do curso e avaliação interna/externa",5,"CPA atua semestralmente com participação de discentes, docentes, corpo técnico e sociedade civil; autoavaliação institucionalizada com atas e planos de melhoria, ainda que os relatórios pós-2023 não estejam publicados no site da IES."],
+        ["1.14","Atividades de tutoria",3,"Atas de reuniões de tutoria de 2024 sem lista de presença completa nem assinatura; nenhum registro disponibilizado para 2025 e 2026; sem avaliação periódica formal da tutoria pelos estudantes."],
+        ["1.15","Conhecimentos, habilidades e atitudes da tutoria",3,"Política de capacitação institucional existe, mas não há diagnóstico específico de necessidades de capacitação da tutoria do curso, nem plano decorrente."],
+        ["1.16","Tecnologias de Informação e Comunicação (TIC)",5,"Infraestrutura tecnológica robusta (Portal do Aluno, Google for Education, Brightspace/D2L), suporte técnico e planos de contingência bem documentados."],
+        ["1.17","Ambiente Virtual de Aprendizagem (AVA)",5,"Brightspace/D2L com funcionalidades avançadas (gamificação, badges, aprendizagem adaptativa), acompanhado pelo Núcleo de Ensino e Aprendizagem Digital."],
+        ["1.18","Material didático",4,"Fluxo de produção bem estruturado e validado, mas sem recursos comprovadamente inovadores em relação ao padrão institucional."],
+        ["1.19","Procedimentos de acompanhamento e avaliação",2,"Predomínio de critérios somativos (notas, exame final); sem evidência de avaliação formativa sistematizada. Participação em práticas é voluntária apesar de constar na matriz como obrigatória; alunos relataram baixíssima adesão às aulas práticas."],
+        ["1.20","Número de vagas",2,"6.500 vagas anuais para 14 docentes e 7 tutores; a IES não realiza mais estudo periódico de vagas específico para esta modalidade por já considerá-la em extinção — mas o curso continua com 6.500 vagas ativas no sistema."],
+        ["1.22","Integração com o SUS",5,"Convênios com UBS/UPA em municípios como Taboão da Serra, São Bernardo do Campo e Itapecerica da Serra; estudantes acompanham dispensação, gestão de estoque e atenção farmacêutica sob supervisão de preceptores."],
+        ["1.23","Atividades práticas de ensino para área da saúde",3,"Cenários de prática existem e são bem documentados no SUS, mas aulas práticas presenciais seguem facultativas, sem controle de participação nem mecanismo formal de reposição."],
+      ]},
+    { key:"D2", name:"Dimensão 2 — Corpo Docente e Tutorial", score:3.20,
+      indicators:[
+        ["2.1","Núcleo Docente Estruturante (NDE)",3,"Composição e regulamento adequados, mas sem portaria de designação vigente na pasta, sem atas regulares das reuniões ordinárias previstas (só 2 atas localizadas, de 2022 e 2026) e sem relatórios parciais/finais do Plano de Ação."],
+        ["2.2","Equipe multidisciplinar",5,"Formalizada pela Resolução UniFECAF nº 55/2026, com plano de ação estruturado em PDCA/5W2H e fluxo de produção de material demonstrado in loco à comissão."],
+        ["2.3","Atuação do coordenador",3,"Gestão alinhada ao PPC, mas sem comprovação de execução sistemática do plano de ação, indicadores públicos de desempenho, nem administração documentada das potencialidades do corpo docente."],
+        ["2.4","Regime de trabalho do coordenador",3,"Regime integral (40h, 34h dedicadas à coordenação) comprovado, mas mesma fragilidade do item 2.3 quanto a indicadores públicos e acompanhamento sistemático do plano de ação."],
+        ["2.5","Corpo docente",3,"Boa qualificação (9 doutores, 3 mestres, 2 especialistas em 14 docentes), mas sem evidência sistemática de uso de pesquisa de ponta nas aulas nem de grupos de estudo/pesquisa ativos vinculados ao curso."],
+        ["2.6","Regime de trabalho do corpo docente",4,"PITs individualizados comprovam a distribuição de carga horária, mas sem uso sistemático desses registros para gestão e melhoria contínua."],
+        ["2.7","Experiência profissional do docente",4,"Boa aderência entre experiência de mercado e conteúdo lecionado, mas sem registros de análise coletiva e documentada da relação competências × conteúdo pelo próprio corpo docente."],
+        ["2.9","Experiência no exercício da docência superior",3,"Boa experiência docente relatada, mas sem evidência de avaliações diagnósticas/formativas sistematizadas com replanejamento pedagógico documentado."],
+        ["2.10","Experiência no exercício da docência em EAD",3,"Mesma fragilidade do item 2.9: falta comprovação de uso sistemático de avaliação formativa para redefinir a prática docente."],
+        ["2.11","Experiência de tutoria em EAD",4,"Boa experiência e capacitação da tutoria, mas sem evidência de orientação sistemática de leituras/atividades complementares aos alunos."],
+        ["2.12","Atuação do colegiado de curso",2,"Divergência entre PPC e regulamento quanto à composição; nenhuma ata, lista de presença ou registro de deliberação foi disponibilizado para comprovar reuniões e encaminhamentos efetivos."],
+        ["2.13","Titulação e formação do corpo de tutores",2,"Vários tutores atuam em disciplinas fora de sua área de graduação (ex.: formado em Ciências Biológicas dando tutoria de Química Orgânica/Farmacêutica; formado em Administração em disciplinas de comunicação)."],
+        ["2.14","Experiência do corpo de tutores em EAD",3,"Boa experiência em EAD (24–72 meses), mas sem evidência de elaboração conjunta e sistemática de atividades para alunos com dificuldade, nem de práticas inovadoras comprovadas."],
+        ["2.15","Interação tutores/docentes/coordenação",4,"Canais e fluxos bem definidos (AVA, Pager, Slack), mas sem avaliação periódica específica da qualidade dessa interação."],
+        ["2.16","Produção científica, cultural, artística ou tecnológica",2,"Pouco mais de 50% dos docentes têm ao menos 1 produção nos últimos 3 anos — quantitativo insuficiente para conceito superior. Mesmo ponto fraco do curso de Serviço Social."],
+      ]},
+    { key:"D3", name:"Dimensão 3 — Infraestrutura", score:2.82,
+      indicators:[
+        ["3.1","Espaço de trabalho para docentes em tempo integral",3,"Espaço compartilhado sem garantia de privacidade para atendimento a discentes/orientandos; atendimento à demanda institucional comprovado majoritariamente por relato, não por documentação."],
+        ["3.2","Espaço de trabalho para o coordenador",3,"Sala adequada para rotina administrativa, mas sem condições comprovadas de privacidade para atendimento — a própria coordenadora relatou receber alunos raramente ali."],
+        ["3.3","Sala coletiva de professores",4,"Boa estrutura geral, mas apenas 20 armários com chave para uso rotativo entre ~220 docentes da IES — quantitativo reduzido para guarda individual de materiais."],
+        ["3.5","Acesso a equipamentos de informática",4,"Boa infraestrutura de laboratórios e rede, mas sem evidência de avaliação periódica formal da adequação/atualização dos equipamentos."],
+        ["3.6","Bibliografia básica por UC",1,"Pior nota do relatório, junto com 3.7 e 1.4. Diversos títulos com mais de 10 anos sem justificativa (ex.: obras de 2003, 2007, 2010, 2012), sem relatório de adequação do NDE, e acervo físico incompatível com 6.500 vagas + cursos correlatos que compartilham os mesmos títulos. Licenças da Biblioteca Pearson (30.000 usuários) inferiores aos ~63 mil alunos da IES."],
+        ["3.7","Bibliografia complementar por UC",1,"Mesma causa-raiz do item 3.6: títulos antigos sem justificativa (2008 a 2015), sem relatório de adequação do NDE vinculando bibliografia × vagas × exemplares."],
+        ["3.8","Laboratórios didáticos de formação básica",2,"Boa estrutura na sede, mas sem comprovação de uso regular pelos alunos EAD, sem equipe técnica documentada, e apenas 1 laboratório por polo, sem obrigatoriedade de participação presencial."],
+        ["3.9","Laboratórios de formação específica",2,"Laboratórios existem na sede (Atendimento Farmacêutico, Farmacotécnica, Análises Clínicas etc.), mas sem comprovação de uso regular, sem equipamentos citados nas DCN (encapsuladora, centrífuga hematológica, analisador bioquímico, estufa BOD) e sem garantia de cobertura das áreas de Bromatologia, Farmacognosia, Toxicologia e Genética em todos os polos."],
+        ["3.10","Laboratórios de ensino para área da saúde",3,"Estrutura básica compatível com DCN, mas sem comprovação de suficiência de insumos/equipamentos frente à demanda potencial e ao compartilhamento com outros cursos da saúde; alunos de diferentes polos relataram insuficiência de recursos."],
+        ["3.14","Processo de controle de produção/distribuição de material didático",4,"Processo formalizado e com sistema informatizado (Looker Studio), mas sem evidência de uso efetivo de indicadores de desempenho para melhoria contínua."],
+        ["3.16","Comitê de Ética em Pesquisa (CEP)",4,"CEP credenciado pela CONEP, mas sem evidência de operacionalização (atas, calendário, relatórios, pareceres emitidos) nem de prestação de serviço a instituições parceiras."],
+      ]},
+  ]
+}
+};
+
+const scoreColor = (s)=>{
+  if(s==="NSA") return {bg:"#F1F2F5",fg:"#9AA1B2"};
+  if(s>=4) return {bg:"var(--good-bg)",fg:"var(--good)"};
+  if(s===3) return {bg:"var(--warn-bg)",fg:"var(--warn)"};
+  return {bg:"var(--bad-bg)",fg:"var(--bad)"};
+};
+const dimColor = (s)=> s>=4 ? "var(--good)" : (s>=3 ? "var(--warn)" : "var(--bad)");
+
+function renderPanel(id, data){
+  const el = document.getElementById(id);
+  let html = "";
+
+  html += `<div class="summary-grid">`;
+  const fc = data.finalColor;
+  html += `<div class="card final-card">
+      <div class="dial" style="background:conic-gradient(${fc} ${(parseFloat(data.final.replace(',','.'))/5*360)}deg, #E9EBF0 0deg);">
+        <span style="color:${fc};">${data.final}</span>
+      </div>
+      <div>
+        <div class="flabel">Conceito final</div>
+        <div style="font-family:Georgia,serif;font-size:15px;font-weight:600;">${data.title}</div>
+        <div class="fsub">Faixa MEC: ${parseFloat(data.final.replace(',','.'))>=4.5?5:(parseFloat(data.final.replace(',','.'))>=3.5?4:(parseFloat(data.final.replace(',','.'))>=2.5?3:2))}</div>
+      </div>
+    </div>`;
+  data.dims.forEach(d=>{
+    const c = dimColor(d.score);
+    html += `<div class="card dim-card">
+        <div class="dlabel">${d.name.split('—')[0].trim()}</div>
+        <div class="dscore" style="color:${c};">${d.score.toFixed(2).replace('.',',')}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${d.score/5*100}%;background:${c};"></div></div>
+      </div>`;
+  });
+  html += `</div>`;
+
+  data.dims.forEach((d,di)=>{
+    const dimId = `${id}-${di}`;
+    html += `<div class="dim-section">
+      <div class="dim-head">
+        <h2>${d.name}</h2>
+        <button class="dim-toggle" onclick="toggleDim('${dimId}')" id="btn-${dimId}">mostrar todos os comentários</button>
+        <div class="avg" style="color:${dimColor(d.score)};">${d.score.toFixed(2).replace('.',',')}</div>
+      </div>
+      <table class="ind">
+        <tr><th style="width:48px;">Ind.</th><th>Indicador</th><th style="width:70px;">Nota</th><th style="width:100px;"></th></tr>`;
+    d.indicators.forEach((ind,ii)=>{
+      const [code,name,score,comment] = ind;
+      const isNSA = score==="NSA";
+      const col = scoreColor(score);
+      const rowId = `${id}-${di}-${ii}`;
+      html += `<tr class="${isNSA?'nsa-row':''}">
+          <td class="code">${code}</td>
+          <td class="ind-name">${name}</td>
+          <td><span class="score-badge" style="background:${col.bg};color:${col.fg};">${score}</span></td>
+          <td>${comment?`<button class="toggle-btn" onclick="toggleRow('${rowId}')" id="btn-row-${rowId}">ver comentário</button>`:''}</td>
+        </tr>`;
+      if(comment){
+        html += `<tr class="comment-row hidden dim-${dimId}" id="row-${rowId}"><td></td><td colspan="3"><b>Comentário do avaliador:</b> ${comment}</td></tr>`;
+      }
+    });
+    html += `</table></div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function toggleRow(id){
+  const row = document.getElementById('row-'+id);
+  row.classList.toggle('hidden');
+}
+
+function toggleDim(dimId){
+  const rows = document.querySelectorAll('.dim-'+dimId);
+  const btn = document.getElementById('btn-'+dimId);
+  const opening = rows.length && rows[0].classList.contains('hidden');
+  rows.forEach(r=> r.classList.toggle('hidden', !opening));
+  btn.textContent = opening ? 'ocultar todos os comentários' : 'mostrar todos os comentários';
+}
+
+function showTab(key){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`.tab[data-target="${key}"]`).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+key).classList.add('active');
+}
+
+renderPanel('panel-ss', courses.ss);
+renderPanel('panel-fa', courses.fa);
+</script>
+
+</body>
+</html>

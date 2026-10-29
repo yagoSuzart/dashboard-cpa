@@ -1,0 +1,67 @@
+/* =========================================================
+   Tokens do Hub Regulatório — a ÚNICA fonte de cores, fontes
+   e espaçamentos. Toda tela usa estas variáveis.
+   ========================================================= */
+:root {
+  /* Marca UniFECAF */
+  --navy: #1A3666;
+  --navy-deep: #002156;
+  --blue: #0E77CC;
+  --green: #17A460;
+  --cyan: #00B1D2;
+  --yellow: #F2CB0A;
+  --purple: #351B65;
+
+  /* Variações suaves (fundo de tags e alertas) + texto escuro que passa no contraste AA */
+  --green-soft: #E3F5EC;  --green-ink: #0C5A38;
+  --blue-soft: #E6F1FB;   --blue-ink: #0C447C;
+  --yellow-soft: #FCF3D2; --yellow-ink: #6B5102;
+  --red: #C4392B;
+  --red-soft: #FBE6E3;    --red-ink: #8A241C;
+  --purple-soft: #EDE7F6; --purple-ink: #26215C;
+  --gray-soft: #EEF1F5;   --gray-ink: #44505F;
+
+  /* Neutros */
+  --ink: #191919;
+  --slate: #56657A;
+  --line: #E1E7EF;
+  --line-strong: #C9D3E0;
+  --paper: #FFFFFF;
+  --parchment: #F4F6F9;
+  --row-hover: #F7F9FC;
+
+  /* Tipografia */
+  --font-title: 'Poppins', system-ui, sans-serif;
+  --font-text: 'Roboto Condensed', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12.5px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+
+  /* Espaçamento (escala de 4px) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Forma e profundidade */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 2px rgba(16, 33, 64, .06), 0 2px 8px rgba(16, 33, 64, .05);
+  --shadow-lg: 0 10px 40px rgba(0, 20, 60, .25);
+
+  /* Foco visível (teclado) */
+  --focus: 0 0 0 3px rgba(14, 119, 204, .45);
+
+  /* Layout */
+  --sidebar-w: 248px;
+  --topbar-h: 60px;
+}
