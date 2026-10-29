@@ -104,9 +104,9 @@ function abrirDetalhe(p: Polo) {
 
 export function paginaPolos(el: HTMLElement, ctx: Contexto) {
   const p = parametrosDaRota()
-  for (const k of Object.keys(filtros) as (keyof typeof filtros)[]) {
-    const v = p.get(k)
-    if (v !== null) filtros[k] = v
+  // Se o link traz filtros, eles substituem os anteriores
+  if ([...p.keys()].length) {
+    for (const k of Object.keys(filtros) as (keyof typeof filtros)[]) filtros[k] = p.get(k) ?? ''
   }
 
   carregarPagina(el, ctx, getPolos, (polos) => {

@@ -192,7 +192,7 @@ dl.ficha dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; white
 .bar-row { display: grid; grid-template-columns: minmax(70px, 140px) 1fr 44px; gap: var(--sp-2); align-items: center; font-size: 12.5px; }
 .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar-track { height: 10px; background: var(--gray-soft); border-radius: var(--radius-pill); overflow: hidden; }
-.bar-fill { height: 100%; background: var(--blue); border-radius: var(--radius-pill); }
+.bar-fill { display: block; height: 100%; background: var(--blue); border-radius: var(--radius-pill); }
 .bar-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--navy); }
 
 /* ---------- Grades utilitárias ---------- */

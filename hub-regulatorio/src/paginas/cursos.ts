@@ -94,9 +94,9 @@ const CSV: ColunaCsv<Curso>[] = [
 export function paginaCursos(el: HTMLElement, ctx: Contexto) {
   // Filtro vindo de um link do Painel (ex.: #/cursos?conceito=abaixo-minimo)
   const p = parametrosDaRota()
-  for (const k of Object.keys(filtros) as (keyof typeof filtros)[]) {
-    const v = p.get(k)
-    if (v !== null) filtros[k] = v
+  // Se o link traz filtros, eles substituem os anteriores
+  if ([...p.keys()].length) {
+    for (const k of Object.keys(filtros) as (keyof typeof filtros)[]) filtros[k] = p.get(k) ?? ''
   }
 
   carregarPagina(el, ctx, getCursos, (cursos) => {
