@@ -18,6 +18,7 @@ import Triagem from './views/Triagem.jsx'
 import Planos from './views/Planos.jsx'
 import Acompanhar from './views/Acompanhar.jsx'
 import MontarPlanos from './views/MontarPlanos.jsx'
+import ControleFeedback from './views/ControleFeedback.jsx'
 import Nucleo from './views/Nucleo.jsx'
 import Setores from './views/Setores.jsx'
 import MeuSetor from './views/MeuSetor.jsx'
@@ -181,6 +182,7 @@ export default function App() {
             ...(r === 'admin' ? [{ k: 'triagem', t: 'Encaminhar aos setores' }] : []),
             ...(podeVerAgenda(perfil) ? [{ k: 'agenda', t: r === 'admin' ? 'Agenda e prazos' : 'Agenda de entregas' }] : []),
             ...(temCursos ? [{ k: 'feedback', t: 'Feedback para os alunos' }] : []),
+            ...(perfil.global ? [{ k: 'controle-feedback', t: 'Controle do feedback' }] : []),
           ],
         },
         {
@@ -271,6 +273,7 @@ export default function App() {
         {atual === 'nucleo-setores' && <NucleoSetores {...props} key={param} />}
         {atual === 'agenda' && <Agenda {...props} key={param} />}
         {atual === 'feedback' && <Feedback {...props} />}
+        {atual === 'controle-feedback' && <ControleFeedback {...props} />}
         {atual === 'importar' && <Importar {...props} />}
         {atual === 'admin' && <Admin {...props} />}
         {atual === 'proxima' && <ProximaCPA {...props} />}

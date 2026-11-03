@@ -10,6 +10,7 @@ import { zipSync, strToU8 } from 'fflate'
 import { sb, carregarTurmas } from '../lib/dados.js'
 import { MODALIDADE_LABEL } from '../lib/config.js'
 import { PECA_MAX_ITENS, gerarCard, gerarPeca } from '../lib/peca.js'
+import { registrarFeedback } from '../lib/feedbackControle.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
 import './planos.css'
 
@@ -112,12 +113,17 @@ export default function Feedback({ perfil, base }) {
           arquivos[`Turma_${limpar(t)}/link.txt`] = strToU8(r.link + '\n')
         }
         baixarZip(arquivos, `CPA_Feedback_${limpar(curso.nome)}_${limpar(modalidade)}_por_turma.zip`)
+        for (const t of listaTurmas) {
+          registrarFeedback(perfil, { curso_id: curso.id, turma: t, formato, evento: 'gerado', itens: itens.length })
+          registrarFeedback(perfil, { curso_id: curso.id, turma: t, formato, evento: 'baixado', itens: itens.length })
+        }
         setResultado({ zip: true })
         setAviso({ tipo: 'ok', texto: `Pronto! Baixamos um ZIP com uma pasta para cada uma das ${listaTurmas.length} turmas de ${curso.nome} ${modalidade}.` })
       } else {
         const r = await arquivosDe(curso, itens, formato, turma)
         const arquivos = r.partes.flat()
-        setResultado({ link: r.link, arquivos, urls: arquivos.map((f) => URL.createObjectURL(f)) })
+        setResultado({ link: r.link, arquivos, urls: arquivos.map((f) => URL.createObjectURL(f)), formato, turma, itens: itens.length })
+        registrarFeedback(perfil, { curso_id: curso.id, turma, formato, evento: 'gerado', itens: itens.length })
         setAviso({ tipo: 'ok', texto: `Feedback de ${rotuloAtual} pronto! ${arquivos.length === 1 ? 'É 1 imagem' : `São ${arquivos.length} imagens`}: envie só para ${turma ? 'essa turma' : `as turmas de ${curso.nome} ${modalidade}`}.` })
       }
     } catch (e) {
@@ -135,6 +141,7 @@ export default function Feedback({ perfil, base }) {
       for (const [i, c] of comItens.entries()) {
         const r = await arquivosDe(c, aprovados(c.id).map(paraItem), formatoLote, '')
         feitos.push({ c, mod: modal(c), ...r })
+        registrarFeedback(perfil, { curso_id: c.id, formato: formatoLote, evento: 'gerado', itens: aprovados(c.id).length })
         setLote({ estado: 'gerando', feito: i + 1, total: comItens.length, cursos: [...feitos] })
       }
       const arquivos = {}
@@ -146,6 +153,7 @@ export default function Feedback({ perfil, base }) {
       }
       arquivos['links_por_curso.txt'] = strToU8(links.join('\n') + '\n')
       baixarZip(arquivos, 'CPA_Feedback_todos_os_cursos.zip')
+      for (const r of feitos) registrarFeedback(perfil, { curso_id: r.c.id, formato: formatoLote, evento: 'baixado' })
       setLote({ estado: 'pronto', feito: feitos.length, total: feitos.length, cursos: feitos })
     } catch (e) {
       setLote(null)
@@ -208,11 +216,11 @@ export default function Feedback({ perfil, base }) {
                     <span><b>{r.c.nome}</b> · {r.mod}<span className="small muted"> · {r.partes.flat().length} {r.partes.flat().length === 1 ? 'imagem' : 'imagens'}{r.partes.length > 1 ? ` em ${r.partes.length} partes` : ''}</span></span>
                     <span className="fb-lote-btns">
                       {r.partes.map((parte, k) => (
-                        <button key={k} type="button" className="btn sm" onClick={() => compartilhar(parte, textoEnvio(r.c, r.mod, '', r.link)).catch(() => {})}>
+                        <button key={k} type="button" className="btn sm" onClick={() => { registrarFeedback(perfil, { curso_id: r.c.id, formato: formatoLote, evento: 'compartilhado' }); compartilhar(parte, textoEnvio(r.c, r.mod, '', r.link)).catch(() => {}) }}>
                           Enviar no WhatsApp{r.partes.length > 1 ? ` (parte ${k + 1})` : ''}
                         </button>
                       ))}
-                      <BotaoCopiar texto={r.link} />
+                      <BotaoCopiar texto={r.link} aoCopiar={() => registrarFeedback(perfil, { curso_id: r.c.id, formato: formatoLote, evento: 'link_copiado' })} />
                     </span>
                   </div>
                 ))}
@@ -300,16 +308,16 @@ export default function Feedback({ perfil, base }) {
             {resultado && !resultado.zip && (
               <>
                 <div className="filtros">
-                  <button type="button" className="btn escuro" onClick={() => compartilhar(resultado.arquivos, textoEnvio(curso, modalidade, turma, resultado.link)).catch(() => {})}>4. Enviar no WhatsApp</button>
-                  <button type="button" className="btn" onClick={() => resultado.arquivos.forEach((f, i) => setTimeout(() => baixarUrl(resultado.urls[i], f.name), i * 400))}>Baixar {resultado.arquivos.length === 1 ? 'a imagem' : 'todas as imagens'}</button>
-                  <BotaoCopiar texto={resultado.link} rotulo="Copiar link da página do curso" />
+                  <button type="button" className="btn escuro" onClick={() => { registrarFeedback(perfil, { curso_id: curso.id, turma: resultado.turma, formato: resultado.formato, evento: 'compartilhado' }); compartilhar(resultado.arquivos, textoEnvio(curso, modalidade, turma, resultado.link)).catch(() => {}) }}>4. Enviar no WhatsApp</button>
+                  <button type="button" className="btn" onClick={() => { registrarFeedback(perfil, { curso_id: curso.id, turma: resultado.turma, formato: resultado.formato, evento: 'baixado' }); resultado.arquivos.forEach((f, i) => setTimeout(() => baixarUrl(resultado.urls[i], f.name), i * 400)) }}>Baixar {resultado.arquivos.length === 1 ? 'a imagem' : 'todas as imagens'}</button>
+                  <BotaoCopiar texto={resultado.link} rotulo="Copiar link da página do curso" aoCopiar={() => registrarFeedback(perfil, { curso_id: curso.id, turma: resultado.turma, formato: resultado.formato, evento: 'link_copiado' })} />
                   <span className="small muted">No celular, “Enviar no WhatsApp” abre o compartilhamento com as imagens e o link. No computador, elas são baixadas.</span>
                 </div>
                 <div className="fb-telas">
                   {resultado.arquivos.map((f, i) => (
                     <figure key={f.name} className="fb-tela">
                       <img src={resultado.urls[i]} alt={'Imagem ' + (i + 1) + ' de ' + resultado.arquivos.length} />
-                      <a className="btn sm" href={resultado.urls[i]} download={f.name}>Baixar {i + 1}/{resultado.arquivos.length}</a>
+                      <a className="btn sm" href={resultado.urls[i]} download={f.name} onClick={() => registrarFeedback(perfil, { curso_id: curso.id, turma: resultado.turma, formato: resultado.formato, evento: 'baixado' })}>Baixar {i + 1}/{resultado.arquivos.length}</a>
                     </figure>
                   ))}
                 </div>
@@ -322,10 +330,10 @@ export default function Feedback({ perfil, base }) {
   )
 }
 
-function BotaoCopiar({ texto, rotulo = 'Copiar link' }) {
+function BotaoCopiar({ texto, rotulo = 'Copiar link', aoCopiar }) {
   const [ok, setOk] = useState(false)
   return (
-    <button type="button" className="btn sm" onClick={() => navigator.clipboard?.writeText(texto).then(() => { setOk(true); setTimeout(() => setOk(false), 2000) }).catch(() => {})}>
+    <button type="button" className="btn sm" onClick={() => navigator.clipboard?.writeText(texto).then(() => { aoCopiar?.(); setOk(true); setTimeout(() => setOk(false), 2000) }).catch(() => {})}>
       {ok ? 'Link copiado ✓' : rotulo}
     </button>
   )
