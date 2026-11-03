@@ -208,3 +208,9 @@
 .fb-curso:hover { background: var(--paper-2); }
 .fb-curso.on { border-color: var(--navy); background: var(--blue-soft); }
 .fb-modal { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--blue-ink); }
+.fb-todos { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; padding: 16px 18px; border-radius: 14px; background: var(--blue-soft); border: 1px solid #b9d6f2; }
+.fb-todos > div { display: flex; flex-direction: column; gap: 4px; flex: 1 1 320px; }
+.fb-todos b { font-size: 17px; color: var(--blue-ink); }
+.fb-lote { display: flex; flex-direction: column; gap: 8px; }
+.fb-lote-item { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
+.fb-lote-btns { display: inline-flex; flex-wrap: wrap; gap: 8px; }

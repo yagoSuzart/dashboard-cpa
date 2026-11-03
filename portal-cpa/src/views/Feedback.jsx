@@ -1,7 +1,10 @@
 // Feedback para os alunos: monta o carrossel de imagens (Instagram/WhatsApp) com o que o curso está fazendo a partir
 // da CPA — os planos aprovados/concluídos da própria pessoa num curso que ela coordena e as devolutivas "não há pontos
 // a melhorar" aprovadas (viram tela de ponto forte). Até PECA_MAX_ITENS itens por feedback.
+// "Montar todos de uma vez" gera o feedback de todos os cursos e modalidades com itens aprovados e entrega um ZIP com
+// uma pasta por curso e modalidade (para coordenadores com muitos cursos).
 import { useEffect, useMemo, useState } from 'react'
+import { zipSync } from 'fflate'
 import { sb } from '../lib/dados.js'
 import { MODALIDADE_LABEL } from '../lib/config.js'
 import { PECA_MAX_ITENS, gerarPeca } from '../lib/peca.js'
@@ -33,7 +36,10 @@ export default function Feedback({ perfil, base }) {
     return () => { vivo = false }
   }, [perfil.id])
 
-  const disponiveis = (meus || []).filter((it) => it.curso_id === cursoId && (it.status === 'aprovado' || it.status === 'concluido'))
+  const [lote, setLote] = useState(null) // { estado: 'gerando' | 'pronto', feito, total, cursos: [{ c, partes: [[File]] }] }
+  const aprovados = (id) => (meus || []).filter((it) => it.curso_id === id && (it.status === 'aprovado' || it.status === 'concluido'))
+  const disponiveis = aprovados(cursoId)
+  const comItens = cursos.filter((c) => aprovados(c.id).length)
   const curso = porId[cursoId]
   const modalidade = curso ? MODALIDADE_LABEL[curso.modalidade] || curso.modalidade : ''
 
@@ -57,14 +63,7 @@ export default function Feedback({ perfil, base }) {
     const itens = marcados
       .map((id) => disponiveis.find((it) => it.id === id))
       .filter(Boolean)
-      .map((it) => ({
-        tipo: it.sem_melhoria ? 'forte' : 'plano',
-        questionario: (it.categoria || '').split(',')[0].trim(),
-        titulo: it.titulo || '',
-        descricao: it.descricao || '',
-        prazo: it.prazo,
-        status: it.status,
-      }))
+      .map(paraItem)
     setGerando(true)
     setTelas([])
     setAviso({ tipo: '', texto: 'Montando o feedback, só um instante…' })
@@ -76,6 +75,38 @@ export default function Feedback({ perfil, base }) {
       setAviso({ tipo: 'erro', texto: e?.message || 'Não foi possível montar o feedback.' })
     } finally {
       setGerando(false)
+    }
+  }
+
+  async function montarTodos() {
+    if (!comItens.length) return
+    const resultado = []
+    setLote({ estado: 'gerando', feito: 0, total: comItens.length, cursos: [] })
+    try {
+      for (const [i, c] of comItens.entries()) {
+        const mod = MODALIDADE_LABEL[c.modalidade] || c.modalidade
+        const itens = aprovados(c.id).map(paraItem)
+        const partes = []
+        for (let k = 0; k < itens.length; k += PECA_MAX_ITENS) {
+          const geradas = await gerarPeca({ curso: c.nome, modalidade: mod, coordenador: perfil.nome, itens: itens.slice(k, k + PECA_MAX_ITENS) })
+          const prefixo = itens.length > PECA_MAX_ITENS ? `parte${k / PECA_MAX_ITENS + 1}_` : ''
+          partes.push(await Promise.all(geradas.map(async (t, j) => new File([await paraBlob(t.canvas)], `${prefixo}${String(j + 1).padStart(2, '0')}_${t.nome}.png`, { type: 'image/png' }))))
+        }
+        resultado.push({ c, mod, partes })
+        setLote({ estado: 'gerando', feito: i + 1, total: comItens.length, cursos: [...resultado] })
+      }
+      // ZIP com uma pasta por curso e modalidade (PNG já é comprimido: guarda sem recomprimir)
+      const arquivos = {}
+      for (const r of resultado) {
+        const pasta = 'CPA_Feedback_' + limpar(r.c.nome) + '_' + limpar(r.mod)
+        for (const parte of r.partes) for (const f of parte) arquivos[pasta + '/' + f.name] = [new Uint8Array(await f.arrayBuffer()), { level: 0 }]
+      }
+      const zip = zipSync(arquivos)
+      baixarUrl(URL.createObjectURL(new Blob([zip], { type: 'application/zip' })), 'CPA_Feedback_todos_os_cursos.zip')
+      setLote({ estado: 'pronto', feito: resultado.length, total: resultado.length, cursos: resultado })
+    } catch (e) {
+      setLote(null)
+      setAviso({ tipo: 'erro', texto: e?.message || 'Não foi possível montar os feedbacks.' })
     }
   }
 
@@ -103,6 +134,43 @@ export default function Feedback({ perfil, base }) {
                 <b>Administração Presencial</b> e <b>Administração EAD</b> são dois feedbacks — e envie cada um só para as turmas daquela modalidade.
               </span>
             </div>
+
+            {cursos.length > 1 && (
+              <div className="fb-todos">
+                <div>
+                  <b>Tem muitos cursos? Monte todos de uma vez.</b>
+                  <span className="small">
+                    {meus ? `${comItens.length} de ${cursos.length} cursos/modalidades já têm itens aprovados. ` : ''}
+                    Um clique gera o feedback de cada curso e modalidade, com todos os itens aprovados de cada um, e baixa um ZIP com uma pasta por curso.
+                  </span>
+                </div>
+                <button type="button" className="btn escuro" onClick={montarTodos} disabled={!meus || !comItens.length || lote?.estado === 'gerando'}>
+                  {lote?.estado === 'gerando' ? `Montando ${lote.feito} de ${lote.total}…` : `Montar todos (${comItens.length})`}
+                </button>
+              </div>
+            )}
+            {lote && (
+              <div className="fb-lote" aria-live="polite">
+                {lote.estado === 'pronto' && <div className="aviso ok">Pronto! O ZIP “CPA_Feedback_todos_os_cursos” foi baixado com uma pasta por curso e modalidade. No celular, use os botões abaixo para mandar cada feedback no grupo da turma certa.</div>}
+                {lote.cursos.map((r) => (
+                  <div key={r.c.id} className="fb-lote-item">
+                    <span><b>{r.c.nome}</b> · {r.mod}<span className="small muted"> · {r.partes.reduce((s, p) => s + p.length, 0)} imagens{r.partes.length > 1 ? ` em ${r.partes.length} partes` : ''}</span></span>
+                    <span className="fb-lote-btns">
+                      {r.partes.map((parte, k) => (
+                        <button key={k} type="button" className="btn sm" onClick={() => compartilharArquivos(parte).catch(() => {})}>
+                          Enviar no WhatsApp{r.partes.length > 1 ? ` (parte ${k + 1})` : ''}
+                        </button>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+                {cursos.filter((c) => !aprovados(c.id).length).length > 0 && lote.estado === 'pronto' && (
+                  <p className="small muted" style={{ margin: 0 }}>
+                    Ficaram de fora (nada aprovado ainda): {cursos.filter((c) => !aprovados(c.id).length).map((c) => `${c.nome} ${MODALIDADE_LABEL[c.modalidade] || c.modalidade}`).join(', ')}.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="card-h">
               <div className="t">
@@ -184,6 +252,26 @@ export default function Feedback({ perfil, base }) {
       </div>
     </>
   )
+}
+
+const paraItem = (it) => ({
+  tipo: it.sem_melhoria ? 'forte' : 'plano',
+  questionario: (it.categoria || '').split(',')[0].trim(),
+  titulo: it.titulo || '',
+  descricao: it.descricao || '',
+  prazo: it.prazo,
+  status: it.status,
+})
+const paraBlob = (canvas) => new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+const limpar = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '')
+
+// Compartilha arquivos prontos (feedback de um curso do lote); onde não dá, baixa cada um
+async function compartilharArquivos(arquivos) {
+  if (navigator.canShare?.({ files: arquivos })) {
+    await navigator.share({ files: arquivos, title: 'Resultado da CPA', text: 'O que fizemos com a sua resposta na CPA' })
+    return
+  }
+  arquivos.forEach((f, i) => setTimeout(() => baixarUrl(URL.createObjectURL(f), f.name), i * 400))
 }
 
 function baixarUrl(url, nome) {
