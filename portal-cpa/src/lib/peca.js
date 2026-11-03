@@ -229,7 +229,7 @@ function capa(ctx, d) {
 
   // Bloco de texto alinhado por baixo, acima dos passos
   ctx.font = F.texto(36)
-  const sub = linhasAte(ctx, `Veja o que o curso de ${d.curso} (${d.modalidade}) está fazendo a partir das respostas de vocês.`, W - 2 * P, 3)
+  const sub = linhasAte(ctx, `Veja o que o curso de ${d.curso} (${d.modalidade}${d.turma ? ' · turma ' + d.turma : ''}) está fazendo a partir das respostas de vocês.`, W - 2 * P, 3)
   const t = ajustar(ctx, 'Sua voz virou plano de ação.', W - 2 * P, 2, 108, 84, (px) => F.titulo(px))
   const lhT = Math.round(t.px * 1.02)
   const lhS = 50
@@ -392,23 +392,27 @@ function encerramento(ctx, d) {
   barraCores(ctx)
 }
 
-export async function gerarPeca({ curso, modalidade = '', coordenador, itens }) {
-  if (!itens || !itens.length) throw new Error('Selecione pelo menos 1 item para montar o feedback.')
-  if (itens.length > PECA_MAX_ITENS) throw new Error(`Você pode escolher até ${PECA_MAX_ITENS} itens por feedback.`)
-  let foto, logoCor, logoBranco
+async function recursos() {
   try {
-    ;[foto, logoCor, logoBranco] = await Promise.all([carregarImagem('/campus.jpg'), carregarImagem('/logo-unifecaf.png'), carregarImagem('/logo-unifecaf-branco.png')])
+    const [foto, logoCor, logoBranco] = await Promise.all([carregarImagem('/campus.jpg'), carregarImagem('/logo-unifecaf.png'), carregarImagem('/logo-unifecaf-branco.png')])
     await Promise.all([
       document.fonts.load(F.titulo(80)), document.fonts.load(F.texto(34)), document.fonts.load(F.texto(34, 600)), document.fonts.load(F.mono(22)),
     ])
     await document.fonts.ready
+    return { foto, logoCor, logoBranco }
   } catch (e) {
     console.error('Erro ao carregar imagens/fontes do feedback:', e)
     throw new Error('Não foi possível carregar as imagens do feedback agora. Tente de novo em alguns segundos.', { cause: e })
   }
+}
+
+export async function gerarPeca({ curso, modalidade = '', turma = '', coordenador, itens }) {
+  if (!itens || !itens.length) throw new Error('Selecione pelo menos 1 item para montar o feedback.')
+  if (itens.length > PECA_MAX_ITENS) throw new Error(`Você pode escolher até ${PECA_MAX_ITENS} itens por feedback.`)
+  const { foto, logoCor, logoBranco } = await recursos()
 
   const acoes = itens.filter((it) => it.tipo !== 'forte')
-  const d = { curso, modalidade, coordenador, foto, logoCor, logoBranco, totalAcoes: acoes.length }
+  const d = { curso, modalidade, turma, coordenador, foto, logoCor, logoBranco, totalAcoes: acoes.length }
   const telas = [{ nome: 'capa', desenhar: (ctx) => capa(ctx, d) }]
   let na = 0
   let nf = 0
@@ -431,6 +435,89 @@ export async function gerarPeca({ curso, modalidade = '', coordenador, itens }) 
     t.desenhar(canvas.getContext('2d'))
     return { nome: t.nome, canvas }
   })
+}
+
+// ---------- card-resumo: 1 imagem por curso + modalidade, com QR code para a página pública ----------
+// Para coordenadores com muitos cursos: em vez do carrossel, os alunos recebem uma imagem só com as ações do curso e
+// um QR code / link para os detalhes (página pública "Retorno da CPA").
+export const CARD_MAX_LINHAS = 4
+export async function gerarCard({ curso, modalidade = '', turma = '', itens, link }) {
+  if (!itens || !itens.length) throw new Error('Não há itens aprovados para este curso.')
+  const { logoBranco } = await recursos()
+  const QR = await import('qrcode')
+  const qr = document.createElement('canvas')
+  await QR.toCanvas(qr, link, { width: 220, margin: 1, color: { dark: '#002156', light: '#ffffff' } })
+
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')
+  fundoEscuro(ctx)
+  logo(ctx, logoBranco, P, P, 220)
+  pilula(ctx, 'RESULTADO DA CPA', W - P, P + 4, { fundo: 'rgba(255,255,255,.12)', borda: 'rgba(255,255,255,.25)', alinhar: 'dir' })
+
+  let y = 250
+  eyebrow(ctx, 'Você falou · a gente ouviu', P, y, C.mint)
+  y += 22
+  const t = ajustar(ctx, `O que mudou em ${curso}`, W - 2 * P, 2, 58, 40, (px) => F.titulo(px))
+  ctx.fillStyle = C.branco
+  ctx.font = F.titulo(t.px)
+  espacamento(ctx, -0.02, t.px)
+  y = escrever(ctx, t.linhas, P, y + t.px * 0.9, Math.round(t.px * 1.06))
+  espacamento(ctx, 0, t.px)
+  // Chip da modalidade (e turma)
+  ctx.font = F.texto(28, 600)
+  const chip = modalidade + (turma ? ' · Turma ' + turma : '')
+  const wChip = ctx.measureText(chip).width + 44
+  caixa(ctx, P, y, wChip, 50, 25, 'rgba(159,224,184,.16)', 'rgba(159,224,184,.45)')
+  ctx.fillStyle = C.mint
+  ctx.textBaseline = 'middle'
+  ctx.fillText(chip, P + 22, y + 26)
+  ctx.textBaseline = 'alphabetic'
+  y += 50 + 26
+
+  // Lista das ações: altura mínima garantida por linha; o que não couber vira "+ N outras ações"
+  const hQR = 260
+  const yQR = H - 110 - hQR
+  const LINHA_MIN = 92
+  let n = Math.min(CARD_MAX_LINHAS, itens.length)
+  const altura = (k) => Math.floor((yQR - 24 - y - (itens.length > k ? 46 : 0)) / k) - 12
+  while (n > 1 && altura(n) < LINHA_MIN) n -= 1
+  const hLinha = Math.min(120, altura(n))
+  const lista = itens.slice(0, n)
+  const resto = itens.length - n
+  lista.forEach((it) => {
+    caixa(ctx, P, y, W - 2 * P, hLinha, 22, 'rgba(255,255,255,.07)', 'rgba(255,255,255,.14)')
+    const forte = it.tipo === 'forte'
+    eyebrow(ctx, (forte ? 'Ponto forte · ' : '') + (it.questionario || ''), P + 30, y + 36, forte ? C.mint : '#7cc4ff')
+    const tt = ajustar(ctx, forte ? 'Aqui, vocês aprovaram o curso.' : it.titulo, W - 2 * P - 60, 1, 32, 24, (px) => F.titulo(px, 600))
+    ctx.fillStyle = C.branco
+    ctx.font = F.titulo(tt.px, 600)
+    ctx.fillText(tt.linhas[0], P + 30, y + hLinha - 24)
+    y += hLinha + 12
+  })
+  if (resto) {
+    ctx.fillStyle = C.soft
+    ctx.font = F.texto(28, 600)
+    ctx.fillText(`+ ${resto} ${resto === 1 ? 'outra ação' : 'outras ações'} — veja no link`, P, y + 26)
+  }
+
+  // Bloco do QR code
+  caixa(ctx, P, yQR, W - 2 * P, hQR, 28, C.branco)
+  ctx.drawImage(qr, P + 20, yQR + 20, 220, 220)
+  ctx.fillStyle = C.navy
+  ctx.font = F.titulo(36)
+  ctx.fillText('Veja os detalhes', P + 270, yQR + 72)
+  ctx.font = F.texto(26)
+  ctx.fillStyle = '#3c4a5c'
+  escrever(ctx, linhasAte(ctx, 'O que será feito em cada ação, os prazos e a situação. Aponte a câmera do celular para o código.', W - 2 * P - 300, 3), P + 270, yQR + 112, 34)
+  ctx.font = F.mono(16)
+  ctx.fillStyle = C.blue
+  escrever(ctx, linhasAte(ctx, link.replace(/^https?:\/\//, ''), W - 2 * P - 300, 2), P + 270, yQR + 222, 22)
+
+  rodape(ctx, 'CPA UniFECAF', 'Seu sonho, nossa meta!', { cor: C.branco, corDireita: C.mint })
+  barraCores(ctx)
+  return canvas
 }
 
 export function baixarTela(canvas, nomeArquivo) {

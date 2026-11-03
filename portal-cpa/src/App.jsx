@@ -5,6 +5,7 @@ import { cursosDoEscopo, ehSetor, planosDoEscopo } from './lib/escopo.js'
 import { Carregando, Erro } from './components/ui.jsx'
 import Login, { TrocarSenha } from './views/Login.jsx'
 import SolicitarAcesso from './views/SolicitarAcesso.jsx'
+import RetornoPublico from './views/RetornoPublico.jsx'
 import PrimeiroAcesso from './views/PrimeiroAcesso.jsx'
 import Inicio from './views/Inicio.jsx'
 import Executiva from './views/Executiva.jsx'
@@ -114,6 +115,8 @@ export default function App() {
 
   // Link público da CPA dos professores e do corpo técnico-administrativo (não precisa de login)
   if (rota.rota === 'avaliar') return <AvaliarColaborador key={rota.param} codigo={rota.param} />
+  // Retorno da CPA aos alunos: página pública por curso e modalidade (QR code / link do card-resumo do feedback)
+  if (rota.rota === 'retorno') return <RetornoPublico key={rota.param} param={rota.param} />
   if (sessao === undefined) return <Carregando texto="Abrindo o Portal…" />
   if (recuperando) return <TrocarSenha onFim={() => setRecuperando(false)} />
   if (!sessao) return pedindo ? <SolicitarAcesso onVoltar={() => setPedindo(false)} /> : <Login onSolicitar={() => setPedindo(true)} />
