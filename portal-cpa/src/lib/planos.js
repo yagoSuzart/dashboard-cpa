@@ -233,7 +233,11 @@ export function criarDeclaracaoSemMelhoria(perfil, { curso_id, categoria, texto 
   })
 }
 
-async function escrever(body) {
+const SESSAO_EXPIRADA = /identificar o usuário logado|Não autenticado|JWT|session/i
+const MSG_SESSAO =
+  'Sua sessão no Portal expirou (por exemplo, depois de uma troca de senha). Copie o texto que você escreveu, clique em Sair, entre de novo e salve outra vez.'
+
+async function chamarEscrever(body) {
   const { data, error } = await sb.functions.invoke('plano-acao-escrever', { body })
   if (data?.error) throw new Error(data.error)
   if (error) {
@@ -247,6 +251,23 @@ async function escrever(body) {
     throw new Error(traduzir(error))
   }
   return true
+}
+
+// Se o servidor não reconhecer o login (sessão expirada ou encerrada), renova a sessão e tenta mais uma vez;
+// se ainda assim não der, explica o que fazer em vez da mensagem técnica.
+async function escrever(body) {
+  try {
+    return await chamarEscrever(body)
+  } catch (e) {
+    if (!SESSAO_EXPIRADA.test(e.message)) throw e
+    const { data, error } = await sb.auth.refreshSession()
+    if (error || !data?.session) throw new Error(MSG_SESSAO, { cause: e })
+    try {
+      return await chamarEscrever(body)
+    } catch (e2) {
+      throw new Error(SESSAO_EXPIRADA.test(e2.message) ? MSG_SESSAO : e2.message, { cause: e2 })
+    }
+  }
 }
 
 export const atualizarPlano = (itemId, patch) => escrever({ acao: 'update', itemId, patch })
