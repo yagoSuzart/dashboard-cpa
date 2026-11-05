@@ -12,13 +12,18 @@ const MODS = [
   ['presencial', 'PRESENCIAL', 'Presencial'],
 ]
 const ordem = (a, b) => (a.tipo === 'aberta') - (b.tipo === 'aberta') || (a.posicao ?? 999) - (b.posicao ?? 999)
+const ESCOLHA = [
+  ['ead', 'EAD', 'Ver questionários e perguntas'],
+  ['semi', 'Semipresencial', 'Ver questionários e perguntas'],
+  ['presencial', 'Presencial', 'Ver questionários e perguntas'],
+]
 const FECHADA = ['aprovada', 'enviada_ti']
 const NOTA = { satisfacao_geral: 'Nota de 0 a 10' }
 const AVISO = { novo_clinica_escola: 'Só para os cursos com clínica-escola.', novo_polo_aulas_praticas: 'Sobre o polo onde o aluno faz as aulas práticas.' }
 
 export default function PerguntasPublico({ param }) {
-  const inicial = MODS.find((m) => m[0] === String(param || '').toLowerCase())?.[0] || 'ead'
-  const [mod, setMod] = useState(inicial)
+  // Sem modalidade no link (o QR code), a página abre na escolha: EAD, Semipresencial ou Presencial
+  const mod = MODS.find((m) => m[0] === String(param || '').toLowerCase())?.[0] || null
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState(false)
 
@@ -35,11 +40,11 @@ export default function PerguntasPublico({ param }) {
   }, [])
 
   const trocar = (k) => {
-    setMod(k)
-    history.replaceState(null, '', `#/perguntas/${k}`)
+    window.location.assign(`#/perguntas/${k}`)
+    window.scrollTo(0, 0)
   }
-  const [, M, nomeMod] = MODS.find((m) => m[0] === mod)
-  const grupos = dados
+  const [, M, nomeMod] = MODS.find((m) => m[0] === mod) || []
+  const grupos = dados && M
     ? dados.questionarios
         .map((q) => ({ q, itens: dados.itens.filter((i) => i.questionario_id === q.id && i.modalidades?.includes(M)).sort(ordem) }))
         .filter((g) => g.itens.length)
@@ -56,16 +61,28 @@ export default function PerguntasPublico({ param }) {
       <section className="rt-hero">
         <span className="rt-eyebrow">Para os coordenadores · sem surpresas</span>
         <h1>O que os alunos vão responder na próxima CPA.</h1>
-        <p>Escolha a modalidade e veja cada questionário com as perguntas, do jeito que o aluno vai ler.</p>
-        <div className="pq-abas" role="tablist" aria-label="Modalidade">
-          {MODS.map(([k, , t]) => (
-            <button key={k} role="tab" aria-selected={mod === k} onClick={() => trocar(k)}>{t}</button>
-          ))}
-        </div>
+        <p>{mod ? 'Veja cada questionário com as perguntas, do jeito que o aluno vai ler.' : 'Escolha o modelo de oferta para ver os questionários e as perguntas.'}</p>
+        {mod && (
+          <div className="pq-abas" role="tablist" aria-label="Modalidade">
+            {MODS.map(([k, , t]) => (
+              <button key={k} role="tab" aria-selected={mod === k} onClick={() => trocar(k)}>{t}</button>
+            ))}
+          </div>
+        )}
       </section>
 
       <main className="rt-corpo">
-        {erro ? (
+        {!mod ? (
+          <div className="pq-escolha">
+            {ESCOLHA.map(([k, t, d]) => (
+              <button key={k} type="button" onClick={() => trocar(k)}>
+                <b>{t}</b>
+                <span>{d}</span>
+                <i aria-hidden="true">→</i>
+              </button>
+            ))}
+          </div>
+        ) : erro ? (
           <div className="rt-vazio">Não foi possível carregar as perguntas agora. Tente de novo em instantes.</div>
         ) : !dados ? (
           <div className="rt-vazio">Carregando…</div>
