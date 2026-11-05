@@ -36,7 +36,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
-body { font-family: var(--f-ui); font-size: 14px; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; }
+body { overflow-wrap: break-word; font-family: var(--f-ui); font-size: 14px; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: var(--navy); }
@@ -266,7 +266,15 @@ button.plano-item:hover { border-color: #c9d6e3; background: var(--paper-2); }
   .login .foto .dentro { padding: 32px 24px; }
   .login .foto h1 { font-size: 38px; }
   .login .form { padding: 32px 20px; }
+  .login .foto .stats { gap: 14px; }
+  .login .foto .stats b { font-size: 19px; }
   .card { padding: 20px; }
+}
+/* Celular estreito: os três destaques do login viram linhas, sem um texto passar por cima do outro */
+@media (max-width: 520px) {
+  .login .foto .stats { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .login .foto .stats > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .login .foto .stats b { margin-bottom: 0; }
 }
 @media print {
   .top, .no-print { display: none !important; }
