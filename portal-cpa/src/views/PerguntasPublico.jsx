@@ -1,9 +1,10 @@
 // Perguntas da próxima CPA — página pública (sem login) para os coordenadores verem, antes da aplicação, o que os
 // alunos de cada modalidade vão responder: questionário por questionário, com o enunciado e as perguntas.
-// Os dados vêm da função do banco cpa_perguntas_publico (só a proposta mais recente e só o que entra).
+// Os dados vêm da função do banco cpa_perguntas_publico (só a proposta mais recente e só o que entra), lida com
+// um fetch simples: nada de login, sessão ou cliente do Portal. Também roda sozinha em /perguntas/ (QR code).
 import { useEffect, useState } from 'react'
-import { sb } from '../lib/dados.js'
-import { prefixoDe, textoNaModalidade } from '../lib/proxima.js'
+import { SUPABASE } from '../lib/config.js'
+import { prefixoDe, textoNaModalidade } from '../lib/perguntasTexto.js'
 import './retorno.css'
 
 const MODS = [
@@ -21,7 +22,18 @@ const FECHADA = ['aprovada', 'enviada_ti']
 const NOTA = { satisfacao_geral: 'Nota de 0 a 10' }
 const AVISO = { novo_clinica_escola: 'Só para os cursos com clínica-escola.', novo_polo_aulas_praticas: 'Sobre o polo onde o aluno faz as aulas práticas.' }
 
-export default function PerguntasPublico({ param }) {
+async function carregar() {
+  const r = await fetch(`${SUPABASE.url}/rest/v1/rpc/cpa_perguntas_publico`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE.chave, 'Content-Type': 'application/json' },
+    body: '{}',
+  })
+  if (!r.ok) throw new Error('HTTP ' + r.status)
+  return r.json()
+}
+
+// base: como o link de cada modalidade começa ('#/perguntas/' dentro do Portal, '#' na página separada)
+export default function PerguntasPublico({ param, base = '#/perguntas/' }) {
   // Sem modalidade no link (o QR code), a página abre na escolha: EAD, Semipresencial ou Presencial
   const mod = MODS.find((m) => m[0] === String(param || '').toLowerCase())?.[0] || null
   const [dados, setDados] = useState(null)
@@ -29,18 +41,16 @@ export default function PerguntasPublico({ param }) {
 
   useEffect(() => {
     let vivo = true
-    sb.rpc('cpa_perguntas_publico').then(({ data, error }) => {
-      if (!vivo) return
-      if (error) setErro(true)
-      else setDados(data)
-    })
+    carregar()
+      .then((d) => vivo && setDados(d))
+      .catch(() => vivo && setErro(true))
     return () => {
       vivo = false
     }
   }, [])
 
   const trocar = (k) => {
-    window.location.assign(`#/perguntas/${k}`)
+    window.location.assign(base + k)
     window.scrollTo(0, 0)
   }
   const [, M, nomeMod] = MODS.find((m) => m[0] === mod) || []
@@ -59,7 +69,7 @@ export default function PerguntasPublico({ param }) {
       </header>
 
       <section className="rt-hero">
-        <span className="rt-eyebrow">Para os coordenadores · sem surpresas</span>
+        <span className="rt-eyebrow">CPA UniFECAF · para conferência</span>
         <h1>O que os alunos vão responder na próxima CPA.</h1>
         <p>{mod ? 'Veja cada questionário com as perguntas, do jeito que o aluno vai ler.' : 'Escolha o modelo de oferta para ver os questionários e as perguntas.'}</p>
         {mod && (

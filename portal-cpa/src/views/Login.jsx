@@ -79,7 +79,7 @@ export default function Login({ onSolicitar }) {
             </p>
           )}
           <p className="small muted" style={{ textAlign: 'center' }}>No primeiro acesso, o Portal pergunta se você quer trocar a sua senha.</p>
-          <a className="btn" href="#/perguntas" style={{ textDecoration: 'none' }}>Ver as perguntas da próxima CPA (sem login)</a>
+          <a className="btn" href="/perguntas/" style={{ textDecoration: 'none' }}>Ver as perguntas da próxima CPA (sem login)</a>
         </form>
       </div>
     </div>
