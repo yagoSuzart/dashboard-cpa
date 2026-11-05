@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { DIMENSOES, SATISFACAO, TRILHO, GLOBAL_SUPERVISOR_ROLES } from '../lib/config.js'
+import { DIMENSOES, SATISFACAO, TRILHO, GLOBAL_SUPERVISOR_ROLES, RESPONDEM_PELO_CURSO } from '../lib/config.js'
 import { rotuloCurso } from '../lib/escopo.js'
 import { fmtInt, fmtNota } from '../lib/cpa.js'
 import { buscarComentarios } from '../lib/dados.js'
@@ -19,7 +19,7 @@ export default function Planos(props) {
   const { perfil, base, planos, param, recarregarBase, escopo, aoEnviarPlano } = props
   const meus = useMemo(() => base.planos.filter((p) => p.usuario_id === perfil.id), [base.planos, perfil.id])
   const equipe = useMemo(() => {
-    if (perfil.role !== 'coordenador') return []
+    if (!RESPONDEM_PELO_CURSO.includes(perfil.role)) return []
     const aux = new Set(base.usuarios.filter((u) => u.role === 'professor_auxiliar').map((u) => u.id))
     return base.planos.filter((p) => aux.has(p.usuario_id) && p.curso_id && perfil.cursos.includes(p.curso_id))
   }, [base.planos, base.usuarios, perfil])
@@ -84,7 +84,7 @@ function MeusPlanos({ perfil, base, meus, podeEscrever, mudou, aoEnviarPlano }) 
   const grupos = agrupar(meus, (p) => p.categoria || 'Sem questionário vinculado')
   return (
     <>
-      {perfil.role === 'coordenador' && <CoberturaMinha perfil={perfil} base={base} />}
+      {RESPONDEM_PELO_CURSO.includes(perfil.role) && perfil.cursos.length > 0 && <CoberturaMinha perfil={perfil} base={base} />}
       {podeEscrever && (
         novo ? (
           <FormPlano perfil={perfil} base={base} escopo={base.cursos.filter((c) => perfil.cursos.includes(c.id))}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { MODALIDADE_LABEL } from '../lib/config.js'
+import { MODALIDADE_LABEL, RESPONDEM_PELO_CURSO } from '../lib/config.js'
 import { fmtInt } from '../lib/cpa.js'
 import { CATEGORIAS_PLANO, useVinculos } from '../lib/planos.js'
 import { ESTADO_CELULA, calcularCobertura, cursosDaPessoa, nomeCurso, ordCurso, planosDaCobertura } from '../lib/cobertura.js'
@@ -113,7 +113,7 @@ export function CoberturaGeral({ base }) {
     const cursosDe = {}
     for (const v of vinculos) (cursosDe[v.usuario_id] ||= []).push(v.curso_id)
     return base.usuarios
-      .filter((u) => u.role === 'coordenador' && cursosDe[u.id]?.length)
+      .filter((u) => RESPONDEM_PELO_CURSO.includes(u.role) && cursosDe[u.id]?.length)
       .map((u) => {
         const ids = [...new Set(cursosDe[u.id])]
         const cursos = ids.map((id) => porCurso[id] || { id, nome: id, modalidade: '' }).sort(ordCurso)

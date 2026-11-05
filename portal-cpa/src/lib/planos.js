@@ -3,7 +3,7 @@
 // passam pela função do servidor `plano-acao-escrever`, que confere o papel de quem pede.
 import { useEffect, useState } from 'react'
 import { sb } from './dados.js'
-import { DIMENSOES, ROLE_LABELS, STATUS_PLANO } from './config.js'
+import { DIMENSOES, RESPONDEM_PELO_CURSO, ROLE_LABELS, STATUS_PLANO } from './config.js'
 
 // Quem escreve plano de curso (precisa ter cursos vinculados)
 export const ESCREVE_PLANO = ['coordenador', 'professor_auxiliar', 'diretor_nucleo', 'admin', 'diretor_cpa', 'pro_reitoria']
@@ -378,9 +378,9 @@ export function fmtData(d) {
   return Number.isNaN(x.getTime()) ? null : x.toLocaleDateString('pt-BR')
 }
 
-// O coordenador revisa os planos dos professores auxiliares dos cursos que coordena
+// Quem responde pelo curso revisa os planos dos professores auxiliares dos cursos vinculados
 export function coordenaAutor(perfil, p, base) {
-  if (perfil.role !== 'coordenador' || !p.curso_id || !perfil.cursos.includes(p.curso_id)) return false
+  if (!RESPONDEM_PELO_CURSO.includes(perfil.role) || !p.curso_id || !perfil.cursos.includes(p.curso_id)) return false
   return base.usuarios.find((u) => u.id === p.usuario_id)?.role === 'professor_auxiliar'
 }
 
@@ -465,11 +465,11 @@ export function useVinculos() {
   return v
 }
 
-// Coordenadores (role coordenador) vinculados a um curso
+// Quem responde pelo curso (coordenador ou, sem coordenador, o diretor de núcleo vinculado)
 export function coordenadoresDoCurso(cursoId, vinculos, base) {
   if (!cursoId || !vinculos) return []
   const ids = new Set(vinculos.filter((v) => v.curso_id === cursoId).map((v) => v.usuario_id))
-  return base.usuarios.filter((u) => ids.has(u.id) && u.role === 'coordenador')
+  return base.usuarios.filter((u) => ids.has(u.id) && RESPONDEM_PELO_CURSO.includes(u.role))
 }
 
 export function autorRotulo(u) {

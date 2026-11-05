@@ -2,7 +2,7 @@
 // Mesmas regras do sistema anterior. Tabela: entregas_agenda. E-mail: edge function notificar-entrega,
 // que recebe { tipo: 'cobranca' | 'entrega', entregaId }.
 import { sb } from './dados.js'
-import { GLOBAL_SUPERVISOR_ROLES } from './config.js'
+import { GLOBAL_SUPERVISOR_ROLES, RESPONDEM_PELO_CURSO } from './config.js'
 
 // Quem vê a Agenda de Entregas (menu do sistema anterior) e quem cria/edita cobranças
 export const VE_AGENDA = GLOBAL_SUPERVISOR_ROLES
@@ -208,7 +208,7 @@ export function montarCobrancaAuxiliares(base, coordsPorCurso = {}) {
 
 // Primeiro coordenador vinculado a cada curso (como no sistema anterior: ALL_USERS.find(coordenador com o curso))
 export async function coordenadoresPorCurso(base) {
-  const coords = base.usuarios.filter((u) => u.role === 'coordenador')
+  const coords = base.usuarios.filter((u) => RESPONDEM_PELO_CURSO.includes(u.role))
   if (!coords.length) return {}
   const { data, error } = await sb.from('usuario_cursos').select('usuario_id, curso_id').in('usuario_id', coords.map((c) => c.id))
   if (error) throw error

@@ -66,7 +66,7 @@ function podeTransitar(opts: {
     if (novoStatus === 'aguardando_coordenador' && autorAuxiliar) return true
   }
 
-  if (papel === 'coordenador' && escopoCoordenador) {
+  if ((papel === 'coordenador' || papel === 'diretor_nucleo') && escopoCoordenador) {
     if (statusAtual === 'aguardando_coordenador' && novoStatus === 'enviado') return true // aprova o item do auxiliar
     if (statusAtual === 'enviado' && novoStatus === 'aguardando_coordenador') return true // puxa de volta pra revisão
   }
@@ -134,7 +134,8 @@ Deno.serve(async (req: Request) => {
     const autorAuxiliar = autor?.role === 'professor_auxiliar'
 
     let escopoCoordenador = false
-    if (perfil.role === 'coordenador' && item.curso_id) {
+    // Quem responde pelo curso: coordenador ou, nos cursos sem coordenador, o diretor de núcleo vinculado
+    if ((perfil.role === 'coordenador' || perfil.role === 'diretor_nucleo') && item.curso_id) {
       const { data: vinculo } = await adminClient
         .from('usuario_cursos')
         .select('curso_id')

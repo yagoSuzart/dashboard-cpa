@@ -1,5 +1,6 @@
 import { CATEGORIAS_PLANO } from './planos.js'
-import { MODALIDADE_LABEL } from './config.js'
+import { MODALIDADE_LABEL, RESPONDEM_PELO_CURSO } from './config.js'
+export { RESPONDEM_PELO_CURSO }
 
 export const dimensoesDe = (p) => (p.categoria || '').split(',').map((x) => x.trim()).filter(Boolean)
 
@@ -117,9 +118,6 @@ export function acaoPendente(estado, planos, nomeDe = () => '') {
   return `Plano escrito, mas não enviado: ${lista}. Revisar e clicar em Enviar.`
 }
 
-// Quem responde pelos planos de um curso: o coordenador e, nos cursos sem coordenador, o diretor de núcleo
-// vinculado a eles (ex.: núcleos de Tecnologia e Engenharia)
-export const RESPONDEM_PELO_CURSO = ['coordenador', 'diretor_nucleo']
 
 // Coordenadores (e diretores de núcleo com cursos) com a cobertura de cada um (lista ordenada por pendências)
 export function coberturaPorCoordenador(base, vinculos) {

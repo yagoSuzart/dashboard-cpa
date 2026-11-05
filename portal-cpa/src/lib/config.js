@@ -26,6 +26,9 @@ export const ROLE_LABELS = {
 }
 
 // Mesmas regras do sistema atual
+// Quem responde pelos planos de um curso: o coordenador e, nos cursos sem coordenador, o diretor de núcleo
+// vinculado a eles (ex.: núcleos de Tecnologia e Engenharia)
+export const RESPONDEM_PELO_CURSO = ['coordenador', 'diretor_nucleo']
 export const GLOBAL_SUPERVISOR_ROLES = ['pro_reitoria', 'diretor_cpa', 'admin', 'comissao_cpa']
 export const IMPORTA_ROLES = ['admin', 'diretor_cpa']
 
