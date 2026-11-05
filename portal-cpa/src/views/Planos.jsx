@@ -11,7 +11,7 @@ import PlanoSituacao, { SelosSituacao } from '../components/PlanoSituacao.jsx'
 import { CoberturaGeral, CoberturaMinha, CoberturaPessoa } from '../components/PlanoCobertura.jsx'
 import PlanoGabarito from '../components/PlanoGabarito.jsx'
 import { coberturaResumida } from '../lib/cobertura.js'
-import { ESCREVE_PLANO, SELO_STATUS, SITUACOES, fmtData, autorRotulo, contarSituacoes, devolvidoAoCoordenador, nomeArea, rotuloStatus, seloPrazo, situacaoDe, urgencia, useVinculos } from '../lib/planos.js'
+import { CATEGORIAS_PLANO, ESCREVE_PLANO, SELO_STATUS, SITUACOES, acoes, botoesDoPlano, fmtData, autorRotulo, contarSituacoes, devolvidoAoCoordenador, nomeArea, rotuloStatus, seloPrazo, situacaoDe, urgencia, useVinculos } from '../lib/planos.js'
 import './planos.css'
 
 
@@ -315,9 +315,68 @@ function Todos({ perfil, base, planos, status, setStatus, mudou }) {
             <button className="btn sm" onClick={() => { setStatus(''); setDim(''); setCurso(''); setBusca('') }}>Limpar filtros</button>
           )}
         </div>
+        <LoteAprovacao lista={lista} perfil={perfil} mudou={mudou} />
         <ListaPlanos planos={lista} base={base} perfil={perfil} onMudou={mudou} />
       </div>
     </>
+  )
+}
+
+// Aprovação em lote dos planos da lista filtrada: a Pró-Reitoria aprova de uma vez os que estão com ela; a CPA
+// valida e encaminha à Pró-Reitoria de uma vez os enviados. Só entram os planos em que a pessoa teria o mesmo
+// botão um a um. Na validação, ficam de fora os questionários sem plano do coordenador (Satisfação Geral e
+// Docência e Tutoria): esses seguem um a um.
+function LoteAprovacao({ lista, perfil, mudou }) {
+  const [rodando, setRodando] = useState(null) // { feito, total }
+  const [erro, setErro] = useState(null)
+  const comPlano = (p) => p.tipo === 'setor' || CATEGORIAS_PLANO.includes((p.categoria || '').split(',')[0].trim())
+  const aprovar = lista.filter((p) => p.status === 'aguardando_pro_reitoria' && botoesDoPlano(p, perfil).includes('aprovar'))
+  const validaveis = lista.filter((p) => p.status === 'enviado' && botoesDoPlano(p, perfil).includes('validarCPA'))
+  const validar = validaveis.filter(comPlano)
+  const foraValidar = validaveis.length - validar.length
+  if (!aprovar.length && !validar.length) return null
+
+  async function executar(tipo, itens) {
+    const verbo = tipo === 'aprovar' ? 'Aprovar' : 'Validar e encaminhar à Pró-Reitoria'
+    if (!window.confirm(`${verbo} ${itens.length} ${itens.length === 1 ? 'plano' : 'planos'} desta lista de uma vez?`)) return
+    setErro(null)
+    const falhas = []
+    for (const [i, p] of itens.entries()) {
+      setRodando({ feito: i, total: itens.length })
+      try {
+        if (tipo === 'aprovar') await acoes.aprovar(p.id, perfil)
+        else await acoes.validarCPA(p.id, perfil, '')
+      } catch (e) {
+        falhas.push(`“${p.titulo}”: ${e.message}`)
+      }
+    }
+    setRodando(null)
+    const ok = itens.length - falhas.length
+    if (falhas.length) setErro(`${falhas.length} não ${falhas.length === 1 ? 'foi' : 'foram'} processado(s). ${falhas.slice(0, 3).join(' · ')}`)
+    mudou(tipo === 'aprovar' ? `${ok} ${ok === 1 ? 'plano aprovado' : 'planos aprovados'}. Já podem virar feedback para os alunos.` : `${ok} ${ok === 1 ? 'plano validado e encaminhado' : 'planos validados e encaminhados'} à Pró-Reitoria.`)
+  }
+
+  return (
+    <div className="lote-aprovacao" role="region" aria-label="Aprovação em lote">
+      {rodando ? (
+        <b>Processando {rodando.feito + 1} de {rodando.total}… não feche a página.</b>
+      ) : (
+        <>
+          <span>
+            <b>Aprovação em lote</b>
+            <span className="small muted" style={{ display: 'block' }}>
+              Vale para os planos desta lista (use os filtros acima para escolher curso, questionário ou situação).
+              {foraValidar > 0 && ` ${foraValidar} de Satisfação Geral ou Docência e Tutoria ficam de fora da validação em lote.`}
+            </span>
+          </span>
+          <span className="lote-btns">
+            {validar.length > 0 && <button className="btn escuro" onClick={() => executar('validar', validar)}>Validar e enviar à Pró-Reitoria ({validar.length})</button>}
+            {aprovar.length > 0 && <button className="btn escuro" onClick={() => executar('aprovar', aprovar)}>Aprovar os {aprovar.length} planos desta lista</button>}
+          </span>
+        </>
+      )}
+      {erro && <div className="aviso erro" role="alert" style={{ flexBasis: '100%' }}>{erro}</div>}
+    </div>
   )
 }
 

@@ -332,10 +332,12 @@ export function botoesDoPlano(p, perfil, { coordenaAutor } = {}) {
   if (!dono) {
     if (st === 'enviado') {
       if (r === 'diretor_cpa') b.push('validarCPA', 'devolver')
-      if (r === 'admin' || r === 'pro_reitoria') b.push('aprovar', 'devolver')
+      // Admin: o caminho normal é validar e mandar para a Pró-Reitoria; a aprovação final direta fica como opção
+      if (r === 'admin') b.push('validarCPA', 'devolver', 'aprovarFinal')
+      if (r === 'pro_reitoria') b.push('aprovar', 'devolver')
     }
     if (st === 'aguardando_pro_reitoria' && (r === 'pro_reitoria' || r === 'admin')) b.push('aprovar', 'devolver')
-    if (r === 'coordenador' && coordenaAutor) {
+    if (RESPONDEM_PELO_CURSO.includes(r) && coordenaAutor) {
       if (st === 'aguardando_coordenador') b.push('enviarParaValidacao', 'editar', 'excluir')
       if (st === 'enviado') b.push('editar', 'excluir', 'puxarParaRevisao')
       if (st === 'devolvido') b.push('editar')
@@ -351,7 +353,8 @@ export function botoesDoPlano(p, perfil, { coordenaAutor } = {}) {
   if (!['aprovado', 'concluido'].includes(st)) b.push('editar')
   b.push('excluir')
   if (r === 'diretor_cpa' && st === 'enviado') b.push('validarCPA', 'devolver')
-  if ((r === 'admin' || r === 'pro_reitoria') && ['enviado', 'aguardando_pro_reitoria'].includes(st)) b.push('aprovar')
+  if (r === 'admin' && st === 'enviado') b.push('validarCPA', 'aprovarFinal')
+  else if ((r === 'admin' || r === 'pro_reitoria') && ['enviado', 'aguardando_pro_reitoria'].includes(st)) b.push('aprovar')
   return b
 }
 

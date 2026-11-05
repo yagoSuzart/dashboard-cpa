@@ -8,6 +8,7 @@ import {
 const ROTULO = {
   validarCPA: 'Validar e encaminhar à Pró-Reitoria',
   aprovar: 'Aprovar',
+  aprovarFinal: 'Aprovação final (pula a Pró-Reitoria)',
   devolver: 'Devolver para ajuste',
   reenviar: 'Já ajustei, reenviar',
   concluir: 'Marcar como concluído',
@@ -59,6 +60,10 @@ export default function ItemPlano({ p, perfil, base, onMudou, contexto }) {
   function clicar(b) {
     if (['devolver', 'editar', 'jaResolvi', 'excluir', 'validarCPA', 'editarComentario', 'editarConsideracoes'].includes(b)) return setModal(b)
     if (b === 'aprovar') return rodar(() => acoes.aprovar(p.id, perfil), 'Plano aprovado.')
+    if (b === 'aprovarFinal') {
+      if (!window.confirm('Aprovar este plano de forma final, sem passar pela Pró-Reitoria?')) return
+      return rodar(() => acoes.aprovar(p.id, perfil), 'Plano aprovado (sem passar pela Pró-Reitoria).')
+    }
     if (b === 'reenviar') return rodar(() => acoes.reenviar(p.id), 'Plano reenviado para análise.')
     if (b === 'concluir') return rodar(() => acoes.concluir(p.id), 'Plano marcado como concluído.')
     if (b === 'enviarParaValidacao') return rodar(() => acoes.enviarParaValidacao(p.id), `Plano de ${autor?.nome || 'auxiliar'} aprovado e enviado para validação.`)
