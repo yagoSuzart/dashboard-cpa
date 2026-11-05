@@ -1,6 +1,7 @@
 -- Perguntas da próxima CPA: página pública (sem login) para os coordenadores verem, por modalidade, quais
 -- questionários e perguntas os alunos vão responder. Devolve SÓ a proposta mais recente e SÓ as perguntas que
--- entram (mantidas pela CPA e não reprovadas pela Pró-Reitoria), sem histórico, observações ou autores.
+-- entram (mantidas pela CPA e não reprovadas pela Pró-Reitoria; dos questionários novos, só as aprovadas pela
+-- Pró-Reitoria), sem histórico, observações ou autores.
 create or replace function public.cpa_perguntas_publico()
 returns jsonb
 language sql stable security definer set search_path = public as $$
@@ -11,7 +12,10 @@ language sql stable security definer set search_path = public as $$
     'itens', coalesce((select jsonb_agg(jsonb_build_object('questionario_id', i.questionario_id, 'posicao', i.posicao, 'texto', i.texto,
         'texto_original', i.texto_original, 'origem', i.origem, 'atual_id', i.atual_id, 'tipo', i.tipo, 'modalidades', i.modalidades,
         'decisao_pr', i.decisao_pr) order by i.posicao)
-      from cpa_proposta_itens i where i.proposta_id = (select id from p) and i.incluida and coalesce(i.decisao_pr, '') <> 'reprovada'), '[]'),
+      from cpa_proposta_itens i join cpa_questionarios q on q.id = i.questionario_id
+      where i.proposta_id = (select id from p) and i.incluida and coalesce(i.decisao_pr, '') <> 'reprovada'
+        -- Questionário novo só aparece depois que a Pró-Reitoria aprovar
+        and (coalesce(q.origem, 'atual') <> 'novo' or i.decisao_pr = 'aprovada')), '[]'),
     'prefixos', coalesce((select jsonb_agg(jsonb_build_object('questionario_id', r.questionario_id, 'modalidade', r.modalidade, 'texto', r.texto))
       from cpa_proposta_prefixos r where r.proposta_id = (select id from p)), '[]')
   );
