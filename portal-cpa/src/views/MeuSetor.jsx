@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { fmtNota, fmtInt, textoComentario, numOuNada } from '../lib/cpa.js'
 import { buscarComentarios } from '../lib/dados.js'
 import { rotuloCurso } from '../lib/escopo.js'
-import { PRIORIDADES, fmtData } from '../lib/planos.js'
+import { PRIORIDADES, acoes, fmtData, rotuloStatus } from '../lib/planos.js'
+import { MODALIDADE_LABEL } from '../lib/config.js'
 import { COLUNAS_FLUXO, PALAVRAS_SETOR, criarPlanoDaDemanda, demandasParaSetor, rankClasseSetor } from '../lib/nucleo.js'
 import { Anel, BarraNota, Carregando, Erro, Paginacao, Vazio } from '../components/ui.jsx'
 import FormPlano from '../components/FormPlano.jsx'
@@ -43,7 +44,7 @@ export default function MeuSetor({ perfil, base, param, recarregarBase }) {
     <>
       <div className="cab">
         <div className="txt">
-          <div className="eyebrow">Infraestrutura e atendimento · Meu setor</div>
+          <div className="eyebrow">Meu setor</div>
           <h1>{setor.nome}</h1>
         </div>
       </div>
@@ -284,39 +285,138 @@ function ComentariosInfra({ setorId, selecionados, onAlternar }) {
   )
 }
 
+// Demandas recebidas: para cada uma, de onde veio (curso, modalidade, coordenador, questionário), o que os alunos
+// reclamaram (comentários anexados pelo coordenador, do questionário do plano) e o que o coordenador pediu ao setor.
 function Demandas({ perfil, base, demandas, meusPlanos, selecionados, onMudou, onCriado }) {
   const [editando, setEditando] = useState(null)
+  const [aberto, setAberto] = useState(null)
+  const [situacao, setSituacao] = useState('abertas')
+  const [modal, setModal] = useState('')
+  const [quest, setQuest] = useState('')
+  const [ocupado, setOcupado] = useState(null)
+  const [todosComent, setTodosComent] = useState({})
+  const porCurso = useMemo(() => Object.fromEntries(base.cursos.map((c) => [c.id, c])), [base.cursos])
+  const nomeDe = (id) => base.usuarios.find((u) => u.id === id)?.nome || 'Coordenação do curso'
+  const questionario = (d) => (d.categoria || '').split(',')[0].trim() || 'Sem questionário'
+  const modalidades = [...new Set(demandas.map((d) => porCurso[d.curso_id]?.modalidade).filter(Boolean))]
+  const questionarios = [...new Set(demandas.map(questionario))].sort()
+  const lista = demandas.filter((d) =>
+    (situacao === 'todas' || (situacao === 'abertas' ? !d.atendido_pelo_setor : d.atendido_pelo_setor)) &&
+    (!modal || porCurso[d.curso_id]?.modalidade === modal) &&
+    (!quest || questionario(d) === quest))
+  const abertas = demandas.filter((d) => !d.atendido_pelo_setor).length
+
+  async function marcar(d, valor) {
+    setOcupado(d.id)
+    try {
+      await acoes.atendidoPeloSetor(d.id, valor)
+      await onMudou(valor ? 'Demanda marcada como atendida pelo setor.' : 'Demanda reaberta.')
+    } catch (e) {
+      onMudou(null)
+      window.alert(e.message || 'Não foi possível atualizar a demanda.')
+    } finally {
+      setOcupado(null)
+    }
+  }
+
   return (
-    <section className="card">
+    <section className="card" style={{ gap: 14 }}>
       <div className="card-h">
         <div className="t">
-          <h2>Demandas encaminhadas por coordenadores</h2>
-          <p className="muted small">Ações de planos de curso que dependem do seu setor. Crie um item do seu plano de melhoria a partir de cada demanda, ou marque-a como atendida.</p>
+          <h2>Demandas encaminhadas pelos coordenadores</h2>
+          <p className="muted small">
+            Para cada demanda: o que os alunos reclamaram, em qual questionário da CPA, e o que o coordenador do curso pediu ao seu setor.
+            Se já estiver resolvido, marque como atendido; se precisar de ação, crie um item do seu plano de melhoria.
+          </p>
         </div>
+        <div className="spacer" />
+        <span className="selo laranja">{abertas} {abertas === 1 ? 'aberta' : 'abertas'}</span>
       </div>
+
+      {demandas.length > 0 && (
+        <div className="filtros">
+          <div className="seg" role="group" aria-label="Situação">
+            {[['abertas', 'Abertas'], ['atendidas', 'Atendidas'], ['todas', 'Todas']].map(([k, t]) => <button key={k} aria-pressed={situacao === k} onClick={() => setSituacao(k)}>{t}</button>)}
+          </div>
+          {modalidades.length > 1 && (
+            <select className="input" aria-label="Modalidade" value={modal} onChange={(e) => setModal(e.target.value)}>
+              <option value="">Todas as modalidades</option>
+              {modalidades.map((m) => <option key={m} value={m}>{MODALIDADE_LABEL[m] || m}</option>)}
+            </select>
+          )}
+          {questionarios.length > 1 && (
+            <select className="input" aria-label="Questionário" value={quest} onChange={(e) => setQuest(e.target.value)}>
+              <option value="">Todos os questionários</option>
+              {questionarios.map((q) => <option key={q} value={q}>{q}</option>)}
+            </select>
+          )}
+          <span className="small muted">{lista.length} {lista.length === 1 ? 'demanda' : 'demandas'}</span>
+        </div>
+      )}
+
       {demandas.length === 0 && <Vazio>Nenhuma demanda encaminhada por coordenadores até o momento.</Vazio>}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {demandas.map((d) => {
+      {demandas.length > 0 && !lista.length && <Vazio>Nenhuma demanda neste filtro.</Vazio>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {lista.map((d) => {
+          const c = porCurso[d.curso_id]
           const filho = meusPlanos.find((p) => p.origem_plano_id === d.id)
+          const comentarios = (d.comentarios_selecionados || []).map((t) => String(t || '').trim()).filter(Boolean)
           return (
-            <ItemPlano
-              key={d.id}
-              p={d}
-              perfil={perfil}
-              base={base}
-              onMudou={onMudou}
-              contexto={
-                d.atendido_pelo_setor ? (
-                  <p className="small" style={{ color: 'var(--green-ink)', fontWeight: 600 }}>
-                    Assumida pelo setor{filho ? ` · virou o item "${filho.titulo}" do plano de melhoria` : ''}.
-                  </p>
+            <article key={d.id} className={'dm-card' + (d.atendido_pelo_setor ? ' feita' : '')}>
+              <header className="dm-topo">
+                <span className="dm-curso">
+                  <b>{c?.nome || d.curso_id}</b>
+                  {c && <span className="dm-chip dm-modal">{MODALIDADE_LABEL[c.modalidade] || c.modalidade}</span>}
+                  <span className="dm-chip quest">{questionario(d)}</span>
+                </span>
+                <span className="small muted">Coordenador(a): <b>{nomeDe(d.usuario_id)}</b>{d.prazo_estimado || d.prazo ? ` · prazo ${fmtData(d.prazo_estimado || d.prazo)}` : ''} · {rotuloStatus(d)}</span>
+                {d.atendido_pelo_setor && <span className="selo verde">✓ Atendida pelo setor{filho ? ' · virou item do plano de melhoria' : ''}</span>}
+              </header>
+
+              <div className="dm-grade">
+                <section className="dm-aluno">
+                  <span className="dm-rot">O que os alunos reclamaram</span>
+                  <span className="small muted">Comentários da avaliação da CPA no questionário <b>{questionario(d)}</b>, anexados pelo coordenador.</span>
+                  {comentarios.length ? (
+                    <>
+                      <ul className="dm-coments">
+                        {(todosComent[d.id] ? comentarios : comentarios.slice(0, 4)).map((t, i) => <li key={i}>“{textoComentario(t)}”</li>)}
+                      </ul>
+                      {comentarios.length > 4 && (
+                        <button type="button" className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => setTodosComent((x) => ({ ...x, [d.id]: !x[d.id] }))}>
+                          {todosComent[d.id] ? 'Mostrar menos' : `Ver todos os ${comentarios.length} comentários`}
+                        </button>
+                      )}
+                    </>
+                  ) : d.queixa_aluno ? (
+                    <p className="dm-queixa">“{d.queixa_aluno}”<span className="small muted"> · resumo do coordenador</span></p>
+                  ) : (
+                    <p className="small muted">O coordenador não anexou comentários dos alunos. Veja ao lado o que ele relatou.</p>
+                  )}
+                  {comentarios.length > 0 && d.queixa_aluno && <p className="dm-queixa"><span className="small muted">Resumo do coordenador: </span>{d.queixa_aluno}</p>}
+                </section>
+                <section className="dm-coord">
+                  <span className="dm-rot">O que o coordenador pediu ao setor</span>
+                  <b className="dm-titulo">{d.titulo}</b>
+                  <p className="dm-desc">{d.descricao}</p>
+                  {d.triagem_obs && <p className="dm-recado"><b>Recado da CPA:</b> {d.triagem_obs}</p>}
+                </section>
+              </div>
+
+              <footer className="dm-acoes">
+                {!d.atendido_pelo_setor ? (
+                  <>
+                    <button type="button" className="btn escuro sm" disabled={ocupado === d.id} onClick={() => marcar(d, true)}>✓ Já está resolvido: marcar como atendido</button>
+                    <button type="button" className="btn sm" onClick={() => setEditando(d)}>Criar item do plano de melhoria</button>
+                  </>
                 ) : (
-                  <div>
-                    <button type="button" className="btn sm escuro" onClick={() => setEditando(d)}>Editar e criar plano de melhoria a partir desta demanda</button>
-                  </div>
-                )
-              }
-            />
+                  !filho && <button type="button" className="btn sm" disabled={ocupado === d.id} onClick={() => marcar(d, false)}>Reabrir demanda</button>
+                )}
+                <button type="button" className="btn sm" aria-expanded={aberto === d.id} onClick={() => setAberto(aberto === d.id ? null : d.id)}>{aberto === d.id ? 'Esconder detalhes' : 'Ver detalhes'}</button>
+              </footer>
+              {aberto === d.id && <ItemPlano p={d} perfil={perfil} base={base} onMudou={onMudou} />}
+            </article>
           )
         })}
       </div>
