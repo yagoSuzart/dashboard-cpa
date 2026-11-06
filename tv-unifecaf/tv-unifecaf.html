@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mural da TV UniFECAF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+:root{
+  --amarelo:#FFC72C;
+  --azul:#0F2D69;
+  --tinta-fixa:#14213D;
+  --bg:#F5F6F8;
+  --text:#14213D;
+  --muted:#53607C;
+  --painel:#0F2D69;
+  --trilho:#D5DAE4;
+  --fora:#DDE2EB;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1A3D; --text:#F2F4F8; --muted:#A9B4CC; --painel:#1A3C85; --trilho:#24396B; --fora:#050E24;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1A3D; --text:#F2F4F8; --muted:#A9B4CC; --painel:#1A3C85; --trilho:#24396B; --fora:#050E24;
+  color-scheme:dark;
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0;height:100%;overflow:hidden;position:relative;
+  background:var(--fora);color:var(--text);
+  font-family:"Archivo","Arial Narrow",Arial,system-ui,sans-serif;
+  cursor:default;
+}
+
+/* Tela fixa de 1920x1080, escalada para caber em qualquer TV sem quebrar */
+.tela{
+  width:1920px;height:1080px;position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(var(--escala,1));
+  background:var(--bg);overflow:hidden;
+}
+.faixa{position:absolute;left:0;top:132px;bottom:120px;width:20px;background:var(--amarelo)}
+
+.topo{
+  position:absolute;top:0;left:0;right:0;height:132px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 96px;
+}
+.marca{font-size:46px;font-weight:850;font-variation-settings:"wdth" 112;letter-spacing:-0.01em}
+.categoria{
+  background:var(--amarelo);color:var(--tinta-fixa);
+  font-size:30px;font-weight:700;padding:10px 28px;border-radius:999px;
+  transition:opacity .5s;
+}
+.categoria:empty{opacity:0}
+
+.palco{position:absolute;top:132px;bottom:120px;left:96px;right:96px}
+.slide{
+  position:absolute;inset:0;opacity:0;transform:translateY(28px);
+  transition:opacity .8s ease,transform .8s ease;pointer-events:none;
+}
+.slide.ativo{opacity:1;transform:none}
+
+.rodape{
+  position:absolute;bottom:0;left:0;right:0;height:120px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 96px;
+}
+.hora-rodape{display:flex;align-items:baseline;gap:28px;transition:opacity .5s}
+.tela.na-abertura .hora-rodape{opacity:0}
+.hora-rodape .h{font-size:54px;font-weight:800;font-variant-numeric:tabular-nums}
+.hora-rodape .d{font-size:30px;color:var(--muted)}
+.progresso{display:flex;gap:12px}
+.seg{width:72px;height:8px;border-radius:4px;background:var(--trilho);overflow:hidden}
+.seg.feito{background:var(--amarelo)}
+.seg i{display:block;height:100%;background:var(--amarelo);transform-origin:left;transform:scaleX(0)}
+@keyframes encher{to{transform:scaleX(1)}}
+
+/* Textos comuns */
+.titulo{margin:0;font-size:104px;line-height:1.03;font-weight:800;letter-spacing:-0.015em;overflow:hidden}
+.texto{margin:36px 0 0;font-size:44px;line-height:1.35;color:var(--muted);max-width:30em;overflow:hidden}
+.destaque{
+  display:inline-block;margin-top:44px;background:var(--amarelo);color:var(--tinta-fixa);
+  font-size:42px;font-weight:700;padding:16px 30px;border-radius:14px;
+}
+.centro{height:100%;display:flex;flex-direction:column;justify-content:center}
+
+/* Abertura */
+.abertura{display:grid;grid-template-columns:1.25fr 1fr;gap:96px;height:100%;align-items:center}
+.saudacao{font-size:64px;font-weight:600;color:var(--muted)}
+.relogio-grande{
+  font-size:380px;line-height:.9;font-weight:900;font-variation-settings:"wdth" 118;
+  letter-spacing:-0.03em;font-variant-numeric:tabular-nums;margin:12px 0 28px;
+}
+.data-grande{font-size:56px;font-weight:600}
+.a-seguir h3{margin:0 0 28px;font-size:36px;font-weight:600;color:var(--muted)}
+.a-seguir ol{list-style:none;margin:0;padding:0;border-left:6px solid var(--amarelo)}
+.a-seguir li{font-size:38px;font-weight:650;line-height:1.2;padding:16px 0 16px 32px}
+
+/* Evento */
+.evento{display:grid;grid-template-columns:1.4fr 1fr;gap:88px;height:100%;align-items:center}
+.detalhes{display:grid;grid-template-columns:auto 1fr;gap:14px 36px;margin:48px 0 0;font-size:40px}
+.detalhes dt{color:var(--muted)}
+.detalhes dd{margin:0;font-weight:700}
+.contagem{
+  background:var(--painel);color:#FFFFFF;border-radius:40px;padding:72px 64px;
+  display:flex;flex-direction:column;justify-content:center;min-height:620px;
+}
+.contagem .num{
+  font-size:300px;line-height:.85;font-weight:900;font-variation-settings:"wdth" 120;
+  color:var(--amarelo);font-variant-numeric:tabular-nums;
+}
+.contagem .rot{font-size:52px;font-weight:650;margin-top:24px;line-height:1.15}
+
+/* Imagem + texto */
+.img-texto{display:grid;grid-template-columns:1.15fr 1fr;gap:80px;height:100%;align-items:center}
+.foto{height:100%;max-height:760px;border-radius:32px;overflow:hidden;background:var(--trilho)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* QR code */
+.qr-slide{display:grid;grid-template-columns:1.3fr 1fr;gap:96px;height:100%;align-items:center}
+.qr-caixa{background:#FFFFFF;border-radius:36px;padding:44px;justify-self:center;width:600px}
+.qr-caixa svg{display:block;width:100%;height:auto}
+.qr-legenda{margin-top:28px;text-align:center;font-size:34px;color:var(--muted)}
+
+/* Imagem cheia: se ajusta a qualquer formato sem cortar nem esticar */
+.moldura{position:absolute;inset:0;border-radius:32px;overflow:hidden;background:#000}
+.moldura .fundo{position:absolute;inset:-60px;width:calc(100% + 120px);height:calc(100% + 120px);object-fit:cover;filter:blur(48px) brightness(.55)}
+.moldura .frente{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.legenda{
+  position:absolute;left:40px;bottom:40px;max-width:70%;
+  background:rgba(10,20,45,.78);color:#FFFFFF;font-size:34px;line-height:1.3;
+  padding:18px 28px;border-radius:16px;
+}
+
+.dica{
+  position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:rgba(10,20,45,.85);color:#FFFFFF;font:600 16px/1.4 "Archivo",Arial,sans-serif;
+  padding:10px 18px;border-radius:999px;transition:opacity .6s;z-index:5;
+}
+.dica.some{opacity:0;pointer-events:none}
+
+@media (prefers-reduced-motion:reduce){
+  .slide{transition:opacity .4s;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="tela" id="tela">
+  <div class="topo">
+    <div class="marca">UniFECAF</div>
+    <div class="categoria" id="categoria"></div>
+  </div>
+  <div class="faixa"></div>
+  <div class="palco" id="palco"></div>
+  <div class="rodape">
+    <div class="hora-rodape"><span class="h" data-relogio></span><span class="d" data-data></span></div>
+    <div class="progresso" id="progresso"></div>
+  </div>
+</div>
+<div class="dica" id="dica">Toque na tela para abrir em tela cheia</div>
+
+<script>
+/* ============================================================
+   AVISOS: esta é a única parte que muda no dia a dia.
+   O visual fica no CSS acima e não é alterado.
+   tipos: abertura | evento | aviso | imagem_texto | qr | imagem_cheia
+   validade (AAAA-MM-DD): o aviso some sozinho depois dessa data.
+   ============================================================ */
+function svgURI(s){return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(s)}
+
+function arteEstante(){
+  let seed=11;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+  const cores=["#FFC72C","#F5F6F8","#7FA6E8","#3D63B8","#E9EEF8","#FFB000"];
+  let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000"><rect width="1600" height="1000" fill="#0F2D69"/>';
+  [90,390,690].forEach(y=>{
+    let x=80;
+    while(x<1500){
+      const w=34+Math.floor(rnd()*48), h=170+Math.floor(rnd()*80);
+      s+=`<rect x="${x}" y="${y+250-h}" width="${w}" height="${h}" rx="4" fill="${cores[Math.floor(rnd()*cores.length)]}"/>`;
+      x+=w+6;
+    }
+    s+=`<rect x="60" y="${y+250}" width="1480" height="22" fill="#0A1F4A"/>`;
+  });
+  s+='<text x="1540" y="975" text-anchor="end" font-family="Arial,sans-serif" font-size="26" fill="#FFFFFF" opacity=".6">Imagem de exemplo</text></svg>';
+  return svgURI(s);
+}
+
+function arteVertical(){
+  return svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <rect width="1080" height="1350" fill="#FFC72C"/>
+  <circle cx="790" cy="370" r="290" fill="#0F2D69"/>
+  <circle cx="790" cy="370" r="150" fill="#FFC72C"/>
+  <text x="90" y="830" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="140" fill="#0F2D69">Vestibular</text>
+  <text x="90" y="990" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="190" fill="#0F2D69">2027</text>
+  <text x="94" y="1090" font-family="Arial,sans-serif" font-weight="700" font-size="62" fill="#0F2D69">Inscrições abertas</text>
+  <text x="94" y="1270" font-family="Arial,sans-serif" font-size="34" fill="#0F2D69" opacity=".7">Arte de exemplo no formato 4:5 (Instagram)</text>
+  </svg>`);
+}
+
+const AVISOS = [
+  { tipo:"abertura", duracao:12 },
+  { tipo:"evento", categoria:"Agenda", titulo:"Semana Acadêmica 2026",
+    texto:"Palestras, oficinas e apresentação de trabalhos de todos os cursos. Aberta a alunos, professores e convidados.",
+    data:"2026-11-23", horario:"19h às 22h", local:"Auditório principal", duracao:15 },
+  { tipo:"imagem_texto", categoria:"Biblioteca", titulo:"Horário estendido na semana de provas",
+    texto:"De 30 de novembro a 4 de dezembro, a biblioteca abre das 7h às 22h, inclusive no sábado.",
+    imagem:arteEstante(), validade:"2026-12-04", duracao:12 },
+  { tipo:"qr", categoria:"CPA", titulo:"Sua opinião muda a UniFECAF",
+    texto:"A Avaliação Institucional 2026 está aberta. Leva menos de 10 minutos e é anônima.",
+    destaque:"Responda até 30 de novembro", link:"https://www.unifecaf.com.br", validade:"2026-11-30", duracao:15 },
+  { tipo:"aviso", categoria:"Comitê de Ética em Pesquisa", titulo:"Seu projeto envolve pessoas? Ele precisa passar pelo CEP",
+    texto:"Pesquisas com seres humanos, incluindo questionários e entrevistas, devem ser aprovadas antes da coleta de dados. A secretaria do CEP orienta a submissão na Plataforma Brasil.",
+    destaque:"Próxima reunião: 26 de novembro", duracao:15 },
+  { tipo:"imagem_cheia", categoria:"Destaque", imagem:arteVertical(),
+    legenda:"Exemplo: uma arte vertical entra na TV sem cortar nem esticar.", duracao:10 }
+];
+
+/* ============================================================
+   Daqui para baixo é o motor do mural. Não precisa mexer.
+   ============================================================ */
+const TZ="America/Sao_Paulo";
+const fmtHora=new Intl.DateTimeFormat("pt-BR",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+const fmtData=new Intl.DateTimeFormat("pt-BR",{timeZone:TZ,weekday:"long",day:"numeric",month:"long"});
+const fmtDataEvento=new Intl.DateTimeFormat("pt-BR",{timeZone:"UTC",weekday:"long",day:"numeric",month:"long"});
+const hojeISO=()=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+const horaSP=()=>+new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",hourCycle:"h23"}).format(new Date());
+const diasAte=iso=>Math.round((Date.parse(iso+"T00:00:00Z")-Date.parse(hojeISO()+"T00:00:00Z"))/86400000);
+const valido=a=>{const v=a.validade||(a.tipo==="evento"?a.data:null);return !v||v>=hojeISO()};
+const saudacao=()=>{const h=horaSP();return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"};
+
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function titulo(t,altura){const h=el("h2","titulo",t);h.dataset.altura=altura;return h}
+function texto(t,altura){const p=el("p","texto",t);p.dataset.altura=altura;return p}
+
+function qrSVG(link){
+  try{
+    const q=qrcode(0,"M");q.addData(link);q.make();
+    const n=q.getModuleCount();let d="";
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c} ${r}h1v1h-1z`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges"><path d="${d}" fill="#14213D"/></svg>`;
+  }catch(e){return null}
+}
+
+const montadores={
+  abertura(a,lista){
+    const g=el("div","abertura");
+    const esq=el("div");
+    esq.append(el("div","saudacao",saudacao()+", bem-vindo à UniFECAF"));
+    const r=el("div","relogio-grande");r.dataset.relogio="";esq.append(r);
+    const d=el("div","data-grande");d.dataset.data="";esq.append(d);
+    const dir=el("div","a-seguir");
+    dir.append(el("h3",null,"Nesta tela hoje"));
+    const ol=el("ol");
+    lista.filter(x=>x.titulo).slice(0,5).forEach(x=>ol.append(el("li",null,x.titulo)));
+    dir.append(ol);
+    g.append(esq,dir);return g;
+  },
+  evento(a){
+    const g=el("div","evento");
+    const esq=el("div");
+    esq.append(titulo(a.titulo,240));
+    if(a.texto)esq.append(texto(a.texto,190));
+    const dl=el("dl","detalhes");
+    const linhas=[["Data",fmtDataEvento.format(new Date(a.data+"T12:00:00Z"))],["Horário",a.horario],["Local",a.local]];
+    linhas.filter(l=>l[1]).forEach(([k,v])=>{dl.append(el("dt",null,k),el("dd",null,v))});
+    esq.append(dl);
+    const n=diasAte(a.data);
+    const c=el("div","contagem");
+    if(n<=0){c.append(el("div","num","Hoje"),el("div","rot","Não perca!"))}
+    else{c.append(el("div","num",String(n)),el("div","rot",n===1?"dia para começar":"dias para começar"))}
+    g.append(esq,c);return g;
+  },
+  aviso(a){
+    const g=el("div","centro");
+    g.append(titulo(a.titulo,340));
+    if(a.texto)g.append(texto(a.texto,240));
+    if(a.destaque){const w=el("div");w.append(el("span","destaque",a.destaque));g.append(w)}
+    return g;
+  },
+  imagem_texto(a){
+    const g=el("div","img-texto");
+    const f=el("div","foto");const img=el("img");img.src=a.imagem;img.alt="";f.append(img);
+    const t=el("div");
+    t.append(titulo(a.titulo,330));
+    if(a.texto)t.append(texto(a.texto,300));
+    if(a.destaque)t.append(el("span","destaque",a.destaque));
+    g.append(f,t);return g;
+  },
+  qr(a){
+    const g=el("div","qr-slide");
+    const t=el("div");
+    t.append(titulo(a.titulo,330));
+    if(a.texto)t.append(texto(a.texto,190));
+    if(a.destaque)t.append(el("span","destaque",a.destaque));
+    const dir=el("div");
+    const cx=el("div","qr-caixa");
+    const svg=qrSVG(a.link);
+    if(svg)cx.innerHTML=svg;else cx.append(el("div",null,a.link));
+    dir.append(cx,el("div","qr-legenda","Aponte a câmera do celular"));
+    g.append(t,dir);return g;
+  },
+  imagem_cheia(a){
+    const m=el("div","moldura");
+    const fundo=el("img","fundo");fundo.src=a.imagem;fundo.alt="";
+    const frente=el("img","frente");frente.src=a.imagem;frente.alt=a.legenda||"";
+    m.append(fundo,frente);
+    if(a.legenda)m.append(el("div","legenda",a.legenda));
+    return m;
+  }
+};
+
+/* Diminui a fonte até o texto caber no espaço reservado */
+function caber(e){
+  const alt=+e.dataset.altura;if(!alt)return;
+  let s=parseFloat(getComputedStyle(e).fontSize);const min=s*0.5;
+  e.style.maxHeight=alt+"px";
+  while((e.scrollHeight>alt+2||e.scrollWidth>e.clientWidth+2)&&s>min){s-=2;e.style.fontSize=s+"px"}
+}
+
+const palco=document.getElementById("palco"),tela=document.getElementById("tela"),
+      cat=document.getElementById("categoria"),prog=document.getElementById("progresso");
+let lista=[],slides=[],idx=-1,timer;
+
+function montar(){
+  lista=AVISOS.filter(valido);
+  if(!lista.length)lista=[{tipo:"abertura",duracao:30}];
+  palco.innerHTML="";prog.innerHTML="";
+  slides=lista.map(a=>{
+    const s=el("section","slide");
+    const f=montadores[a.tipo]||montadores.aviso;
+    s.append(f(a,lista));palco.append(s);
+    prog.append(el("div","seg"));
+    return s;
+  });
+  atualizarRelogio();
+  palco.querySelectorAll("[data-altura]").forEach(caber);
+}
+
+function mostrar(i){
+  slides.forEach((s,j)=>s.classList.toggle("ativo",j===i));
+  const a=lista[i];
+  cat.textContent=a.tipo==="abertura"?"":(a.categoria||"");
+  tela.classList.toggle("na-abertura",a.tipo==="abertura");
+  const dur=(a.duracao||12);
+  [...prog.children].forEach((seg,j)=>{
+    seg.className="seg"+(j<i?" feito":"");seg.innerHTML="";
+    if(j===i){const b=el("i");b.style.animation=`encher ${dur}s linear forwards`;seg.append(b)}
+  });
+  clearTimeout(timer);
+  timer=setTimeout(proximo,dur*1000);
+}
+
+function proximo(){
+  idx++;
+  if(idx>=slides.length){idx=0;montar()} // a cada volta, revalida datas e contagens
+  mostrar(idx);
+}
+
+function atualizarRelogio(){
+  const agora=new Date();
+  document.querySelectorAll("[data-relogio]").forEach(e=>e.textContent=fmtHora.format(agora));
+  document.querySelectorAll("[data-data]").forEach(e=>e.textContent=fmtData.format(agora));
+}
+setInterval(atualizarRelogio,1000);
+
+function escalar(){
+  const s=Math.min(document.body.clientWidth/1920,document.body.clientHeight/1080);
+  tela.style.setProperty("--escala",s);
+}
+window.addEventListener("resize",escalar);
+
+/* Tema forçado pelo link: #claro ou #escuro */
+function tema(){
+  const h=location.hash.slice(1);
+  if(h==="claro")document.documentElement.dataset.theme="light";
+  else if(h==="escuro")document.documentElement.dataset.theme="dark";
+  else delete document.documentElement.dataset.theme;
+}
+window.addEventListener("hashchange",tema);
+
+/* Mantém a tela acordada quando o navegador permite */
+let trava=null;
+async function manterAcordado(){
+  try{if("wakeLock" in navigator&&document.visibilityState==="visible")trava=await navigator.wakeLock.request("screen")}catch(e){}
+}
+document.addEventListener("visibilitychange",manterAcordado);
+
+/* Tela cheia ao tocar */
+const dica=document.getElementById("dica");
+setTimeout(()=>dica.classList.add("some"),7000);
+document.addEventListener("click",()=>{
+  manterAcordado();
+  try{if(!document.fullscreenElement)document.documentElement.requestFullscreen()}catch(e){}
+  dica.classList.add("some");
+});
+
+/* Recarrega a cada 30 minutos para puxar avisos novos */
+setTimeout(()=>location.reload(),30*60*1000);
+
+tema();escalar();
+const iniciar=()=>{montar();proximo();manterAcordado()};
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(iniciar,iniciar);
+</script>
+</body>
+</html>
