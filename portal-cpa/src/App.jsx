@@ -20,6 +20,7 @@ import Planos from './views/Planos.jsx'
 import Acompanhar from './views/Acompanhar.jsx'
 import MontarPlanos from './views/MontarPlanos.jsx'
 import ControleFeedback from './views/ControleFeedback.jsx'
+import PlanoMelhoria from './views/PlanoMelhoria.jsx'
 import Nucleo from './views/Nucleo.jsx'
 import Setores from './views/Setores.jsx'
 import MeuSetor from './views/MeuSetor.jsx'
@@ -181,6 +182,7 @@ export default function App() {
           g: 'Planos',
           itens: [
             { k: 'planos', t: 'Planos de ação' },
+            ...(temCursos || perfil.global ? [{ k: 'plano-melhoria', t: 'Plano de melhoria (PDF)' }] : []),
             ...(perfil.global ? [{ k: 'acompanhar', t: 'Acompanhar' }] : []),
             ...(r === 'admin' ? [{ k: 'triagem', t: 'Encaminhar aos setores' }] : []),
             ...(podeVerAgenda(perfil) ? [{ k: 'agenda', t: r === 'admin' ? 'Agenda e prazos' : 'Agenda de entregas' }] : []),
@@ -277,6 +279,7 @@ export default function App() {
         {atual === 'agenda' && <Agenda {...props} key={param} />}
         {atual === 'feedback' && <Feedback {...props} />}
         {atual === 'controle-feedback' && <ControleFeedback {...props} />}
+        {atual === 'plano-melhoria' && <PlanoMelhoria {...props} />}
         {atual === 'importar' && <Importar {...props} />}
         {atual === 'admin' && <Admin {...props} />}
         {atual === 'proxima' && <ProximaCPA {...props} />}

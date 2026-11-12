@@ -9,8 +9,9 @@
 //   baixarPdfCurso({ base, cursoId, perfil?, planos? })     → relatório integral do curso (CPA_<curso>_<modalidade>.pdf):
 //     satisfação, dimensões x instituição, onde agir, mapa das turmas, pergunta por pergunta,
 //     todos os comentários (sem nomes de professores) e os planos aprovados com todas as informações
-//   baixarPdfIntegralCursos({ base, escopo, planos, onProgresso }) → o mesmo relatório para cada curso com
-//     plano aprovado, um PDF por curso num ZIP (CPA_relatorio_integral_por_curso.zip)
+//   baixarPdfPlanoMelhoria({ base, cursoIds, planos, onProgresso }) → Plano de melhoria dos cursos escolhidos:
+//     panorama em notas (satisfação, dimensões, pergunta por pergunta) + planos aprovados, sem comentários;
+//     1 curso = um PDF, vários = um PDF por curso num ZIP
 //   baixarPdfGeral({ base, escopo, respondentes? })         → um curso por página         (CPA_relatorio_geral.pdf)
 //   baixarPdfSetor({ base, setorId, comentarios? })         → PDF de um setor             (CPA_setor_<id>.pdf)
 //   baixarPdfPlanos({ base, escopo, perfil })               → planos de todos os autores  (CPA_planos_de_acao_geral.pdf)
@@ -251,19 +252,19 @@ export async function baixarPdfCurso({ base, cursoId, planos } = {}) {
   const gerais = ciclo ? await resultadosGerais(ciclo).catch(() => []) : []
   const doc = await montarPdfCurso({ base, cid: cursoId, planos: planos || base.planos || [], ciclo, gerais })
   doc.save(nomeArquivoCurso(base, cursoId))
-  return 'PDF integral do curso gerado com sucesso!'
+  return 'PDF do curso gerado com sucesso!'
 }
 
 // Um relatório integral por curso: notas por dimensão e por pergunta, comentários e planos aprovados
-async function montarPdfCurso({ base, cid, planos, ciclo, gerais }) {
+async function montarPdfCurso({ base, cid, planos, ciclo, gerais, enxuto = false }) {
   const [doc, turmas, porCurso, comentarios] = await Promise.all([
     novoDocumento(),
-    carregarTurmas(cid).catch(() => []),
+    enxuto ? [] : carregarTurmas(cid).catch(() => []),
     ciclo ? resultadosCursos(ciclo, [cid]).catch(() => []) : [],
-    todosComentarios(cid),
+    enxuto ? [] : todosComentarios(cid),
   ])
   escreverCursoCompleto(doc, {
-    base, cid, ciclo, turmas, comentarios,
+    base, cid, ciclo, turmas, comentarios, enxuto,
     perguntas: somarPorPergunta(porCurso), gerais,
     planos: planos.filter((x) => x.curso_id === cid),
   })
@@ -277,31 +278,37 @@ function nomeArquivoCurso(base, cid) {
   return 'CPA_' + nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.pdf'
 }
 
-// Todos os cursos com plano aprovado, um PDF integral por curso, num ZIP. onProgresso(feitos, total, nomeDoCurso)
-export async function baixarPdfIntegralCursos({ base, escopo, planos, onProgresso } = {}) {
+// Plano de melhoria dos cursos escolhidos: panorama em notas + planos aprovados, sem comentários.
+// Um curso → um PDF; vários → um PDF por curso, num ZIP. onProgresso(feitos, total, nomeDoCurso)
+export async function baixarPdfPlanoMelhoria({ base, cursoIds, planos, onProgresso } = {}) {
+  const ids = (cursoIds || []).filter((id) => base.cursos.some((c) => c.id === id))
+  if (!ids.length) throw new Error('Selecione pelo menos um curso.')
   const lista = planos || base.planos || []
-  const ids = (escopo || base.cursos.map((c) => c.id))
-    .filter((id) => base.cursos.some((c) => c.id === id) && lista.some((p) => p.curso_id === id && APROVADOS.includes(p.status)))
-    .sort((a, b) => cursoLabel(base, a).localeCompare(cursoLabel(base, b), 'pt-BR'))
-  if (!ids.length) throw new Error('Nenhum curso com plano de ação aprovado neste recorte.')
   const ciclos = await ciclosImportados().catch(() => [])
   const ciclo = ciclos[0]?.ciclo || null
   const gerais = ciclo ? await resultadosGerais(ciclo).catch(() => []) : []
+  const nomeArq = (cid) => nomeArquivoCurso(base, cid).replace(/^CPA_/, 'CPA_plano_de_melhoria_')
+  if (ids.length === 1) {
+    onProgresso?.(0, 1, cursoLabel(base, ids[0]))
+    const doc = await montarPdfCurso({ base, cid: ids[0], planos: lista, ciclo, gerais, enxuto: true })
+    doc.save(nomeArq(ids[0]))
+    return 'PDF de ' + cursoLabel(base, ids[0]) + ' gerado.'
+  }
   const { zipSync } = await import('fflate')
   const arquivos = {}
   for (let i = 0; i < ids.length; i++) {
     onProgresso?.(i, ids.length, cursoLabel(base, ids[i]))
-    const doc = await montarPdfCurso({ base, cid: ids[i], planos: lista, ciclo, gerais })
-    arquivos[nomeArquivoCurso(base, ids[i])] = new Uint8Array(doc.output('arraybuffer'))
+    const doc = await montarPdfCurso({ base, cid: ids[i], planos: lista, ciclo, gerais, enxuto: true })
+    arquivos[nomeArq(ids[i])] = new Uint8Array(doc.output('arraybuffer'))
   }
   onProgresso?.(ids.length, ids.length, '')
   const url = URL.createObjectURL(new Blob([zipSync(arquivos, { level: 0 })], { type: 'application/zip' }))
   const a = document.createElement('a')
   a.href = url
-  a.download = 'CPA_relatorio_integral_por_curso.zip'
+  a.download = 'CPA_planos_de_melhoria.zip'
   document.body.appendChild(a); a.click(); a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 60000)
-  return `ZIP gerado com ${ids.length} PDF(s), um por curso.`
+  return `ZIP gerado com ${ids.length} PDFs, um por curso.`
 }
 
 // Todos os comentários do curso (de 1000 em 1000)
@@ -399,13 +406,16 @@ function paragrafo(doc, y, texto, { tam = 9.5, cor = [50, 54, 66], estilo = 'nor
 const nota2 = (v) => fmtNota(v)
 const dif = (v, b) => (v == null || b == null ? '—' : (v - b >= 0 ? '+' : '') + fmtNota(v - b))
 
-function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, perguntas, gerais, planos }) {
+// enxuto (Plano de melhoria): só o panorama em notas e, logo abaixo, os planos aprovados — sem turmas e sem comentários
+function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, perguntas, gerais, planos, enxuto = false }) {
   const n = base.notas[cid] || {}
   const inst = mediasPorDimensao(base.notas, base.cursos.map((c) => c.id))
   const resp = base.respondentes?.[cid]
 
   let y = pdfCabecalho(doc, cursoLabel(base, cid),
-    'Relatório CPA' + (ciclo ? ' ' + ciclo : '') + ' — UniFECAF' + (resp ? ' · ' + resp + ' aluno(s) responderam' : '') + ' · Gerado em ' + hoje())
+    (enxuto ? 'Plano de melhoria · CPA' : 'Relatório CPA') + (ciclo ? ' ' + ciclo : '') + ' — UniFECAF' + (resp ? ' · ' + resp + ' aluno(s) responderam' : '') + ' · Gerado em ' + hoje())
+
+  if (enxuto) y = secao(doc, y - 6, 'Panorama em notas', 'Como os alunos avaliaram o curso na CPA, comparado com a média da UniFECAF.') + 1
 
   // 1. Satisfação geral
   doc.setFillColor(233, 241, 252); doc.roundedRect(M, y, L, 24, 3, 3, 'F')
@@ -435,6 +445,9 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
     pdfCaixaDestaque(doc, M, y, w, 20, PDF_GREEN, [226, 246, 235], 'PONTO FORTE', forte + ' (' + nota2(n[forte]) + ')')
     pdfCaixaDestaque(doc, M + w + 6, y, w, 20, PDF_AMBER, [252, 240, 222], 'OPORTUNIDADE', oport + ' (' + nota2(n[oport]) + ')')
     y += 27
+  }
+  if (comNota.length && !enxuto) {
+    const oport = comNota[comNota.length - 1]
     const comT = linhasTurma.filter(([, v]) => v[oport] != null)
     const abaixo = comT.filter(([, v]) => v[oport] < META).sort((a, b) => a[1][oport] - b[1][oport])
     y = secao(doc, y, 'Onde agir primeiro')
@@ -444,7 +457,7 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
   }
 
   // 4. Mapa de calor das turmas
-  if (linhasTurma.length) {
+  if (linhasTurma.length && !enxuto) {
     y = secao(doc, y, 'Mapa de calor das turmas', 'Nota de cada turma em cada dimensão. Laranja escuro: abaixo de 3,5 · Laranja claro: 3,5 a 3,99 · Azul claro: 4,0 a 4,29 · Azul: 4,3 ou mais.')
     const CURTO = { 'Conteúdo das Disciplinas': 'Conteúdo', 'Infraestrutura e Atendimento': 'Infraestrutura', 'Políticas Acadêmicas': 'Pol. acadêmicas', 'Políticas de Gestão': 'Pol. de gestão', 'Docência e Tutoria': 'Docência' }
     y = tabela(doc, y,
@@ -475,6 +488,9 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
       y = tabela(doc, y, [{ t: '#', w: 8, a: 'center' }, { t: 'Pergunta', w: 76 }, { t: 'Respostas', w: 18, a: 'right' }, { t: 'Não sei / NU', w: 20, a: 'right' }, { t: 'Curso', w: 29, a: 'center' }, { t: 'Instituição', w: 29, a: 'right' }], linhas)
     }
   }
+
+  // 6. Plano de melhoria: os planos aprovados logo abaixo das notas
+  if (enxuto) return escreverPlanosDoCurso(doc, y, base, planos, { novaPagina: false })
 
   // 7. Todos os comentários, por categoria (só a turma; o nome do professor não entra no PDF)
   const SENT = { good: 'positivos', warn: 'pedem atenção', bad: 'negativos' }
@@ -555,13 +571,13 @@ function bloco(doc, y, titulo, texto, { cor = PDF_INK, fundo = null } = {}) {
   return y + 2.5
 }
 
-function escreverPlanosDoCurso(doc, y, base, todos) {
+function escreverPlanosDoCurso(doc, y, base, todos, { novaPagina = true } = {}) {
   const planos = (todos || []).filter((p) => APROVADOS.includes(p.status) && (p.tipo || 'curso') !== 'setor')
   const ordemQ = (p) => { const i = DIMENSOES.indexOf(String(p.categoria || '').split(',')[0]); return i < 0 ? 99 : i }
   planos.sort((a, b) => ordemQ(a) - ordemQ(b) || String(a.criado_em).localeCompare(String(b.criado_em)))
   const outros = (todos || []).filter((p) => !APROVADOS.includes(p.status) && p.status !== 'rascunho' && (p.tipo || 'curso') !== 'setor').length
-  doc.addPage(); y = 20
-  y = secao(doc, y, `Planos de ação aprovados (${planos.length})`,
+  if (novaPagina) { doc.addPage(); y = 20 }
+  y = secao(doc, y, `Planos de melhoria aprovados (${planos.length})`,
     'O que a coordenação vai fazer a partir das notas e dos comentários dos alunos, já aprovado pela CPA e pela Pró-Reitoria.' +
     (outros ? ` Outros ${outros} plano(s) ainda em análise não entram neste relatório.` : ''))
   if (!planos.length) return paragrafo(doc, y, 'Nenhum plano de ação aprovado para este curso até agora.', { cor: PDF_GRAY_TEXT }) + 4

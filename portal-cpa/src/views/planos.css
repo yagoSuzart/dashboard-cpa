@@ -223,3 +223,19 @@
 /* Aprovação em lote */
 .lote-aprovacao { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 14px; background: var(--blue-soft); border: 1px solid #b9d6f2; }
 .lote-btns { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+
+/* Plano de melhoria em PDF: busca do curso e escolha do modelo de oferta */
+.pm-busca { gap: 6px; }
+.pm-busca .input { max-width: 520px; font-size: 16px; }
+.pm-linha { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--line-2, #eef1f6); }
+.pm-linha:last-child { border-bottom: 0; }
+.pm-nome { flex: 1 1 220px; min-width: 0; font-size: 15px; }
+.pm-mods { display: flex; gap: 8px; flex-wrap: wrap; }
+.pm-mod { display: grid; grid-template-columns: 20px auto; column-gap: 8px; align-items: center; text-align: left; cursor: pointer; border: 1px solid var(--line, #dfe5ee); background: #fff; border-radius: 12px; padding: 8px 12px; font: inherit; color: var(--ink); min-width: 150px; }
+.pm-mod small { grid-column: 2; font-size: 12px; color: var(--muted); }
+.pm-mod span:not(.pm-check) { font-weight: 600; }
+.pm-check { grid-row: 1 / span 2; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--line, #c9d3e1); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; }
+.pm-mod[aria-pressed='true'] { border-color: var(--navy); background: #eef4fc; }
+.pm-mod[aria-pressed='true'] .pm-check { background: var(--navy); border-color: var(--navy); }
+.pm-barra { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line, #dfe5ee); border-radius: 16px; padding: 12px 16px; box-shadow: 0 10px 30px rgba(20,45,80,.12); }
+.pm-sel { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
