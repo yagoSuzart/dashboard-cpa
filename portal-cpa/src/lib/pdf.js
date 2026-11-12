@@ -6,9 +6,11 @@
 //   - lançam Error com a mesma mensagem de aviso do sistema anterior quando não há o que gerar.
 //
 // Assinaturas:
-//   baixarPdfCurso({ base, cursoId, perfil?, planos? })     → relatório completo do curso (CPA_<curso>.pdf):
+//   baixarPdfCurso({ base, cursoId, perfil?, planos? })     → relatório integral do curso (CPA_<curso>_<modalidade>.pdf):
 //     satisfação, dimensões x instituição, onde agir, mapa das turmas, pergunta por pergunta,
-//     planos de ação e todos os comentários (sem nomes de professores)
+//     todos os comentários (sem nomes de professores) e os planos aprovados com todas as informações
+//   baixarPdfIntegralCursos({ base, escopo, planos, onProgresso }) → o mesmo relatório para cada curso com
+//     plano aprovado, um PDF por curso num ZIP (CPA_relatorio_integral_por_curso.zip)
 //   baixarPdfGeral({ base, escopo, respondentes? })         → um curso por página         (CPA_relatorio_geral.pdf)
 //   baixarPdfSetor({ base, setorId, comentarios? })         → PDF de um setor             (CPA_setor_<id>.pdf)
 //   baixarPdfPlanos({ base, escopo, perfil })               → planos de todos os autores  (CPA_planos_de_acao_geral.pdf)
@@ -74,7 +76,7 @@ async function carregarLogo() {
 
 async function novoDocumento() {
   const [JsPDF, logo] = await Promise.all([carregarJsPDF(), carregarLogo()])
-  const doc = new JsPDF()
+  const doc = new JsPDF({ compress: true })
   doc.__logo = logo
   return doc
 }
@@ -246,21 +248,60 @@ export async function baixarPdfCurso({ base, cursoId, planos } = {}) {
     throw new Error('Selecione um curso específico (não "todos os cursos") antes de baixar o PDF.')
   const ciclos = await ciclosImportados().catch(() => [])
   const ciclo = ciclos[0]?.ciclo || null
-  const [doc, turmas, porCurso, gerais, comentarios] = await Promise.all([
+  const gerais = ciclo ? await resultadosGerais(ciclo).catch(() => []) : []
+  const doc = await montarPdfCurso({ base, cid: cursoId, planos: planos || base.planos || [], ciclo, gerais })
+  doc.save(nomeArquivoCurso(base, cursoId))
+  return 'PDF integral do curso gerado com sucesso!'
+}
+
+// Um relatório integral por curso: notas por dimensão e por pergunta, comentários e planos aprovados
+async function montarPdfCurso({ base, cid, planos, ciclo, gerais }) {
+  const [doc, turmas, porCurso, comentarios] = await Promise.all([
     novoDocumento(),
-    carregarTurmas(cursoId).catch(() => []),
-    ciclo ? resultadosCursos(ciclo, [cursoId]).catch(() => []) : [],
-    ciclo ? resultadosGerais(ciclo).catch(() => []) : [],
-    todosComentarios(cursoId),
+    carregarTurmas(cid).catch(() => []),
+    ciclo ? resultadosCursos(ciclo, [cid]).catch(() => []) : [],
+    todosComentarios(cid),
   ])
   escreverCursoCompleto(doc, {
-    base, cid: cursoId, ciclo, turmas, comentarios,
+    base, cid, ciclo, turmas, comentarios,
     perguntas: somarPorPergunta(porCurso), gerais,
-    planos: (planos || base.planos || []).filter((x) => x.curso_id === cursoId),
+    planos: planos.filter((x) => x.curso_id === cid),
   })
   pdfRodapeTodasPaginas(doc)
-  doc.save('CPA_' + cursoId + '.pdf')
-  return 'PDF do curso gerado com sucesso!'
+  return doc
+}
+
+function nomeArquivoCurso(base, cid) {
+  const c = base.cursos.find((x) => x.id === cid)
+  const nome = c ? `${c.nome}_${MODALIDADE_LABEL[c.modalidade] || c.modalidade}` : cid
+  return 'CPA_' + nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.pdf'
+}
+
+// Todos os cursos com plano aprovado, um PDF integral por curso, num ZIP. onProgresso(feitos, total, nomeDoCurso)
+export async function baixarPdfIntegralCursos({ base, escopo, planos, onProgresso } = {}) {
+  const lista = planos || base.planos || []
+  const ids = (escopo || base.cursos.map((c) => c.id))
+    .filter((id) => base.cursos.some((c) => c.id === id) && lista.some((p) => p.curso_id === id && APROVADOS.includes(p.status)))
+    .sort((a, b) => cursoLabel(base, a).localeCompare(cursoLabel(base, b), 'pt-BR'))
+  if (!ids.length) throw new Error('Nenhum curso com plano de ação aprovado neste recorte.')
+  const ciclos = await ciclosImportados().catch(() => [])
+  const ciclo = ciclos[0]?.ciclo || null
+  const gerais = ciclo ? await resultadosGerais(ciclo).catch(() => []) : []
+  const { zipSync } = await import('fflate')
+  const arquivos = {}
+  for (let i = 0; i < ids.length; i++) {
+    onProgresso?.(i, ids.length, cursoLabel(base, ids[i]))
+    const doc = await montarPdfCurso({ base, cid: ids[i], planos: lista, ciclo, gerais })
+    arquivos[nomeArquivoCurso(base, ids[i])] = new Uint8Array(doc.output('arraybuffer'))
+  }
+  onProgresso?.(ids.length, ids.length, '')
+  const url = URL.createObjectURL(new Blob([zipSync(arquivos, { level: 0 })], { type: 'application/zip' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'CPA_relatorio_integral_por_curso.zip'
+  document.body.appendChild(a); a.click(); a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 60000)
+  return `ZIP gerado com ${ids.length} PDF(s), um por curso.`
 }
 
 // Todos os comentários do curso (de 1000 em 1000)
@@ -435,16 +476,6 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
     }
   }
 
-  // 6. Planos de ação do curso
-  y = secao(doc, y, 'Planos de ação do curso', planos.length ? planos.length + ' plano(s) registrado(s).' : null)
-  if (!planos.length) y = paragrafo(doc, y, 'Nenhum plano de ação registrado para este curso.', { cor: PDF_GRAY_TEXT }) + 4
-  else {
-    const autor = (id) => base.usuarios.find((u) => u.id === id)?.nome || '—'
-    const data = (d) => (d ? new Date(String(d).length <= 10 ? d + 'T12:00:00' : d).toLocaleDateString('pt-BR') : '—')
-    y = tabela(doc, y, [{ t: 'Plano', w: 64 }, { t: 'Autor', w: 36 }, { t: 'Situação', w: 38 }, { t: 'Prioridade', w: 18 }, { t: 'Prazo', w: 24, a: 'center' }],
-      planos.map((p) => [p.titulo, autor(p.usuario_id), statusTexto(p.status), p.prioridade || '—', data(p.prazo)]))
-  }
-
   // 7. Todos os comentários, por categoria (só a turma; o nome do professor não entra no PDF)
   const SENT = { good: 'positivos', warn: 'pedem atenção', bad: 'negativos' }
   const cont = { good: 0, warn: 0, bad: 0 }
@@ -461,7 +492,7 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
     for (const c of lista) {
       const meta = c.turma ? 'Turma ' + c.turma : ''
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8)
-      const linhas = doc.splitTextToSize(String(c.texto || '').replace(/\\n/g, '\n'), L - 10)
+      const linhas = doc.splitTextToSize(limpar(c.texto), L - 10)
       const h = linhas.length * 3.8 + (meta ? 4.2 : 0) + 4
       y = cabe(doc, y, h)
       doc.setFillColor(...PDF_CARD_BG); doc.rect(M, y, L, h, 'F')
@@ -474,6 +505,124 @@ function escreverCursoCompleto(doc, { base, cid, ciclo, turmas, comentarios, per
     }
     y += 3
   }
+
+  // 8. Planos de ação aprovados: o que a coordenação fez a partir das notas e dos comentários acima
+  y = escreverPlanosDoCurso(doc, y, base, planos)
+  return y
+}
+
+// ---------- planos de ação aprovados do curso, com todas as informações ----------
+const APROVADOS = ['aprovado', 'concluido']
+const dataBr = (d) => (d ? new Date(String(d).length <= 10 ? d + 'T12:00:00' : d).toLocaleDateString('pt-BR') : '')
+
+// A fonte padrão do PDF só desenha o alfabeto latino: tira emoji e troca hífens especiais (senão saem símbolos estranhos)
+const WINANSI = new Set('€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ')
+function limpar(t) {
+  return String(t ?? '').replace(/\\n/g, '\n').replace(/[\u2010-\u2012\u2212]/g, '-').replace(/\u00a0|\u202f/g, ' ')
+    .replace(/[^\n]/gu, (ch) => (ch.codePointAt(0) <= 0xff || WINANSI.has(ch) ? ch : '')).replace(/[ \t]{2,}/g, ' ').trim()
+}
+
+function campo(doc, y, rotulo, valor) {
+  if (!valor) return y
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
+  const l = doc.splitTextToSize(limpar(valor), L - 42)
+  y = cabe(doc, y, l.length * 4 + 1.5)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.3); doc.setTextColor(...PDF_GRAY_TEXT)
+  doc.text(rotulo, M + 4, y)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(40, 44, 56)
+  doc.text(l, M + 42, y)
+  return y + l.length * 4 + 1.5
+}
+
+function bloco(doc, y, titulo, texto, { cor = PDF_INK, fundo = null } = {}) {
+  if (!texto) return y
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.2)
+  const l = doc.splitTextToSize(limpar(texto), L - 10)
+  y = cabe(doc, y + 1, 10)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.6); doc.setTextColor(...cor)
+  doc.text(titulo.toUpperCase(), M + 4, y)
+  y += 4.4
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.2); doc.setTextColor(40, 44, 56)
+  // Texto longo: escreve em pedaços para quebrar a página no meio, se precisar
+  for (let i = 0; i < l.length; i += 8) {
+    const parte = l.slice(i, i + 8)
+    const h = parte.length * 4.1
+    y = cabe(doc, y, h)
+    if (fundo) { doc.setFillColor(...fundo); doc.rect(M + 2, y - 3.3, L - 4, h + 1.2, 'F') }
+    doc.text(parte, M + 6, y)
+    y += h
+  }
+  return y + 2.5
+}
+
+function escreverPlanosDoCurso(doc, y, base, todos) {
+  const planos = (todos || []).filter((p) => APROVADOS.includes(p.status) && (p.tipo || 'curso') !== 'setor')
+  const ordemQ = (p) => { const i = DIMENSOES.indexOf(String(p.categoria || '').split(',')[0]); return i < 0 ? 99 : i }
+  planos.sort((a, b) => ordemQ(a) - ordemQ(b) || String(a.criado_em).localeCompare(String(b.criado_em)))
+  const outros = (todos || []).filter((p) => !APROVADOS.includes(p.status) && p.status !== 'rascunho' && (p.tipo || 'curso') !== 'setor').length
+  doc.addPage(); y = 20
+  y = secao(doc, y, `Planos de ação aprovados (${planos.length})`,
+    'O que a coordenação vai fazer a partir das notas e dos comentários dos alunos, já aprovado pela CPA e pela Pró-Reitoria.' +
+    (outros ? ` Outros ${outros} plano(s) ainda em análise não entram neste relatório.` : ''))
+  if (!planos.length) return paragrafo(doc, y, 'Nenhum plano de ação aprovado para este curso até agora.', { cor: PDF_GRAY_TEXT }) + 4
+
+  // Resumo: um plano por linha
+  y = tabela(doc, y, [{ t: '#', w: 8, a: 'center' }, { t: 'Plano', w: 82 }, { t: 'Questionário', w: 44 }, { t: 'Situação', w: 24 }, { t: 'Prazo', w: 22, a: 'center' }],
+    planos.map((p, i) => [i + 1, limpar(p.sem_melhoria ? 'Ponto forte (sem melhoria)' : p.titulo) || '—', limpar(p.categoria) || '—', p.status === 'concluido' ? 'Concluído' : 'Aprovado', dataBr(p.prazo) || '—']))
+
+  const usuario = (id) => base.usuarios.find((u) => u.id === id)
+  planos.forEach((p, i) => {
+    y = cabe(doc, y + 2, 40)
+    // Faixa do título
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
+    const tit = doc.splitTextToSize(`${i + 1}. ${limpar(p.sem_melhoria ? 'Ponto forte: ' + (p.categoria || '') : p.titulo) || 'Plano sem título'}`, L - 8)
+    const hT = tit.length * 5 + 4
+    doc.setFillColor(233, 241, 252); doc.rect(M, y - 4.5, L, hT, 'F')
+    doc.setFillColor(...PDF_BLUE); doc.rect(M, y - 4.5, 1.6, hT, 'F')
+    doc.setTextColor(...PDF_INK); doc.text(tit, M + 4, y)
+    y += hT + 1
+
+    const autor = usuario(p.usuario_id)
+    const areas = [p.area, ...(p.areas_extra || [])].filter(Boolean).map((a) => nomeAreaPdf(a, base.setores))
+    y = campo(doc, y, 'Questionário', p.categoria)
+    y = campo(doc, y, 'Situação', (p.status === 'concluido' ? 'Concluído' : 'Aprovado') + (p.sem_melhoria ? ' · ponto forte, sem melhoria necessária' : ''))
+    y = campo(doc, y, 'Autor(a)', autor ? autor.nome + ' · ' + (ROLE_LABELS_PDF[autor.role] || autor.role) : '')
+    y = campo(doc, y, 'Enviado em', dataBr(p.criado_em))
+    y = campo(doc, y, 'Prioridade', p.prioridade)
+    y = campo(doc, y, 'Prazo', dataBr(p.prazo))
+    y = campo(doc, y, 'Concluído em', dataBr(p.data_conclusao))
+    y = campo(doc, y, 'Área responsável', areas.length ? areas.join(', ') + (p.externa ? ' (depende de outro setor)' : '') : '')
+    y = campo(doc, y, 'Prazo do setor', dataBr(p.prazo_estimado))
+    y = campo(doc, y, 'Setor', p.atendido_pelo_setor ? 'Marcou como atendido' : '')
+    y = campo(doc, y, 'Validado pela CPA', p.validado_por)
+    y = campo(doc, y, 'Aprovado por', [p.revisado_por, dataBr(p.revisado_em)].filter(Boolean).join(' em '))
+    y += 1.5
+    y = bloco(doc, y, p.sem_melhoria ? 'Por que não precisa de melhoria' : 'O que será feito', p.descricao, { fundo: PDF_CARD_BG })
+    y = bloco(doc, y, 'Indicador de sucesso', p.indicador)
+    y = bloco(doc, y, 'O que os alunos apontaram', p.queixa_aluno)
+    y = bloco(doc, y, 'Considerações da CPA', p.consideracoes_cpa, { cor: PDF_BLUE })
+    y = bloco(doc, y, 'Observação da revisão', p.comentario_revisor, { cor: PDF_AMBER })
+    y = bloco(doc, y, 'Observação do encaminhamento', p.triagem_obs)
+
+    const coments = (p.comentarios_selecionados || []).map(limpar).filter(Boolean)
+    if (coments.length) {
+      y = cabe(doc, y + 1, 12)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.6); doc.setTextColor(...PDF_GREEN)
+      doc.text(`COMENTÁRIOS DOS ALUNOS QUE EMBASARAM O PLANO (${coments.length})`, M + 4, y)
+      y += 4.6
+      for (const c of coments) {
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(8.6)
+        const l = doc.splitTextToSize('“' + c + '”', L - 14)
+        const h = l.length * 3.8 + 2.4
+        y = cabe(doc, y, h)
+        doc.setFillColor(...PDF_GREEN); doc.rect(M + 5, y - 3, 0.8, h - 1.6, 'F')
+        doc.setTextColor(60, 64, 76); doc.text(l, M + 8, y)
+        y += h
+      }
+    }
+    y += 3
+    if (i < planos.length - 1) { y = cabe(doc, y, 4); doc.setDrawColor(219, 230, 245); doc.line(M, y, M + L, y); y += 6 }
+  })
   return y
 }
 

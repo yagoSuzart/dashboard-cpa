@@ -13,11 +13,12 @@
 import { useState } from 'react'
 
 const ROTULOS = {
-  curso: 'Baixar PDF deste curso',
+  curso: 'PDF integral deste curso (notas, comentários e planos)',
   geral: 'PDF geral (todos os cursos)',
   setor: 'Baixar PDF deste setor',
   planos: 'Baixar PDF de todos os planos de ação (com comentários)',
   meuPlano: 'Baixar PDF do meu plano',
+  integral: 'PDF integral por curso (um PDF por curso, em ZIP)',
 }
 
 const FUNCOES = {
@@ -26,6 +27,7 @@ const FUNCOES = {
   setor: 'baixarPdfSetor',
   planos: 'baixarPdfPlanos',
   meuPlano: 'baixarPdfMeuPlano',
+  integral: 'baixarPdfIntegralCursos',
 }
 
 function useGerar() {
@@ -34,10 +36,13 @@ function useGerar() {
   async function gerar(tipo, args) {
     if (ocupado) return
     setOcupado(tipo)
-    setAviso({ tipo: '', texto: tipo === 'planos' ? 'Gerando PDF com todos os planos de ação... isso pode levar alguns segundos.' : 'Gerando PDF…' })
+    setAviso({ tipo: '', texto: tipo === 'planos' ? 'Gerando PDF com todos os planos de ação... isso pode levar alguns segundos.' : tipo === 'integral' ? 'Preparando os PDFs dos cursos…' : 'Gerando PDF…' })
     try {
       const pdf = await import('../lib/pdf.js')
-      const msg = await pdf[FUNCOES[tipo]](args)
+      // No lote, mostra o andamento curso a curso (a aba precisa ficar aberta até o ZIP baixar)
+      const onProgresso = (feitos, total, nome) =>
+        setAviso({ tipo: '', texto: feitos < total ? `Gerando ${feitos + 1} de ${total}: ${nome}… Deixe esta aba aberta.` : 'Compactando o ZIP…' })
+      const msg = await pdf[FUNCOES[tipo]]({ ...args, onProgresso })
       setAviso({ tipo: 'ok', texto: msg })
     } catch (e) {
       console.error('Erro ao gerar PDF:', e)

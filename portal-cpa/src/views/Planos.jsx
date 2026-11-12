@@ -56,7 +56,7 @@ export default function Planos(props) {
       </div>
       <PlanoSituacao planos={planos} ativo={aba === 'todos' ? status : ''} onEscolher={(st) => { setStatus(st); setAba('todos'); setAviso(null) }} />
       {aviso && <div className="aviso ok" role="status">{aviso}</div>}
-      <BotoesPdf tipos={[...(perfil.role !== 'setor' && perfil.role !== 'diretor_nucleo_setor' ? ['meuPlano'] : []), ...(perfil.global ? ['planos'] : [])]} base={base} perfil={perfil} escopo={escopo} />
+      <BotoesPdf tipos={[...(perfil.role !== 'setor' && perfil.role !== 'diretor_nucleo_setor' ? ['meuPlano'] : []), ...(perfil.global ? ['planos'] : []), ...(perfil.role !== 'setor' && perfil.role !== 'diretor_nucleo_setor' ? ['integral'] : [])]} base={base} perfil={perfil} escopo={escopo} planos={planos} />
       {aba === 'meus' && <MeusPlanos {...{ perfil, base, meus, podeEscrever, mudou, aoEnviarPlano }} />}
       {aba === 'equipe' && <Equipe {...{ perfil, base, equipe, mudou }} />}
       {aba === 'acompanhamento' && <Acompanhamento {...{ perfil, base, planos, mudou }} />}
