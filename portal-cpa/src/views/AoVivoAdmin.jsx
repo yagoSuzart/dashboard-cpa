@@ -120,7 +120,7 @@ export default function AoVivoAdmin({ base }) {
 
       <section className="card av-passo">
         <h2><span>1</span>CSVs "Respondentes por curso"</h2>
-        <p className="muted">No painel da avaliação, clique no modelo de oferta (filtro no topo), desça até "Respondentes por curso" e clique em <b>Baixar CSV</b>. Repita para os três.</p>
+        <p className="muted">No painel da avaliação, clique no modelo de oferta (filtro no topo), desça até "Respondentes por curso" e clique em <b>Baixar CSV</b> (o arquivo começa com <b>respondentes-cpa</b>). Repita para os três.</p>
         <div className="av-arquivos">
           {MODALIDADES_AO_VIVO.map(({ k, t }) => (
             <label key={k} className={'av-arq' + (csv[k] ? ' ok' : '')}>
@@ -192,7 +192,7 @@ export default function AoVivoAdmin({ base }) {
 
       <section className="card av-passo">
         <h2><span>4</span>Professores <span className="small muted">(opcional · só a coordenação vê)</span></h2>
-        <p className="muted">O CSV "Respostas" do painel gera a média de cada professor no questionário Docente, por curso. Do arquivo só saem médias e contagens; códigos de aluno e comentários não são enviados.</p>
+        <p className="muted">O CSV "Respostas" do painel (botão Exportar → Respostas; o arquivo começa com <b>respostas-cpa</b>) gera a média de cada professor no questionário Docente, por curso. Do arquivo só saem médias e contagens; códigos de aluno e comentários não são enviados.</p>
         <label className={'av-arq' + (prof ? ' ok' : '')} style={{ maxWidth: 360 }}>
           <b>CSV de respostas</b>
           <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${fmtNum(prof.professores.length)} professores em ${new Set(prof.professores.map((p) => p.curso_id)).size} cursos` : 'Escolher o CSV'}</span>

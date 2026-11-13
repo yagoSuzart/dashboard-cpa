@@ -35,8 +35,10 @@ function lerCsv(arquivo, opcoes = {}) {
 // CSV "Respondentes por curso" do painel: #;Curso;Elegíveis;Iniciados;Concluídos;%
 export async function lerCsvRespondentes(arquivo) {
   const linhas = await lerCsv(arquivo)
+  if (linhas.length && 'Pesquisa' in linhas[0] && 'Resposta' in linhas[0])
+    throw new Error(`"${arquivo.name}" é o CSV de Respostas (uma linha por resposta): ele vai no passo 4, de professores. Aqui no passo 1 vai o CSV do quadro "Respondentes por curso" (o arquivo começa com "respondentes-cpa").`)
   if (!linhas.length || !('Curso' in linhas[0]) || !('Elegíveis' in linhas[0]))
-    throw new Error(`"${arquivo.name}" não parece o CSV "Respondentes por curso" do painel (faltam as colunas Curso e Elegíveis).`)
+    throw new Error(`"${arquivo.name}" não parece o CSV "Respondentes por curso" do painel (faltam as colunas Curso e Elegíveis). Baixe pelo botão "Baixar CSV" do quadro "Respondentes por curso".`)
   return linhas
     .filter((l) => l.Curso)
     .map((l) => ({ nome: String(l.Curso).trim(), elegiveis: num(l['Elegíveis']), iniciados: num(l.Iniciados), concluidos: num(l['Concluídos']) }))
