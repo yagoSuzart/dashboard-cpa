@@ -104,7 +104,7 @@ export default function PainelPublico({ logado = false }) {
           </div>
         </div>
       </section>
-      <div className="pp-faixa">Ainda dá tempo! A avaliação da CPA está aberta no Mentor · responda e faça a sua voz virar ação.</div>
+      <div className="pp-faixa">Ainda dá tempo! A avaliação da CPA ainda está disponível no UniFECAF ONE · responda e faça a sua voz virar ação.</div>
 
       {g && (
         <>
