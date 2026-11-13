@@ -6,7 +6,10 @@
 .av-arq { position: relative; display: flex; flex-direction: column; gap: 4px; border: 1.5px dashed var(--line); border-radius: 14px; padding: 14px 16px; cursor: pointer; background: #fff; }
 .av-arq.ok { border-style: solid; border-color: #17a460; background: #f1faf4; }
 .av-arq input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.av-gerais { display: grid; grid-template-columns: repeat(3, minmax(0, 200px)); gap: 12px; }
+.av-numeros { display: flex; flex-direction: column; gap: 10px; }
+.av-num-linha { display: grid; grid-template-columns: 170px repeat(3, minmax(0, 180px)); gap: 12px; align-items: end; padding: 10px 12px; border-radius: 12px; background: #f6f8fb; }
+.av-num-linha.geral { background: #eef4fc; }
+.av-num-linha > b { align-self: center; }
 .av-filtro { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .av-mod { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .av-mod summary { cursor: pointer; font-size: 16px; }
@@ -19,7 +22,7 @@
 .av-sit.fora { background: #fbebeb; color: #9b1c1c; }
 .av-sit.rep { background: #f9eeda; color: #8a5a00; }
 .av-publicar { position: sticky; bottom: 12px; z-index: 5; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-@media (max-width: 760px) { .av-arquivos, .av-gerais { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .av-arquivos, .av-num-linha { grid-template-columns: minmax(0, 1fr); } }
 
 .pr-filtros { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
 .pr-filtros .campo { min-width: 180px; flex: 1 1 180px; max-width: 320px; }

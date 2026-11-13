@@ -1,4 +1,4 @@
-// Página aberta do Portal (sem login): o panorama da CPA ao vivo — respondentes, adesão e ranking por curso em cada
+// Página aberta do Portal (sem login): os números parciais da CPA em andamento — respondentes, adesão e ranking por curso em cada
 // modelo de oferta —, as notas gerais do ciclo anterior e os números dos planos de ação. Só agregados: comentários,
 // professores e planos detalhados ficam depois do login (botão "Área do coordenador · Entrar").
 import { useEffect, useMemo, useState } from 'react'
@@ -7,6 +7,8 @@ import { DIMENSOES, SATISFACAO } from '../lib/config.js'
 import './painelPublico.css'
 
 const TOP = 5
+// Modalidade publicada, mas sem respondentes por curso (o painel ainda não separa): mostra aviso em vez de zeros
+const semPorCurso = (lista) => lista.length > 0 && lista.every((c) => !c.concluidos && !c.iniciados)
 const dataHora = (s) => new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 const nota = (v) => (v == null ? '—' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 
@@ -54,7 +56,7 @@ export default function PainelPublico({ logado = false }) {
             <a className="pp-bt pp-lima" href={entrar}>Área do coordenador · Entrar</a>
           </div>
           <nav className="pp-menu" aria-label="Seções">
-            <a href="#ao-vivo" onClick={(e) => { e.preventDefault(); document.getElementById('ao-vivo')?.scrollIntoView({ behavior: 'smooth' }) }}>CPA ao vivo</a>
+            <a href="#ao-vivo" onClick={(e) => { e.preventDefault(); document.getElementById('ao-vivo')?.scrollIntoView({ behavior: 'smooth' }) }}>Ranking dos cursos</a>
             <a href="#placar" onClick={(e) => { e.preventDefault(); document.getElementById('placar')?.scrollIntoView({ behavior: 'smooth' }) }}>Placar por modelo de oferta</a>
             {temHist && <a href="#historico" onClick={(e) => { e.preventDefault(); document.getElementById('historico')?.scrollIntoView({ behavior: 'smooth' }) }}>Resultados {hist.ciclo}</a>}
             <a href="#acao" onClick={(e) => { e.preventDefault(); document.getElementById('acao')?.scrollIntoView({ behavior: 'smooth' }) }}>Do resultado à ação</a>
@@ -82,7 +84,7 @@ export default function PainelPublico({ logado = false }) {
               <p className="pp-mut">Os números da avaliação aparecem aqui assim que a CPA publicar a primeira atualização.</p>
             ) : (
               <>
-                <h3>Alunos · ciclo {av.ciclo}</h3>
+                <h3>Parcial da CPA {av.ciclo}</h3>
                 <div className="pp-big">{fmtNum(iniciaram)}<small>já começaram</small></div>
                 <div className="pp-prog" aria-hidden="true">
                   <i style={{ width: pct(g.concluidos, g.elegiveis) + '%', background: 'var(--pp-lima)' }} />
@@ -98,7 +100,7 @@ export default function PainelPublico({ logado = false }) {
                     <div key={k}><small>{t.toUpperCase()}</small><b>{fmtNum((mods[k]?.concluidos || 0) + (mods[k]?.iniciados || 0))}</b></div>
                   ))}
                 </div>
-                <p className="pp-atual">Atualizado em {dataHora(av.publicado_em)}</p>
+                <p className="pp-atual">Números atualizados em {dataHora(av.publicado_em)} · a CPA atualiza algumas vezes por dia</p>
               </>
             )}
           </div>
@@ -110,7 +112,7 @@ export default function PainelPublico({ logado = false }) {
         <>
           <section className="pp-s" id="ao-vivo">
             <div className="pp-w">
-              <div className="pp-eb">CPA {av.ciclo} · ao vivo</div>
+              <div className="pp-eb">CPA {av.ciclo} · parcial de {dataHora(av.publicado_em)}</div>
               <h2>Quem está na frente?</h2>
               <p className="pp-sub">Ranking dos cursos em cada modelo de oferta. Adesão é o percentual de alunos do curso que já concluíram a avaliação.</p>
               <div className="pp-abas" role="tablist" aria-label="Ordenar o ranking">
@@ -126,6 +128,9 @@ export default function PainelPublico({ logado = false }) {
                     <div key={k} className="pp-card">
                       <h4>{t}<small>{lista.length} cursos</small></h4>
                       {!lista.length && <p className="pp-mut">Sem cursos publicados nesta modalidade.</p>}
+                      {semPorCurso(lista) ? (
+                        <p className="pp-mut pp-aguarda">{fmtNum((mods[k]?.concluidos || 0) + (mods[k]?.iniciados || 0))} alunos já começaram no {t}. O ranking por curso aparece assim que o painel separar os respondentes por curso.</p>
+                      ) : (
                       <ol className="pp-rk">
                         {(todos ? lista : lista.slice(0, TOP)).map((c, i) => {
                           const v = modo === 'adesao' ? c.adesao : c.concluidos
@@ -140,7 +145,8 @@ export default function PainelPublico({ logado = false }) {
                           )
                         })}
                       </ol>
-                      {lista.length > TOP && (
+                      )}
+                      {!semPorCurso(lista) && lista.length > TOP && (
                         <button className="pp-mais" onClick={() => setAberto((a) => ({ ...a, [k]: !todos }))}>
                           {todos ? 'Mostrar só o top 5' : `Ver os ${lista.length} cursos →`}
                         </button>

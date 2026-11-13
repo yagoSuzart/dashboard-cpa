@@ -186,7 +186,7 @@ export default function App() {
             { k: 'questionarios', t: 'Pergunta por pergunta' },
             ...(r !== 'professor_auxiliar' ? [{ k: 'professores', t: 'Por professor' }] : []),
             { k: 'comentarios', t: 'Comentários' },
-            ...(temCursos || perfil.global ? [{ k: 'professores-ao-vivo', t: 'Professores · CPA ao vivo' }] : []),
+            ...(temCursos || perfil.global ? [{ k: 'professores-ao-vivo', t: 'Professores · parcial da CPA' }] : []),
             ...(r === 'diretor_nucleo' || perfil.global ? [{ k: 'nucleo', t: 'Núcleos' }] : []),
             ...(perfil.global ? [{ k: 'setores', t: 'Setores' }] : []),
           ],
@@ -206,7 +206,7 @@ export default function App() {
         {
           g: 'CPA',
           itens: [
-            ...(GERE_AO_VIVO.includes(r) ? [{ k: 'ao-vivo', t: 'Atualizar CPA ao vivo' }] : []),
+            ...(GERE_AO_VIVO.includes(r) ? [{ k: 'ao-vivo', t: 'Atualizar números da CPA' }] : []),
             ...(LE_PROPOSTA.includes(r) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
             ...(VE_COLAB.includes(r) ? [{ k: 'colaboradores', t: 'CPA Docentes e Técnicos' }] : []),
             ...(podeImportar ? [{ k: 'importar', t: 'Importar respostas' }] : []),

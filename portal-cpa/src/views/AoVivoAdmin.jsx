@@ -1,4 +1,4 @@
-// Atualizar CPA ao vivo (só admin e Coordenação da CPA): sobe os CSVs "Respondentes por curso" do painel da
+// Atualizar os números da CPA (só admin e Coordenação da CPA): sobe os CSVs "Respondentes por curso" do painel da
 // avaliação (um por modelo de oferta), confere os cursos com o cadastro do Portal e publica o panorama aberto.
 // Opcional: o CSV "Respostas" gera o ranking de professores, que só a coordenação de cada curso vê.
 import { useEffect, useMemo, useState } from 'react'
@@ -19,7 +19,8 @@ export default function AoVivoAdmin({ base }) {
   const [ciclo, setCiclo] = useState('2026.2')
   const [csv, setCsv] = useState({})
   const [config, setConfig] = useState(null)
-  const [gerais, setGerais] = useState({ elegiveis: '', concluidos: '', iniciados: '' })
+  // Números dos cards do painel: o geral (filtro "Todos") e o de cada modelo de oferta (filtro de cada um)
+  const [numeros, setNumeros] = useState(() => Object.fromEntries(['geral', ...MODALIDADES_AO_VIVO.map((m) => m.k)].map((k) => [k, { elegiveis: '', concluidos: '', iniciados: '' }])))
   const [prof, setProf] = useState(null)
   const [lendoProf, setLendoProf] = useState(null)
   const [soFora, setSoFora] = useState(false)
@@ -32,7 +33,14 @@ export default function AoVivoAdmin({ base }) {
     ultimaPublicacao()
       .then((u) => {
         setUltima(u)
-        if (u?.dados?.geral) setGerais({ elegiveis: u.dados.geral.elegiveis, concluidos: u.dados.geral.concluidos, iniciados: u.dados.geral.iniciados })
+        if (u?.dados) {
+          const pega = (x) => (x ? { elegiveis: x.elegiveis ?? '', concluidos: x.concluidos ?? '', iniciados: x.iniciados ?? '' } : null)
+          setNumeros((n) => ({
+            ...n,
+            geral: pega(u.dados.geral) || n.geral,
+            ...Object.fromEntries(MODALIDADES_AO_VIVO.map(({ k }) => [k, pega(u.dados.modalidades?.[k]?.painel) || n[k]])),
+          }))
+        }
         if (u?.ciclo) setCiclo(u.ciclo)
       })
       .catch(() => {})
@@ -82,16 +90,18 @@ export default function AoVivoAdmin({ base }) {
   }, [csv])
 
   async function publicar() {
-    const g = { elegiveis: Number(gerais.elegiveis), concluidos: Number(gerais.concluidos), iniciados: Number(gerais.iniciados) }
+    const nums = (x) => ({ elegiveis: Number(x.elegiveis) || 0, concluidos: Number(x.concluidos) || 0, iniciados: Number(x.iniciados) || 0 })
+    const g = nums(numeros.geral)
     if (!g.elegiveis || !g.concluidos) {
       setAviso({ tipo: 'erro', texto: 'Preencha os números gerais do painel (elegíveis e concluíram tudo).' })
       return
     }
+    const porMod = Object.fromEntries(MODALIDADES_AO_VIVO.map(({ k }) => [k, nums(numeros[k])]).filter(([, v]) => v.elegiveis > 0))
     setOcupado(true)
     setAviso({ tipo: '', texto: 'Publicando…' })
     try {
       await salvarConfig(config)
-      await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g))
+      await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g, porMod))
       if (prof?.professores?.length) await publicarProfessores(ciclo, prof.professores)
       const u = await ultimaPublicacao()
       setUltima(u)
@@ -109,9 +119,9 @@ export default function AoVivoAdmin({ base }) {
     <>
       <section className="cab">
         <div className="txt">
-          <div className="eyebrow">CPA · ao vivo</div>
-          <h1>Atualizar a CPA ao vivo.</h1>
-          <p className="muted">Suba os CSVs do painel da avaliação, confira os cursos e publique. Só você e a Coordenação da CPA veem esta tela; a página aberta mostra só o que for publicado.</p>
+          <div className="eyebrow">CPA · números parciais</div>
+          <h1>Atualizar os números da CPA.</h1>
+          <p className="muted">Suba os CSVs do painel da avaliação, confira os cursos e publique. A página aberta mostra a data e a hora de cada atualização. Só você e a Coordenação da CPA veem esta tela; a página aberta mostra só o que for publicado.</p>
         </div>
         <div className="spacer" />
         <a className="btn" href="#/panorama" target="_blank" rel="noreferrer">Ver a página aberta ↗</a>
@@ -137,16 +147,22 @@ export default function AoVivoAdmin({ base }) {
       </section>
 
       <section className="card av-passo">
-        <h2><span>2</span>Números gerais do painel</h2>
-        <p className="muted">Copie os cards do topo do painel com o filtro "Todos". {temCsv && `Pela soma dos CSVs: ${fmtNum(somaCsv.elegiveis)} elegíveis, ${fmtNum(somaCsv.concluidos)} concluíram.`}</p>
-        <div className="av-gerais">
-          {[['elegiveis', 'Elegíveis'], ['concluidos', 'Concluíram tudo'], ['iniciados', 'Em andamento']].map(([k, t]) => (
-            <label key={k} className="campo">
-              <span className="small muted">{t}</span>
-              <input className="input" type="number" min="0" value={gerais[k]} onChange={(e) => setGerais((g) => ({ ...g, [k]: e.target.value }))} />
-            </label>
+        <h2><span>2</span>Números do painel</h2>
+        <p className="muted">Copie os cards do topo do painel: primeiro com o filtro "Todos" e depois com cada modelo de oferta. Os pontos de milhar entram sozinhos. {temCsv && `Pela soma dos CSVs: ${fmtNum(somaCsv.elegiveis)} elegíveis, ${fmtNum(somaCsv.concluidos)} concluíram.`}</p>
+        <div className="av-numeros">
+          {[{ k: 'geral', t: 'UniFECAF (Todos)' }, ...MODALIDADES_AO_VIVO].map(({ k, t }) => (
+            <div key={k} className={'av-num-linha' + (k === 'geral' ? ' geral' : '')}>
+              <b>{t}</b>
+              {[['elegiveis', 'Elegíveis'], ['concluidos', 'Concluíram tudo'], ['iniciados', 'Em andamento']].map(([c, rot]) => (
+                <label key={c} className="campo">
+                  <span className="small muted">{rot}</span>
+                  <NumeroInput valor={numeros[k][c]} onValor={(v) => setNumeros((n) => ({ ...n, [k]: { ...n[k], [c]: v } }))} />
+                </label>
+              ))}
+            </div>
           ))}
         </div>
+        <p className="small muted">Se deixar um modelo de oferta em branco, a página usa a soma dos cursos do CSV dele.</p>
       </section>
 
       {temCsv && (
@@ -208,5 +224,21 @@ export default function AoVivoAdmin({ base }) {
         <button className="btn escuro" disabled={ocupado || (!temCsv && !prof)} onClick={publicar}>{ocupado ? 'Publicando…' : 'Publicar atualização'}</button>
       </div>
     </>
+  )
+}
+
+// Campo de número com ponto de milhar automático (58853 → 58.853). Guarda só os dígitos.
+function NumeroInput({ valor, onValor }) {
+  const txt = valor === '' || valor == null ? '' : Number(valor).toLocaleString('pt-BR')
+  return (
+    <input
+      className="input"
+      inputMode="numeric"
+      value={txt}
+      onChange={(e) => {
+        const d = e.target.value.replace(/\D/g, '').slice(0, 9)
+        onValor(d === '' ? '' : Number(d))
+      }}
+    />
   )
 }

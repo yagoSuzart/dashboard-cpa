@@ -42,7 +42,7 @@ export default function ProfessoresAoVivo({ base }) {
     <>
       <section className="cab">
         <div className="txt">
-          <div className="eyebrow">CPA ao vivo · professores</div>
+          <div className="eyebrow">Parcial da CPA · professores</div>
           <h1>Como os alunos estão avaliando os professores.</h1>
           <p className="muted">Média de 1 a 5 no questionário Docente e quantos alunos avaliaram cada professor, nos cursos que você acompanha. {lista[0] && `Atualizado em ${new Date(lista[0].publicado_em).toLocaleString('pt-BR')}.`}</p>
         </div>

@@ -1,4 +1,4 @@
-// CPA ao vivo: lê os CSVs do painel da avaliação, confere os cursos com o cadastro do Portal e publica
+// Números parciais da CPA ("CPA ao vivo" no código): lê os CSVs do painel da avaliação, confere os cursos com o cadastro do Portal e publica
 // o panorama aberto (sem login) e o ranking de professores (só para a coordenação).
 // Nada de aluno sai do navegador: do CSV de respostas só vão médias e contagens por professor.
 import Papa from 'papaparse'
@@ -82,7 +82,8 @@ export function conferir(porModalidade, cursos, config = {}) {
 }
 
 // Dados publicados: só as linhas incluídas, com os elegíveis ajustados
-export function montarDados(conferido, cursos, gerais) {
+// porMod: números dos cards do painel por modelo de oferta (quando a CPA digitou); sem eles, vale a soma dos cursos
+export function montarDados(conferido, cursos, gerais, porMod = {}) {
   const porId = Object.fromEntries(cursos.map((c) => [c.id, c]))
   const modalidades = {}
   for (const { k } of MODALIDADES_AO_VIVO) {
@@ -95,7 +96,10 @@ export function montarDados(conferido, cursos, gerais) {
       iniciados: r.iniciados,
     }))
     const soma = (c) => lista.reduce((s, x) => s + x[c], 0)
-    modalidades[k] = { elegiveis: soma('elegiveis'), concluidos: soma('concluidos'), iniciados: soma('iniciados'), cursos: lista }
+    const painel = porMod[k]
+    modalidades[k] = painel
+      ? { ...painel, painel, cursos: lista }
+      : { elegiveis: soma('elegiveis'), concluidos: soma('concluidos'), iniciados: soma('iniciados'), cursos: lista }
   }
   return { geral: gerais, modalidades }
 }

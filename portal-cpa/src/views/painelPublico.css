@@ -108,3 +108,5 @@
   .pp-barra .pp-bt.pp-lima { padding: 9px 12px; font-size: 14px; }
   .pp-barra img { height: 26px; }
 }
+
+.pp-aguarda { margin-top: 14px; padding: 14px; border-radius: 14px; background: #0b1430; border: 1px dashed var(--pp-linha); line-height: 1.45; }

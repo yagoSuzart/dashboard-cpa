@@ -36,7 +36,7 @@ export function slug(s) {
 
 // Nomes da planilha que diferem do cadastro de cursos
 const PREFIXOS = [/^graduacao tecnologica em /, /^tecnologico em /, /^tecnologia em /, /^curso superior de tecnologia em /]
-const APELIDOS = { influenciador_digital: 'influenciador_digital_creator_digital_influencer' }
+const APELIDOS = { influenciador_digital: 'influenciador_digital_creator_digital_influencer', seguranca_cibernetica: 'defesa_cibernetica' }
 
 export function cursoIdDaPlanilha(nome, modalidade, idsValidos) {
   let n = normalizar(nome)
