@@ -51,7 +51,7 @@ export default function PainelPublico({ logado = false }) {
             <span className="pp-sep" /><span className="pp-nm">PORTAL CPA</span>
             <span className="pp-esp" />
             <a className="pp-bt pp-sec" href="/perguntas/">Perguntas da próxima CPA</a>
-            <a className="pp-bt pp-lima" href={entrar}>{logado ? 'Voltar ao Portal' : 'Área do coordenador · Entrar'}</a>
+            <a className="pp-bt pp-lima" href={entrar}>Área do coordenador · Entrar</a>
           </div>
           <nav className="pp-menu" aria-label="Seções">
             <a href="#ao-vivo" onClick={(e) => { e.preventDefault(); document.getElementById('ao-vivo')?.scrollIntoView({ behavior: 'smooth' }) }}>CPA ao vivo</a>
@@ -70,7 +70,7 @@ export default function PainelPublico({ logado = false }) {
             <p className="pp-l">Quantos alunos já responderam, os cursos que mais participam e o que cada coordenação faz com as respostas.</p>
             <div className="pp-ctas">
               <a className="pp-bt pp-lima" href="#ao-vivo" onClick={(e) => { e.preventDefault(); document.getElementById('ao-vivo')?.scrollIntoView({ behavior: 'smooth' }) }}>Ver o ranking dos cursos</a>
-              <a className="pp-bt" href={entrar}>{logado ? 'Voltar ao Portal' : 'Entrar no Portal'}</a>
+              <a className="pp-bt" href={entrar}>Entrar no Portal</a>
             </div>
           </div>
           <div className="pp-vivo">
@@ -220,7 +220,7 @@ export default function PainelPublico({ logado = false }) {
           )}
           <div className="pp-entrar">
             <div><h3>É da coordenação ou da CPA?</h3><p>Entre no Portal para montar planos, acompanhar demandas e ver os resultados detalhados do seu curso.</p></div>
-            <a className="pp-bt pp-lima" href={entrar}>{logado ? 'Voltar ao Portal' : 'Entrar no Portal'}</a>
+            <a className="pp-bt pp-lima" href={entrar}>Entrar no Portal</a>
           </div>
         </div>
       </section>

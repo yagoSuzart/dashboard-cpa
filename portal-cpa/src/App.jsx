@@ -57,7 +57,8 @@ async function comNovaTentativa(fn, tentativas = 4) {
 
 function lerRota() {
   const [rota = 'inicio', ...resto] = location.hash.replace(/^#\/?/, '').split('/')
-  return { rota: rota || 'inicio', param: resto.join('/') ? decodeURIComponent(resto.join('/')) : '' }
+  // raiz: o link do site sem nada depois (abre a página aberta para todos, com ou sem login)
+  return { rota: rota || 'inicio', raiz: !rota, param: resto.join('/') ? decodeURIComponent(resto.join('/')) : '' }
 }
 
 export default function App() {
@@ -126,14 +127,15 @@ export default function App() {
   if (rota.rota === 'retorno') return <RetornoPublico key={rota.param} param={rota.param} />
   // Perguntas da próxima CPA: página pública para os coordenadores (por modalidade)
   if (rota.rota === 'perguntas') return <PerguntasPublico param={rota.param} />
-  // Página aberta da CPA ao vivo (também acessível por quem já entrou, pelo link #/panorama)
-  if (rota.rota === 'panorama' && sessao !== undefined) return <PainelPublico logado={!!sessao} />
+  // Página aberta da CPA ao vivo: é o que todos veem ao abrir o link do site, com ou sem login.
+  // "Entrar" leva ao login (#/entrar); quem já entrou vai direto para o Portal (#/inicio).
+  if ((rota.raiz || rota.rota === 'panorama') && sessao !== undefined) return <PainelPublico logado={!!sessao} />
   if (sessao === undefined) return <Carregando texto="Abrindo o Portal…" />
   if (recuperando) return <TrocarSenha onFim={() => setRecuperando(false)} />
   // Sem login: a página aberta (panorama da CPA); o botão "Entrar" leva ao login (#/entrar) sem recarregar
   if (!sessao) {
     if (pedindo) return <SolicitarAcesso onVoltar={() => setPedindo(false)} />
-    return rota.rota === 'entrar' ? <Login onSolicitar={() => setPedindo(true)} /> : <PainelPublico />
+    return <Login onSolicitar={() => setPedindo(true)} />
   }
   if (erro)
     return (
@@ -232,7 +234,7 @@ export default function App() {
   return (
     <>
       <header className="top">
-        <a href="#/" className="marca" aria-label="UniFECAF · Comissão Própria de Avaliação · início">
+        <a href="#/inicio" className="marca" aria-label="UniFECAF · Comissão Própria de Avaliação · início">
           <img className="logo" src="/logo-unifecaf-branco.png" alt="UniFECAF" />
           <span className="sep" aria-hidden="true" />
           <span className="nome"><b>Comissão Própria de Avaliação</b><span>Portal CPA</span></span>
