@@ -7,6 +7,9 @@ import Login, { TrocarSenha } from './views/Login.jsx'
 import SolicitarAcesso from './views/SolicitarAcesso.jsx'
 import RetornoPublico from './views/RetornoPublico.jsx'
 import PerguntasPublico from './views/PerguntasPublico.jsx'
+import PainelPublico from './views/PainelPublico.jsx'
+import AoVivoAdmin from './views/AoVivoAdmin.jsx'
+import ProfessoresAoVivo from './views/ProfessoresAoVivo.jsx'
 import PrimeiroAcesso from './views/PrimeiroAcesso.jsx'
 import Inicio from './views/Inicio.jsx'
 import Executiva from './views/Executiva.jsx'
@@ -35,6 +38,7 @@ import AvaliarColaborador from './views/AvaliarColaborador.jsx'
 import PlanoNoQuestionario from './components/PlanoNoQuestionario.jsx'
 import { LE_PROPOSTA } from './lib/proxima.js'
 import { VE_COLAB } from './lib/colaboradores.js'
+import { GERE_AO_VIVO } from './lib/aoVivo.js'
 import { podeVerAgenda, verificarCumprimentoEntrega } from './lib/agenda.js'
 import { CATEGORIAS_PLANO, ESCREVE_PLANO, SEM_PLANO_DO_COORDENADOR } from './lib/planos.js'
 
@@ -122,9 +126,15 @@ export default function App() {
   if (rota.rota === 'retorno') return <RetornoPublico key={rota.param} param={rota.param} />
   // Perguntas da próxima CPA: página pública para os coordenadores (por modalidade)
   if (rota.rota === 'perguntas') return <PerguntasPublico param={rota.param} />
+  // Página aberta da CPA ao vivo (também acessível por quem já entrou, pelo link #/panorama)
+  if (rota.rota === 'panorama' && sessao !== undefined) return <PainelPublico logado={!!sessao} />
   if (sessao === undefined) return <Carregando texto="Abrindo o Portal…" />
   if (recuperando) return <TrocarSenha onFim={() => setRecuperando(false)} />
-  if (!sessao) return pedindo ? <SolicitarAcesso onVoltar={() => setPedindo(false)} /> : <Login onSolicitar={() => setPedindo(true)} />
+  // Sem login: a página aberta (panorama da CPA); o botão "Entrar" leva ao login (#/entrar) sem recarregar
+  if (!sessao) {
+    if (pedindo) return <SolicitarAcesso onVoltar={() => setPedindo(false)} />
+    return rota.rota === 'entrar' ? <Login onSolicitar={() => setPedindo(true)} /> : <PainelPublico />
+  }
   if (erro)
     return (
       <div className="conteudo">
@@ -174,6 +184,7 @@ export default function App() {
             { k: 'questionarios', t: 'Pergunta por pergunta' },
             ...(r !== 'professor_auxiliar' ? [{ k: 'professores', t: 'Por professor' }] : []),
             { k: 'comentarios', t: 'Comentários' },
+            ...(temCursos || perfil.global ? [{ k: 'professores-ao-vivo', t: 'Professores · CPA ao vivo' }] : []),
             ...(r === 'diretor_nucleo' || perfil.global ? [{ k: 'nucleo', t: 'Núcleos' }] : []),
             ...(perfil.global ? [{ k: 'setores', t: 'Setores' }] : []),
           ],
@@ -193,6 +204,7 @@ export default function App() {
         {
           g: 'CPA',
           itens: [
+            ...(GERE_AO_VIVO.includes(r) ? [{ k: 'ao-vivo', t: 'Atualizar CPA ao vivo' }] : []),
             ...(LE_PROPOSTA.includes(r) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
             ...(VE_COLAB.includes(r) ? [{ k: 'colaboradores', t: 'CPA Docentes e Técnicos' }] : []),
             ...(podeImportar ? [{ k: 'importar', t: 'Importar respostas' }] : []),
@@ -280,6 +292,8 @@ export default function App() {
         {atual === 'feedback' && <Feedback {...props} />}
         {atual === 'controle-feedback' && <ControleFeedback {...props} />}
         {atual === 'plano-melhoria' && <PlanoMelhoria {...props} />}
+        {atual === 'ao-vivo' && <AoVivoAdmin {...props} />}
+        {atual === 'professores-ao-vivo' && <ProfessoresAoVivo {...props} />}
         {atual === 'importar' && <Importar {...props} />}
         {atual === 'admin' && <Admin {...props} />}
         {atual === 'proxima' && <ProximaCPA {...props} />}

@@ -50,6 +50,7 @@ export default function Login({ onSolicitar }) {
       <div className="form">
         <form onSubmit={enviar}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a href="#/" className="small" style={{ color: 'var(--navy)', fontWeight: 600, textDecoration: 'none' }}>← Voltar ao panorama da CPA</a>
             <div className="eyebrow">Portal CPA</div>
             <h2 style={{ fontSize: 40, lineHeight: 1.1 }}>Bom te ver por aqui.</h2>
             <p className="muted" style={{ fontSize: 15, lineHeight: 1.55 }}>
