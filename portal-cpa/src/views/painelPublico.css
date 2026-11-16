@@ -110,3 +110,30 @@
 }
 
 .pp-aguarda { margin-top: 14px; padding: 14px; border-radius: 14px; background: #0b1430; border: 1px dashed var(--pp-linha); line-height: 1.45; }
+
+/* Evolução das respostas (gráfico de linhas) */
+.pp-evol { padding-bottom: 24px; }
+.pp-grafico { margin-top: 24px; padding: 20px 18px 14px; }
+.ge-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.ge-leg { display: flex; gap: 16px; flex-wrap: wrap; font-size: 15px; color: var(--pp-mut); }
+.ge-leg span { display: inline-flex; align-items: center; gap: 7px; }
+.ge-leg i { display: inline-block; width: 22px; border-radius: 99px; }
+.ge-alterna { background: none; border: 1px solid #3a4b78; color: #cfd8ea; border-radius: 99px; padding: 6px 14px; font: 600 14px Poppins, sans-serif; cursor: pointer; }
+.ge-caixa { position: relative; touch-action: pan-y; }
+.ge-caixa svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ge-grade { stroke: #24345c; stroke-width: 1; }
+.ge-eixo { fill: #8796b3; font: 500 15px 'Roboto Condensed', sans-serif; }
+.ge-mira { stroke: #8796b3; stroke-width: 1; stroke-dasharray: 4 4; }
+.ge-rot { fill: #cfd8ea; font: 600 16px 'Roboto Condensed', sans-serif; }
+.ge-rot.forte { fill: var(--pp-ink); font-weight: 700; font-size: 17px; }
+.ge-dica { position: absolute; top: 8px; transform: translateX(-50%); background: #0b1224; border: 1px solid #3a4b78; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--pp-mut); pointer-events: none; min-width: 170px; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.ge-dica > b { color: var(--pp-ink); font: 700 15px Poppins, sans-serif; }
+.ge-dica span { display: flex; align-items: center; gap: 6px; }
+.ge-dica span b { margin-left: auto; color: var(--pp-ink); }
+.ge-dica i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.ge-tab { overflow-x: auto; max-height: 360px; }
+.ge-tab table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.ge-tab th, .ge-tab td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #24345c; white-space: nowrap; }
+.ge-tab th:first-child, .ge-tab td:first-child { text-align: left; }
+.ge-tab th { color: var(--pp-mut); font-weight: 600; position: sticky; top: 0; background: var(--pp-card); }
+@media (max-width: 600px) { .ge-rot-nome { display: none; } .ge-rot { font-size: 26px; } .ge-rot.forte { font-size: 28px; } .ge-eixo { font-size: 24px; } }

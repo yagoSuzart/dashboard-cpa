@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MODALIDADES_AO_VIVO, carregarPublico, fmtNum, fmtPct, pct } from '../lib/aoVivo.js'
 import { DIMENSOES, SATISFACAO } from '../lib/config.js'
+import GraficoEvolucao from '../components/GraficoEvolucao.jsx'
 import './painelPublico.css'
 
 const TOP = 5
@@ -57,6 +58,7 @@ export default function PainelPublico({ logado = false }) {
           </div>
           <nav className="pp-menu" aria-label="Seções">
             <a href="#ao-vivo" onClick={(e) => { e.preventDefault(); document.getElementById('ao-vivo')?.scrollIntoView({ behavior: 'smooth' }) }}>Ranking dos cursos</a>
+            {av?.dados?.evolucao?.length > 0 && <a href="#evolucao" onClick={(e) => { e.preventDefault(); document.getElementById('evolucao')?.scrollIntoView({ behavior: 'smooth' }) }}>Evolução</a>}
             <a href="#placar" onClick={(e) => { e.preventDefault(); document.getElementById('placar')?.scrollIntoView({ behavior: 'smooth' }) }}>Placar por modelo de oferta</a>
             {temHist && <a href="#historico" onClick={(e) => { e.preventDefault(); document.getElementById('historico')?.scrollIntoView({ behavior: 'smooth' }) }}>Resultados {hist.ciclo}</a>}
             <a href="#acao" onClick={(e) => { e.preventDefault(); document.getElementById('acao')?.scrollIntoView({ behavior: 'smooth' }) }}>Do resultado à ação</a>
@@ -110,6 +112,18 @@ export default function PainelPublico({ logado = false }) {
 
       {g && (
         <>
+          {av.dados.evolucao?.length > 0 && (
+            <section className="pp-s pp-evol" id="evolucao">
+              <div className="pp-w">
+                <div className="pp-eb">Evolução · CPA {av.ciclo}</div>
+                <h2>A participação crescendo, dia a dia.</h2>
+                <p className="pp-sub">Alunos que já responderam ao menos um questionário, somados dia após dia desde a abertura da avaliação.</p>
+                <div className="pp-card pp-grafico">
+                  <GraficoEvolucao pontos={av.dados.evolucao} series={MODALIDADES_AO_VIVO} />
+                </div>
+              </div>
+            </section>
+          )}
           <section className="pp-s" id="ao-vivo">
             <div className="pp-w">
               <div className="pp-eb">CPA {av.ciclo} · parcial de {dataHora(av.publicado_em)}</div>

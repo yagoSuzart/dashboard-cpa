@@ -101,7 +101,9 @@ export default function AoVivoAdmin({ base }) {
     setAviso({ tipo: '', texto: 'Publicando…' })
     try {
       await salvarConfig(config)
-      await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g, porMod))
+      // A curva dia a dia vem do CSV de Respostas; sem ele, mantém a da publicação anterior
+      const evolucao = prof?.evolucao?.length ? prof.evolucao : ultima?.dados?.evolucao || null
+      await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g, porMod, evolucao))
       if (prof?.professores?.length) await publicarProfessores(ciclo, prof.professores)
       const u = await ultimaPublicacao()
       setUltima(u)
@@ -207,11 +209,11 @@ export default function AoVivoAdmin({ base }) {
       )}
 
       <section className="card av-passo">
-        <h2><span>4</span>Professores <span className="small muted">(opcional · só a coordenação vê)</span></h2>
-        <p className="muted">O CSV "Respostas" do painel (botão Exportar → Respostas; o arquivo começa com <b>respostas-cpa</b>) gera a média de cada professor no questionário Docente, por curso. Do arquivo só saem médias e contagens; códigos de aluno e comentários não são enviados.</p>
+        <h2><span>4</span>Professores e evolução das respostas <span className="small muted">(opcional)</span></h2>
+        <p className="muted">O CSV "Respostas" do painel (botão Exportar → Respostas; o arquivo começa com <b>respostas-cpa</b>) gera a média de cada professor no questionário Docente, por curso (só a coordenação vê), e a curva dia a dia das respostas na página aberta. Do arquivo só saem médias e contagens; códigos de aluno e comentários não são enviados.</p>
         <label className={'av-arq' + (prof ? ' ok' : '')} style={{ maxWidth: 360 }}>
           <b>CSV de respostas</b>
-          <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${fmtNum(prof.professores.length)} professores em ${new Set(prof.professores.map((p) => p.curso_id)).size} cursos` : 'Escolher o CSV'}</span>
+          <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${fmtNum(prof.professores.length)} professores em ${new Set(prof.professores.map((p) => p.curso_id)).size} cursos · curva de ${prof.evolucao?.length || 0} dias` : 'Escolher o CSV'}</span>
           <input type="file" accept=".csv,text/csv" onChange={(e) => escolherRespostas(e.target.files[0])} />
         </label>
         {prof && Object.keys(prof.semCurso).length > 0 && (

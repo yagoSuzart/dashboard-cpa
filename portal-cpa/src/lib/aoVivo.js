@@ -7,9 +7,10 @@ import { SUPABASE } from './config.js'
 import { cursoIdDaPlanilha, normalizar } from './cpa.js'
 
 export const MODALIDADES_AO_VIVO = [
-  { k: 'PRESENCIAL', t: 'Presencial', cor: '#8be36a' },
-  { k: 'SEMIPRESENCIAL', t: 'Semipresencial', cor: '#22c3e6' },
-  { k: 'EAD', t: 'EAD', cor: '#3b8cff' },
+  // Cores validadas para o fundo escuro da página (faixa de luminosidade, contraste e daltonismo)
+  { k: 'PRESENCIAL', t: 'Presencial', cor: '#199e70' },
+  { k: 'SEMIPRESENCIAL', t: 'Semipresencial', cor: '#d95926' },
+  { k: 'EAD', t: 'EAD', cor: '#3987e5' },
 ]
 export const GERE_AO_VIVO = ['admin', 'diretor_cpa']
 export const PROF_NAO_SEI = 6 // "Não sei / Não utilizo": fica fora da média
@@ -83,7 +84,7 @@ export function conferir(porModalidade, cursos, config = {}) {
 
 // Dados publicados: só as linhas incluídas, com os elegíveis ajustados
 // porMod: números dos cards do painel por modelo de oferta (quando a CPA digitou); sem eles, vale a soma dos cursos
-export function montarDados(conferido, cursos, gerais, porMod = {}) {
+export function montarDados(conferido, cursos, gerais, porMod = {}, evolucao = null) {
   const porId = Object.fromEntries(cursos.map((c) => [c.id, c]))
   const modalidades = {}
   for (const { k } of MODALIDADES_AO_VIVO) {
@@ -101,16 +102,42 @@ export function montarDados(conferido, cursos, gerais, porMod = {}) {
       ? { ...painel, painel, cursos: lista }
       : { elegiveis: soma('elegiveis'), concluidos: soma('concluidos'), iniciados: soma('iniciados'), cursos: lista }
   }
-  return { geral: gerais, modalidades }
+  return { geral: gerais, modalidades, ...(evolucao?.length ? { evolucao } : {}) }
 }
 
 /* ---------------- professores (CSV "Respostas" do painel) ---------------- */
 // Soma, por curso e professor, as notas do questionário Docente (1 a 5; "não sei" fora da média).
 // Os códigos dos alunos só servem para contar quantos alunos avaliaram cada professor e não saem do navegador.
+// Data (AAAA-MM-DD) de uma célula como "2026-11-10 14:32" ou "10/11/2026 14:32"
+function diaDe(v) {
+  const t = String(v || '')
+  let m = t.match(/(\d{4})-(\d{2})-(\d{2})/)
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`
+  m = t.match(/(\d{2})\/(\d{2})\/(\d{4})/)
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null
+}
+const modDoPeriodo = (p) => (/^E/i.test(p || '') ? 'EAD' : /^S/i.test(p || '') ? 'SEMIPRESENCIAL' : /^G/i.test(p || '') ? 'PRESENCIAL' : null)
+
+// Evolução dia a dia: quantos alunos já tinham respondido (ao menos um questionário) até cada dia, por modelo de oferta
+function montarEvolucao(primeiroDia) {
+  const porDia = {}
+  for (const { dia, mod } of primeiroDia.values()) {
+    if (!dia || !mod) continue
+    const d = (porDia[dia] ||= { PRESENCIAL: 0, SEMIPRESENCIAL: 0, EAD: 0 })
+    d[mod]++
+  }
+  const acum = { PRESENCIAL: 0, SEMIPRESENCIAL: 0, EAD: 0 }
+  return Object.keys(porDia).sort().map((dia) => {
+    for (const k of Object.keys(acum)) acum[k] += porDia[dia][k]
+    return { dia, ...acum, total: acum.PRESENCIAL + acum.SEMIPRESENCIAL + acum.EAD }
+  })
+}
+
 export function lerCsvProfessores(arquivo, cursos, onProgresso) {
   const ids = new Set(cursos.map((c) => c.id))
   const grupos = new Map()
   const semCurso = {}
+  const primeiroDia = new Map() // aluno → primeiro dia em que respondeu (só para a curva; não sai do navegador)
   let linhas = 0
   return new Promise((resolve, reject) => {
     Papa.parse(arquivo, {
@@ -121,6 +148,12 @@ export function lerCsvProfessores(arquivo, cursos, onProgresso) {
       chunk: (res) => {
         for (const l of res.data) {
           linhas++
+          const aluno = l['UUID Aluno']
+          const dia = diaDe(l['Respondido Em']) || diaDe(l['Concluído Em']) || diaDe(l['Iniciado Em'])
+          if (aluno && dia) {
+            const atual = primeiroDia.get(aluno)
+            if (!atual || dia < atual.dia) primeiroDia.set(aluno, { dia, mod: modDoPeriodo(l['Período']) || atual?.mod })
+          }
           if (!/docente/i.test(l.Pesquisa || '')) continue
           const docente = String(l['Docente Alvo'] || '').trim()
           const curso = String(l.Curso || '').trim()
@@ -142,6 +175,7 @@ export function lerCsvProfessores(arquivo, cursos, onProgresso) {
         resolve({
           linhas,
           semCurso,
+          evolucao: montarEvolucao(primeiroDia),
           professores: [...grupos.values()].map((g) => ({
             curso_id: g.curso_id,
             docente: g.docente,
