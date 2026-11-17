@@ -38,7 +38,6 @@ export default function PainelPublico({ logado = false }) {
     return out
   }, [mods, modo])
 
-  const iniciaram = g ? g.concluidos + g.iniciados : 0
   const hist = d?.historico
   const dims = DIMENSOES.map((k) => ({ k, nota: hist?.dimensoes?.find((x) => x.categoria === k)?.nota }))
   const satisfacao = hist?.dimensoes?.find((x) => x.categoria === SATISFACAO)?.nota
@@ -87,7 +86,8 @@ export default function PainelPublico({ logado = false }) {
             ) : (
               <>
                 <h3>Parcial da CPA {av.ciclo}</h3>
-                <div className="pp-big">{fmtNum(iniciaram)}<small>já começaram</small></div>
+                <div className="pp-big">{fmtNum(g.concluidos)}<small>concluíram tudo</small></div>
+                <span className="pp-big-sub">{fmtPct(pct(g.concluidos, g.elegiveis))} dos {fmtNum(g.elegiveis)} alunos elegíveis</span>
                 <div className="pp-prog" aria-hidden="true">
                   <i style={{ width: pct(g.concluidos, g.elegiveis) + '%', background: 'var(--pp-lima)' }} />
                   <i style={{ width: pct(g.iniciados, g.elegiveis) + '%', background: '#f0a33a' }} />
@@ -97,9 +97,10 @@ export default function PainelPublico({ logado = false }) {
                   <span><i style={{ background: '#f0a33a' }} />Em andamento <b>{fmtNum(g.iniciados)}</b></span>
                   <span><i style={{ background: '#2a3b66' }} />Elegíveis <b>{fmtNum(g.elegiveis)}</b></span>
                 </div>
+                <div className="pp-andam"><b>+{fmtNum(g.iniciados)}</b> alunos começaram e ainda não terminaram</div>
                 <div className="pp-mini">
                   {MODALIDADES_AO_VIVO.map(({ k, t }) => (
-                    <div key={k}><small>{t.toUpperCase()}</small><b>{fmtNum((mods[k]?.concluidos || 0) + (mods[k]?.iniciados || 0))}</b></div>
+                    <div key={k}><small>{t.toUpperCase()}</small><b>{fmtNum(mods[k]?.concluidos || 0)}</b><span className="and">+{fmtNum(mods[k]?.iniciados || 0)} em andamento</span></div>
                   ))}
                 </div>
                 <p className="pp-atual">Números atualizados em {dataHora(av.publicado_em)} · a CPA atualiza algumas vezes por dia</p>
@@ -116,10 +117,11 @@ export default function PainelPublico({ logado = false }) {
             <section className="pp-s pp-evol" id="evolucao">
               <div className="pp-w">
                 <div className="pp-eb">Evolução · CPA {av.ciclo}</div>
-                <h2>A participação crescendo, dia a dia.</h2>
-                <p className="pp-sub">Alunos que já responderam ao menos um questionário, somados dia após dia desde a abertura da avaliação.</p>
+                <h2>Quanto falta para todos responderem?</h2>
+                <p className="pp-sub">Alunos que concluíram todos os questionários, dia a dia, em relação aos elegíveis. O topo do gráfico (100%) são todos os {fmtNum(g.elegiveis)} alunos.</p>
                 <div className="pp-card pp-grafico">
-                  <GraficoEvolucao pontos={av.dados.evolucao} series={MODALIDADES_AO_VIVO} />
+                  <GraficoEvolucao pontos={av.dados.evolucao} series={MODALIDADES_AO_VIVO}
+                    base={{ total: g.elegiveis, ...Object.fromEntries(MODALIDADES_AO_VIVO.map(({ k }) => [k, mods[k]?.elegiveis || 0])) }} />
                 </div>
               </div>
             </section>

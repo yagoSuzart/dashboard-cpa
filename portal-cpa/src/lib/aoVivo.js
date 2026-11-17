@@ -118,13 +118,22 @@ function diaDe(v) {
 }
 const modDoPeriodo = (p) => (/^E/i.test(p || '') ? 'EAD' : /^S/i.test(p || '') ? 'SEMIPRESENCIAL' : /^G/i.test(p || '') ? 'PRESENCIAL' : null)
 
-// Evolução dia a dia: quantos alunos já tinham respondido (ao menos um questionário) até cada dia, por modelo de oferta
-function montarEvolucao(primeiroDia) {
+// Evolução dia a dia de quem CONCLUIU TUDO: o aluno entra na curva no dia em que concluiu o último questionário
+// do seu modelo de oferta (os questionários de cada modalidade saem do próprio arquivo). Acumulado, por modalidade.
+function montarEvolucao(alunos, pesquisasDaMod) {
   const porDia = {}
-  for (const { dia, mod } of primeiroDia.values()) {
-    if (!dia || !mod) continue
-    const d = (porDia[dia] ||= { PRESENCIAL: 0, SEMIPRESENCIAL: 0, EAD: 0 })
-    d[mod]++
+  for (const a of alunos.values()) {
+    const exigidas = pesquisasDaMod[a.mod]
+    if (!a.mod || !exigidas || a.feitas.size < exigidas.size) continue
+    let ok = true, ultimo = ''
+    for (const p of exigidas) {
+      const d = a.feitas.get(p)
+      if (!d) { ok = false; break }
+      if (d > ultimo) ultimo = d
+    }
+    if (!ok || !ultimo) continue
+    const d = (porDia[ultimo] ||= { PRESENCIAL: 0, SEMIPRESENCIAL: 0, EAD: 0 })
+    d[a.mod]++
   }
   const acum = { PRESENCIAL: 0, SEMIPRESENCIAL: 0, EAD: 0 }
   return Object.keys(porDia).sort().map((dia) => {
@@ -137,7 +146,9 @@ export function lerCsvProfessores(arquivo, cursos, onProgresso) {
   const ids = new Set(cursos.map((c) => c.id))
   const grupos = new Map()
   const semCurso = {}
-  const primeiroDia = new Map() // aluno → primeiro dia em que respondeu (só para a curva; não sai do navegador)
+  // Só para a curva (não sai do navegador): por aluno, a modalidade e o dia em que concluiu cada questionário
+  const alunos = new Map()
+  const pesquisasDaMod = {}
   let linhas = 0
   return new Promise((resolve, reject) => {
     Papa.parse(arquivo, {
@@ -149,10 +160,14 @@ export function lerCsvProfessores(arquivo, cursos, onProgresso) {
         for (const l of res.data) {
           linhas++
           const aluno = l['UUID Aluno']
-          const dia = diaDe(l['Respondido Em']) || diaDe(l['Concluído Em']) || diaDe(l['Iniciado Em'])
-          if (aluno && dia) {
-            const atual = primeiroDia.get(aluno)
-            if (!atual || dia < atual.dia) primeiroDia.set(aluno, { dia, mod: modDoPeriodo(l['Período']) || atual?.mod })
+          const mod = modDoPeriodo(l['Período'])
+          const pesq = String(l.Pesquisa || '').trim()
+          if (mod && pesq) (pesquisasDaMod[mod] ||= new Set()).add(pesq)
+          if (aluno && mod) {
+            const a = alunos.get(aluno) || { mod, feitas: new Map() }
+            alunos.set(aluno, a)
+            const fim = /complet|conclu/i.test(l.Status || '') ? diaDe(l['Concluído Em']) || diaDe(l['Respondido Em']) : null
+            if (fim && pesq) { const ant = a.feitas.get(pesq); if (!ant || fim > ant) a.feitas.set(pesq, fim) }
           }
           if (!/docente/i.test(l.Pesquisa || '')) continue
           const docente = String(l['Docente Alvo'] || '').trim()
@@ -175,7 +190,7 @@ export function lerCsvProfessores(arquivo, cursos, onProgresso) {
         resolve({
           linhas,
           semCurso,
-          evolucao: montarEvolucao(primeiroDia),
+          evolucao: montarEvolucao(alunos, pesquisasDaMod),
           professores: [...grupos.values()].map((g) => ({
             curso_id: g.curso_id,
             docente: g.docente,
