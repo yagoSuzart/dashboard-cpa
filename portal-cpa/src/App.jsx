@@ -10,6 +10,7 @@ import PerguntasPublico from './views/PerguntasPublico.jsx'
 import PainelPublico from './views/PainelPublico.jsx'
 import AoVivoAdmin from './views/AoVivoAdmin.jsx'
 import ProfessoresAoVivo from './views/ProfessoresAoVivo.jsx'
+import RespostasParciais from './views/RespostasParciais.jsx'
 import PrimeiroAcesso from './views/PrimeiroAcesso.jsx'
 import Inicio from './views/Inicio.jsx'
 import Executiva from './views/Executiva.jsx'
@@ -186,6 +187,7 @@ export default function App() {
             { k: 'questionarios', t: 'Pergunta por pergunta' },
             ...(r !== 'professor_auxiliar' ? [{ k: 'professores', t: 'Por professor' }] : []),
             { k: 'comentarios', t: 'Comentários' },
+            ...(temCursos || perfil.global ? [{ k: 'respostas-parciais', t: 'Respostas · parcial da CPA' }] : []),
             ...(temCursos || perfil.global ? [{ k: 'professores-ao-vivo', t: 'Professores · parcial da CPA' }] : []),
             ...(r === 'diretor_nucleo' || perfil.global ? [{ k: 'nucleo', t: 'Núcleos' }] : []),
             ...(perfil.global ? [{ k: 'setores', t: 'Setores' }] : []),
@@ -296,6 +298,7 @@ export default function App() {
         {atual === 'plano-melhoria' && <PlanoMelhoria {...props} />}
         {atual === 'ao-vivo' && <AoVivoAdmin {...props} />}
         {atual === 'professores-ao-vivo' && <ProfessoresAoVivo {...props} />}
+        {atual === 'respostas-parciais' && <RespostasParciais {...props} />}
         {atual === 'importar' && <Importar {...props} />}
         {atual === 'admin' && <Admin {...props} />}
         {atual === 'proxima' && <ProximaCPA {...props} />}

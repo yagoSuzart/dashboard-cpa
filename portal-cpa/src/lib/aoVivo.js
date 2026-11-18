@@ -142,66 +142,159 @@ function montarEvolucao(alunos, pesquisasDaMod) {
   })
 }
 
-export function lerCsvProfessores(arquivo, cursos, onProgresso) {
+// Lê um ou mais CSVs "Respostas" (um por modelo de oferta, ou o geral) e devolve só agregados:
+// - professores: média por curso e professor no questionário Docente (1 a 5; "não sei" fora da média);
+// - perguntas: distribuição das notas de cada pergunta, por modelo de oferta (e por curso, quando o painel informa);
+// - pesquisas: alunos que iniciaram e concluíram cada questionário;
+// - evolucao: a curva dia a dia de quem concluiu tudo.
+// Linhas repetidas entre arquivos contam uma vez. Códigos de aluno e comentários não saem do navegador.
+export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
+  const lista = Array.isArray(arquivos) ? arquivos : [arquivos]
   const ids = new Set(cursos.map((c) => c.id))
   const grupos = new Map()
   const semCurso = {}
-  // Só para a curva (não sai do navegador): por aluno, a modalidade e o dia em que concluiu cada questionário
   const alunos = new Map()
   const pesquisasDaMod = {}
-  let linhas = 0
-  return new Promise((resolve, reject) => {
-    Papa.parse(arquivo, {
-      header: true,
-      skipEmptyLines: 'greedy',
-      transformHeader: (h) => h.replace(/^\uFEFF/, '').trim().replace(/^"(.*)"$/, '$1'),
-      chunkSize: 1024 * 1024 * 4,
-      chunk: (res) => {
-        for (const l of res.data) {
-          linhas++
-          const aluno = l['UUID Aluno']
-          const mod = modDoPeriodo(l['Período'])
-          const pesq = String(l.Pesquisa || '').trim()
-          if (mod && pesq) (pesquisasDaMod[mod] ||= new Set()).add(pesq)
-          if (aluno && mod) {
-            const a = alunos.get(aluno) || { mod, feitas: new Map() }
-            alunos.set(aluno, a)
-            const fim = /complet|conclu/i.test(l.Status || '') ? diaDe(l['Concluído Em']) || diaDe(l['Respondido Em']) : null
-            if (fim && pesq) { const ant = a.feitas.get(pesq); if (!ant || fim > ant) a.feitas.set(pesq, fim) }
+  const perguntas = new Map()
+  const pesquisas = new Map()
+  const vistas = new Set()
+  const mods = new Set()
+  let linhas = 0, repetidas = 0
+  const total = lista.reduce((s, a) => s + (a.size || 0), 0) || 1
+  let feito = 0
+  for (const arquivo of lista) {
+    let primeiro = true
+    await new Promise((resolve, reject) => {
+      Papa.parse(arquivo, {
+        header: true,
+        skipEmptyLines: 'greedy',
+        transformHeader: (h) => h.replace(/^\uFEFF/, '').trim().replace(/^"(.*)"$/, '$1'),
+        chunkSize: 1024 * 1024 * 4,
+        chunk: (res, parser) => {
+          if (primeiro) {
+            primeiro = false
+            if (res.data[0] && !('Resposta' in res.data[0] && 'Pesquisa' in res.data[0])) {
+              parser.abort()
+              reject(new Error(`"${arquivo.name}" não é o CSV de Respostas (falta a coluna Resposta). Use Exportar → Respostas no painel.`))
+              return
+            }
           }
-          if (!/docente/i.test(l.Pesquisa || '')) continue
-          const docente = String(l['Docente Alvo'] || '').trim()
-          const curso = String(l.Curso || '').trim()
-          const v = Number(String(l.Resposta || '').trim())
-          if (!docente || !curso || !Number.isInteger(v) || v < 1 || v > 5) continue
-          const cursoId = cursoIdDaPlanilha(nomeSemModalidade(curso), 'PRESENCIAL', ids)
-          if (!cursoId) { semCurso[curso] = (semCurso[curso] || 0) + 1; continue }
-          const k = cursoId + '|' + docente
-          if (!grupos.has(k)) grupos.set(k, { curso_id: cursoId, docente, disciplinas: new Set(), alunos: new Set(), respostas: 0, soma: 0 })
-          const g = grupos.get(k)
-          g.respostas++
-          g.soma += v
-          if (l['Disciplina Alvo']) g.disciplinas.add(String(l['Disciplina Alvo']).trim())
-          if (l['UUID Aluno']) g.alunos.add(l['UUID Aluno'])
-        }
-        onProgresso?.(res.meta.cursor / arquivo.size)
-      },
-      complete: () =>
-        resolve({
-          linhas,
-          semCurso,
-          evolucao: montarEvolucao(alunos, pesquisasDaMod),
-          professores: [...grupos.values()].map((g) => ({
-            curso_id: g.curso_id,
-            docente: g.docente,
-            disciplinas: [...g.disciplinas].sort(),
-            alunos: g.alunos.size,
-            respostas: g.respostas,
-            media: Math.round((g.soma / g.respostas) * 100) / 100,
-          })),
-        }),
-      error: reject,
+          for (const l of res.data) {
+            const aluno = l['UUID Aluno']
+            const mod = modDoPeriodo(l['Período'])
+            const pesq = String(l.Pesquisa || '').trim()
+            const nPerg = parseInt(l['Nº Pergunta'], 10)
+            const docente = String(l['Docente Alvo'] || '').trim()
+            const disc = String(l['Disciplina Alvo'] || '').trim()
+            const chave = `${aluno}|${pesq}|${nPerg}|${docente}|${disc}|${l.Turma || ''}`
+            if (vistas.has(chave)) { repetidas++; continue }
+            vistas.add(chave)
+            linhas++
+            if (!mod || !pesq) continue
+            mods.add(mod)
+            ;(pesquisasDaMod[mod] ||= new Set()).add(pesq)
+            const concluiu = /complet|conclu/i.test(l.Status || '')
+            if (aluno) {
+              const a = alunos.get(aluno) || { mod, feitas: new Map() }
+              alunos.set(aluno, a)
+              const fim = concluiu ? diaDe(l['Concluído Em']) || diaDe(l['Respondido Em']) : null
+              if (fim) { const ant = a.feitas.get(pesq); if (!ant || fim > ant) a.feitas.set(pesq, fim) }
+              const kp = mod + '|' + pesq
+              if (!pesquisas.has(kp)) pesquisas.set(kp, { modalidade: mod, pesquisa: pesq, alunos: new Set(), concluiram: new Set(), perguntas: new Set() })
+              const ps = pesquisas.get(kp)
+              ps.alunos.add(aluno)
+              if (concluiu) ps.concluiram.add(aluno)
+              if (Number.isInteger(nPerg)) ps.perguntas.add(nPerg)
+            }
+
+            // Pergunta por pergunta (por curso quando o painel informa o curso)
+            const resp = String(l.Resposta ?? '').trim()
+            const curso = String(l.Curso || '').trim()
+            let cursoId = ''
+            if (curso) {
+              cursoId = cursoIdDaPlanilha(nomeSemModalidade(curso), mod, ids) || ''
+              if (!cursoId) semCurso[curso] = (semCurso[curso] || 0) + 1
+            }
+            if (Number.isInteger(nPerg) && resp) {
+              const tipo = String(l.Tipo || '').trim() || 'rating_scale'
+              const kq = `${mod}|${pesq}|${cursoId}|${nPerg}`
+              if (!perguntas.has(kq)) perguntas.set(kq, { modalidade: mod, pesquisa: pesq, curso_id: cursoId, n_pergunta: nPerg, pergunta: String(l.Pergunta || '').trim(), tipo, respostas: 0, alunos: new Set(), dist: {} })
+              const q = perguntas.get(kq)
+              q.respostas++
+              if (aluno) q.alunos.add(aluno)
+              if (tipo !== 'textarea') { const v = String(Number(resp)); if (v !== 'NaN') q.dist[v] = (q.dist[v] || 0) + 1 }
+            }
+
+            // Professores (só o questionário Docente, notas 1 a 5)
+            if (!/docente/i.test(pesq)) continue
+            const v = Number(resp)
+            if (!docente || !curso || !Number.isInteger(v) || v < 1 || v > 5) continue
+            const cid = cursoIdDaPlanilha(nomeSemModalidade(curso), 'PRESENCIAL', ids)
+            if (!cid) continue
+            const k = cid + '|' + docente
+            if (!grupos.has(k)) grupos.set(k, { curso_id: cid, docente, disciplinas: new Set(), alunos: new Set(), respostas: 0, soma: 0 })
+            const g = grupos.get(k)
+            g.respostas++
+            g.soma += v
+            if (disc) g.disciplinas.add(disc)
+            if (aluno) g.alunos.add(aluno)
+          }
+          onProgresso?.((feito + res.meta.cursor) / total)
+        },
+        complete: resolve,
+        error: reject,
+      })
     })
+    feito += arquivo.size || 0
+  }
+
+  return {
+    linhas,
+    repetidas,
+    semCurso,
+    modalidades: [...mods],
+    evolucao: montarEvolucao(alunos, pesquisasDaMod),
+    professores: [...grupos.values()].map((g) => ({
+      curso_id: g.curso_id,
+      docente: g.docente,
+      disciplinas: [...g.disciplinas].sort(),
+      alunos: g.alunos.size,
+      respostas: g.respostas,
+      media: Math.round((g.soma / g.respostas) * 100) / 100,
+    })),
+    perguntas: [...perguntas.values()].map((q) => {
+      const vals = Object.keys(q.dist).map(Number)
+      const escala = q.tipo === 'textarea' ? null : vals.some((v) => v === 0 || v > 6) ? 'nps_0_10' : 'likert_5'
+      let soma = 0, n = 0
+      for (const [v, c] of Object.entries(q.dist)) {
+        const x = Number(v)
+        if (escala === 'likert_5' && (x < 1 || x > 5)) continue
+        soma += x * c
+        n += c
+      }
+      return {
+        modalidade: q.modalidade, pesquisa: q.pesquisa, curso_id: q.curso_id, n_pergunta: q.n_pergunta, pergunta: q.pergunta, tipo: q.tipo,
+        escala, respostas: q.respostas, alunos: q.alunos.size, distribuicao: q.dist, media: n ? Math.round((soma / n) * 100) / 100 : null,
+      }
+    }),
+    pesquisas: [...pesquisas.values()].map((p) => ({ modalidade: p.modalidade, pesquisa: p.pesquisa, alunos: p.alunos.size, concluiram: p.concluiram.size, perguntas: p.perguntas.size })),
+  }
+}
+
+// Junta a curva nova com a anterior: as modalidades que vieram nos arquivos são substituídas, as outras ficam
+export function mesclarEvolucao(nova, antiga, modsNovas) {
+  if (!antiga?.length) return nova
+  if (!nova?.length) return antiga
+  const ks = MODALIDADES_AO_VIVO.map((m) => m.k)
+  const serie = (lista, k) => new Map(lista.map((p) => [p.dia, p[k] || 0]))
+  const fontes = Object.fromEntries(ks.map((k) => [k, serie(modsNovas.includes(k) ? nova : antiga, k)]))
+  const dias = [...new Set([...nova, ...antiga].map((p) => p.dia))].sort()
+  const ult = Object.fromEntries(ks.map((k) => [k, 0]))
+  return dias.map((dia) => {
+    const p = { dia }
+    for (const k of ks) { if (fontes[k].has(dia)) ult[k] = fontes[k].get(dia); p[k] = ult[k] }
+    p.total = ks.reduce((s, k) => s + p[k], 0)
+    return p
   })
 }
 
@@ -231,6 +324,41 @@ export async function publicarProfessores(ciclo, professores) {
     const { error } = await sb.from('cpa_ao_vivo_professores').insert(lote)
     if (error) throw error
   }
+}
+
+// Respostas parciais: substitui só os modelos de oferta que vieram nos arquivos
+export async function publicarRespostas(ciclo, r) {
+  const mods = r.modalidades
+  if (!mods.length) return
+  const agora = new Date().toISOString()
+  for (const t of ['cpa_respostas_perguntas', 'cpa_respostas_pesquisas']) {
+    const { error } = await sb.from(t).delete().eq('ciclo', ciclo).in('modalidade', mods)
+    if (error) throw error
+  }
+  const envia = async (t, linhas) => {
+    for (let i = 0; i < linhas.length; i += 500) {
+      const { error } = await sb.from(t).insert(linhas.slice(i, i + 500).map((x) => ({ ...x, ciclo, publicado_em: agora })))
+      if (error) throw error
+    }
+  }
+  await envia('cpa_respostas_pesquisas', r.pesquisas)
+  await envia('cpa_respostas_perguntas', r.perguntas)
+}
+
+export async function carregarRespostas() {
+  const pega = async (t) => {
+    const out = []
+    for (let de = 0; ; de += 1000) {
+      const { data, error } = await sb.from(t).select('*').range(de, de + 999)
+      if (error) throw error
+      out.push(...data)
+      if (data.length < 1000) break
+    }
+    return out
+  }
+  const [pesquisas, perguntas] = await Promise.all([pega('cpa_respostas_pesquisas'), pega('cpa_respostas_perguntas')])
+  const ciclo = [...pesquisas, ...perguntas].reduce((m, p) => (p.publicado_em > (m?.publicado_em || '') ? p : m), null)?.ciclo
+  return { ciclo, pesquisas: pesquisas.filter((p) => p.ciclo === ciclo), perguntas: perguntas.filter((p) => p.ciclo === ciclo) }
 }
 
 export async function ultimaPublicacao() {

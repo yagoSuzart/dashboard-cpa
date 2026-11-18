@@ -31,3 +31,28 @@
 .pr-nota .barra { width: 90px; height: 8px; border-radius: 99px; background: var(--track, #e6ebf2); overflow: hidden; }
 .pr-nota .barra i { display: block; height: 100%; border-radius: 99px; }
 .pr-poucos { color: var(--muted); font-size: 12px; }
+
+/* Respostas parciais (pergunta por pergunta) */
+.rp-pesquisas { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.rp-pesq { text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; font: inherit; color: var(--ink); }
+.rp-pesq span { font-size: 12px; color: var(--muted); }
+.rp-pesq.ativo { border-color: var(--navy); background: #eef4fc; box-shadow: inset 0 0 0 1px var(--navy); }
+.rp-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-2); align-items: center; }
+.rp-leg span { display: inline-flex; align-items: center; gap: 6px; }
+.rp-leg i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid rgba(0,0,0,.06); }
+.rp-bloco { gap: 4px; }
+.rp-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.rp-cab h2 { font-size: 20px; }
+.rp-media { font-weight: 800; font-size: 20px; }
+.rp-media small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.rp-q { padding: 12px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.rp-txt { display: flex; gap: 10px; font-size: 14px; line-height: 1.4; }
+.rp-n { flex: none; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px; background: var(--sand, #f1efe9); font-size: 12px; font-weight: 700; display: grid; place-items: center; color: var(--ink-2); }
+.rp-linha { display: flex; gap: 14px; align-items: center; }
+.rp-barra { flex: 1; display: flex; height: 26px; border-radius: 8px; overflow: hidden; background: #f3f5f9; gap: 1px; }
+.rp-barra i { display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 11px; font-weight: 700; min-width: 2px; overflow: hidden; white-space: nowrap; }
+.rp-num { width: 120px; flex: none; text-align: right; display: flex; flex-direction: column; line-height: 1.15; }
+.rp-num b { font-size: 18px; }
+.rp-num small { font-size: 11px; color: var(--muted); }
+.rp-aberta { margin: 0 0 0 36px; }
+@media (max-width: 640px) { .rp-linha { flex-direction: column; align-items: stretch; } .rp-num { width: auto; flex-direction: row; gap: 8px; align-items: baseline; text-align: left; } }

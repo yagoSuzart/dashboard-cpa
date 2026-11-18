@@ -3,8 +3,8 @@
 // Opcional: o CSV "Respostas" gera o ranking de professores, que só a coordenação de cada curso vê.
 import { useEffect, useMemo, useState } from 'react'
 import {
-  MODALIDADES_AO_VIVO, carregarConfig, conferir, fmtNum, fmtPct, lerCsvProfessores, lerCsvRespondentes, montarDados, pct,
-  publicarPanorama, publicarProfessores, salvarConfig, ultimaPublicacao,
+  MODALIDADES_AO_VIVO, carregarConfig, conferir, fmtNum, fmtPct, lerCsvRespondentes, lerCsvRespostas, mesclarEvolucao, montarDados, pct,
+  publicarPanorama, publicarProfessores, publicarRespostas, salvarConfig, ultimaPublicacao,
 } from '../lib/aoVivo.js'
 import './aoVivo.css'
 
@@ -60,12 +60,12 @@ export default function AoVivoAdmin({ base }) {
     }
   }
 
-  async function escolherRespostas(arquivo) {
-    if (!arquivo) return
+  async function escolherRespostas(arquivos) {
+    if (!arquivos?.length) return
     setAviso(null)
     setLendoProf(0)
     try {
-      setProf(await lerCsvProfessores(arquivo, base.cursos, setLendoProf))
+      setProf(await lerCsvRespostas([...arquivos], base.cursos, setLendoProf))
     } catch (e) {
       setAviso({ tipo: 'erro', texto: 'Não foi possível ler o CSV de respostas: ' + e.message })
     } finally {
@@ -92,7 +92,7 @@ export default function AoVivoAdmin({ base }) {
   async function publicar() {
     const nums = (x) => ({ elegiveis: Number(x.elegiveis) || 0, concluidos: Number(x.concluidos) || 0, iniciados: Number(x.iniciados) || 0 })
     const g = nums(numeros.geral)
-    if (!g.elegiveis || !g.concluidos) {
+    if (temCsv && (!g.elegiveis || !g.concluidos)) {
       setAviso({ tipo: 'erro', texto: 'Preencha os números gerais do painel (elegíveis e concluíram tudo).' })
       return
     }
@@ -101,13 +101,19 @@ export default function AoVivoAdmin({ base }) {
     setAviso({ tipo: '', texto: 'Publicando…' })
     try {
       await salvarConfig(config)
-      // A curva dia a dia vem do CSV de Respostas; sem ele, mantém a da publicação anterior
-      const evolucao = prof?.evolucao?.length ? prof.evolucao : ultima?.dados?.evolucao || null
-      await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g, porMod, evolucao))
+      // A curva dia a dia vem do CSV de Respostas (as modalidades que não vieram ficam como estavam); sem ele, mantém a anterior
+      const anterior = ultima?.dados?.evolucao || null
+      const evolucao = prof?.evolucao?.length ? mesclarEvolucao(prof.evolucao, anterior, prof.modalidades) : anterior
+      if (temCsv) await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g, porMod, evolucao))
+      else if (ultima?.dados && evolucao) await publicarPanorama(ciclo, { ...ultima.dados, evolucao })
       if (prof?.professores?.length) await publicarProfessores(ciclo, prof.professores)
+      if (prof?.perguntas?.length) await publicarRespostas(ciclo, prof)
       const u = await ultimaPublicacao()
       setUltima(u)
-      setAviso({ tipo: 'ok', texto: 'Publicado! A página aberta já mostra os números novos' + (prof?.professores?.length ? ` e o ranking de ${prof.professores.length} professores foi atualizado para a coordenação.` : '.') })
+      const partes = [temCsv ? 'a página aberta já mostra os números novos' : 'a curva de evolução foi atualizada']
+      if (prof?.professores?.length) partes.push(`o ranking de ${prof.professores.length} professores foi atualizado para a coordenação`)
+      if (prof?.perguntas?.length) partes.push(`as respostas pergunta por pergunta de ${prof.modalidades.map((k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t).join(', ')} estão em "Respostas parciais"`)
+      setAviso({ tipo: 'ok', texto: 'Publicado! ' + partes.join('; ') + '.' })
     } catch (e) {
       setAviso({ tipo: 'erro', texto: 'Não foi possível publicar: ' + (e.message || e) })
     } finally {
@@ -209,13 +215,14 @@ export default function AoVivoAdmin({ base }) {
       )}
 
       <section className="card av-passo">
-        <h2><span>4</span>Professores e evolução das respostas <span className="small muted">(opcional)</span></h2>
-        <p className="muted">O CSV "Respostas" do painel (botão Exportar → Respostas; o arquivo começa com <b>respostas-cpa</b>) gera a média de cada professor no questionário Docente, por curso (só a coordenação vê), e a curva dia a dia das respostas na página aberta. Do arquivo só saem médias e contagens; códigos de aluno e comentários não são enviados.</p>
-        <label className={'av-arq' + (prof ? ' ok' : '')} style={{ maxWidth: 360 }}>
-          <b>CSV de respostas</b>
-          <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${fmtNum(prof.professores.length)} professores em ${new Set(prof.professores.map((p) => p.curso_id)).size} cursos · curva de ${prof.evolucao?.length || 0} dias` : 'Escolher o CSV'}</span>
-          <input type="file" accept=".csv,text/csv" onChange={(e) => escolherRespostas(e.target.files[0])} />
+        <h2><span>4</span>Respostas, professores e evolução <span className="small muted">(opcional)</span></h2>
+        <p className="muted">O CSV "Respostas" do painel (botão Exportar → Respostas; o arquivo começa com <b>respostas-cpa</b>). Troque o modelo de oferta no painel e baixe um de cada: Presencial, Semipresencial e EAD. Pode escolher <b>vários arquivos de uma vez</b>; cada envio substitui só os modelos de oferta que vieram. Gera as respostas pergunta por pergunta (tela "Respostas parciais"), a média de cada professor (só a coordenação vê) e a curva dia a dia na página aberta. Do arquivo só saem contagens e médias; códigos de aluno e comentários não são enviados.</p>
+        <label className={'av-arq' + (prof ? ' ok' : '')} style={{ maxWidth: 420 }}>
+          <b>CSVs de respostas</b>
+          <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${prof.modalidades.map((k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t).join(', ')} · ${fmtNum(prof.linhas)} respostas · ${new Set(prof.perguntas.map((q) => q.modalidade + q.pesquisa)).size} questionários · ${fmtNum(prof.professores.length)} professores` : 'Escolher um ou mais CSVs'}</span>
+          <input type="file" multiple accept=".csv,text/csv" onChange={(e) => escolherRespostas(e.target.files)} />
         </label>
+        {prof?.repetidas > 0 && <p className="small muted">{fmtNum(prof.repetidas)} linhas vieram em mais de um arquivo e foram contadas uma vez só.</p>}
         {prof && Object.keys(prof.semCurso).length > 0 && (
           <p className="small muted">Cursos do CSV sem correspondência no cadastro (ficam de fora): {Object.keys(prof.semCurso).join(', ')}.</p>
         )}
