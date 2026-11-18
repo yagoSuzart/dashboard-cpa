@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { MODALIDADES_AO_VIVO, carregarPublico, fmtNum, fmtPct, pct } from '../lib/aoVivo.js'
 import { DIMENSOES, SATISFACAO } from '../lib/config.js'
 import GraficoEvolucao from '../components/GraficoEvolucao.jsx'
+import RespostasPublicas from '../components/RespostasPublicas.jsx'
 import './painelPublico.css'
 
 const TOP = 5
@@ -58,6 +59,7 @@ export default function PainelPublico({ logado = false }) {
           <nav className="pp-menu" aria-label="Seções">
             <a href="#ao-vivo" onClick={(e) => { e.preventDefault(); document.getElementById('ao-vivo')?.scrollIntoView({ behavior: 'smooth' }) }}>Ranking dos cursos</a>
             {av?.dados?.evolucao?.length > 0 && <a href="#evolucao" onClick={(e) => { e.preventDefault(); document.getElementById('evolucao')?.scrollIntoView({ behavior: 'smooth' }) }}>Evolução</a>}
+            {d?.respostas?.perguntas?.length > 0 && <a href="#respostas" onClick={(e) => { e.preventDefault(); document.getElementById('respostas')?.scrollIntoView({ behavior: 'smooth' }) }}>O que os alunos dizem</a>}
             <a href="#placar" onClick={(e) => { e.preventDefault(); document.getElementById('placar')?.scrollIntoView({ behavior: 'smooth' }) }}>Placar por modelo de oferta</a>
             {temHist && <a href="#historico" onClick={(e) => { e.preventDefault(); document.getElementById('historico')?.scrollIntoView({ behavior: 'smooth' }) }}>Resultados {hist.ciclo}</a>}
             <a href="#acao" onClick={(e) => { e.preventDefault(); document.getElementById('acao')?.scrollIntoView({ behavior: 'smooth' }) }}>Do resultado à ação</a>
@@ -173,6 +175,16 @@ export default function PainelPublico({ logado = false }) {
               </div>
             </div>
           </section>
+          {d.respostas?.perguntas?.length > 0 && (
+            <section className="pp-s rpp" id="respostas">
+              <div className="pp-w">
+                <div className="pp-eb">O que os alunos dizem · CPA {d.respostas.ciclo}</div>
+                <h2>Como os alunos estão avaliando a <span>UniFECAF</span>.</h2>
+                <p className="pp-sub">Cada pergunta da avaliação, com a distribuição das notas e a média, em cada modelo de oferta.</p>
+                <RespostasPublicas r={d.respostas} />
+              </div>
+            </section>
+          )}
 
           <section className="pp-s pp-escuro" id="placar">
             <div className="pp-w">
