@@ -24,6 +24,7 @@ export default function AoVivoAdmin({ base }) {
   const [prof, setProf] = useState(null)
   const [lendoProf, setLendoProf] = useState(null)
   const [arqResp, setArqResp] = useState([])
+  const [respMod, setRespMod] = useState({})
   const [soFora, setSoFora] = useState(false)
   const [aviso, setAviso] = useState(null)
   const [ocupado, setOcupado] = useState(false)
@@ -57,29 +58,63 @@ export default function AoVivoAdmin({ base }) {
       const linhas = await lerCsvRespondentes(arquivo)
       setCsv((c) => ({ ...c, [mod]: linhas }))
     } catch (e) {
-      // O CSV de Respostas caiu no passo 1: vai direto para o passo 4
+      // CSV de Respostas da modalidade: fica nesta caixa e entra junto com o geral do passo 4
       if (e.respostas) {
-        await escolherRespostas([arquivo])
-        setAviso({ tipo: 'ok', texto: `"${arquivo.name}" é o CSV de Respostas: ele foi para o passo 4 (respostas, professores e evolução).` })
+        const novo = { ...respMod, [mod]: arquivo }
+        setRespMod(novo)
+        await lerRespostas(novo, arqResp)
       } else setAviso({ tipo: 'erro', texto: e.message })
     }
   }
 
-  // Os CSVs de Respostas se acumulam (EAD, depois Semi, depois Presencial); o mesmo nome substitui o anterior
-  async function escolherRespostas(novos) {
-    if (!novos?.length) return
-    setAviso(null)
-    const lista = [...arqResp.filter((a) => ![...novos].some((n) => n.name === a.name)), ...novos]
-    setArqResp(lista)
+  // Junta os CSVs de Respostas de cada modalidade (passo 1) com os gerais (passo 4); cada resposta conta uma vez
+  async function lerRespostas(porMod, gerais) {
+    const origens = [...Object.keys(porMod), ...gerais.map(() => 'geral')]
+    const lista = [...Object.values(porMod), ...gerais]
+    if (!lista.length) { setProf(null); return }
     setLendoProf(0)
     try {
-      setProf(await lerCsvRespostas(lista, base.cursos, setLendoProf))
+      const r = await lerCsvRespostas(lista, base.cursos, setLendoProf)
+      // Arquivo na caixa errada (sem nenhuma resposta daquela modalidade): sai e avisa
+      const erradas = origens.filter((o, i) => o !== 'geral' && !r.porArquivo[i]?.porMod[o])
+      if (erradas.length) {
+        const nome = (k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t
+        setAviso({ tipo: 'erro', texto: erradas.map((k) => `O arquivo "${porMod[k].name}" não tem respostas de ${nome(k)} (traz ${Object.keys(r.porArquivo[origens.indexOf(k)].porMod).map(nome).join(', ') || 'nada'}). Escolha o CSV de Respostas de ${nome(k)} nessa caixa.`).join(' ') })
+        const certo = Object.fromEntries(Object.entries(porMod).filter(([k]) => !erradas.includes(k)))
+        setRespMod(certo)
+        await lerRespostas(certo, gerais)
+        return
+      }
+      setProf({ ...r, origens })
     } catch (e) {
       setAviso({ tipo: 'erro', texto: 'Não foi possível ler o CSV de respostas: ' + e.message })
     } finally {
       setLendoProf(null)
     }
   }
+
+  // Passo 4: os CSVs gerais se acumulam; o mesmo nome substitui o anterior
+  async function escolherRespostas(novos) {
+    if (!novos?.length) return
+    setAviso(null)
+    const lista = [...arqResp.filter((a) => !novos.some((n) => n.name === a.name)), ...novos]
+    setArqResp(lista)
+    await lerRespostas(respMod, lista)
+  }
+
+  // Resumo de um arquivo de Respostas lido (alunos e respostas por modalidade)
+  const resumoDe = (k) => prof?.porArquivo?.[prof.origens?.indexOf(k)]
+  // Comparação: arquivo de cada modalidade (passo 1) x arquivos gerais (passo 4)
+  const comparacao = useMemo(() => {
+    if (!prof?.porArquivo || !prof.origens) return []
+    const gerais = prof.porArquivo.filter((_, i) => prof.origens[i] === 'geral')
+    if (!gerais.length) return []
+    return MODALIDADES_AO_VIVO.filter(({ k }) => prof.origens.includes(k)).map(({ k, t }) => {
+      const m = prof.porArquivo[prof.origens.indexOf(k)]?.porMod[k] || { linhas: 0, alunos: 0 }
+      const g = gerais.reduce((acc, a) => (a.porMod[k] && a.porMod[k].alunos > acc.alunos ? a.porMod[k] : acc), { linhas: 0, alunos: 0 })
+      return { k, t, m, g }
+    })
+  }, [prof])
 
   const decidir = (r, inclui) => setConfig((c) => ({ ...c, decisoes: { ...(c.decisoes || {}), [r.chave]: inclui } }))
   const ajustarElegiveis = (r, v) =>
@@ -145,16 +180,22 @@ export default function AoVivoAdmin({ base }) {
       {ultima && <div className="aviso">Última publicação: ciclo {ultima.ciclo}, em {new Date(ultima.publicado_em).toLocaleString('pt-BR')}.</div>}
 
       <section className="card av-passo">
-        <h2><span>1</span>CSVs "Respondentes por curso"</h2>
-        <p className="muted">No painel da avaliação, clique no modelo de oferta (filtro no topo), desça até "Respondentes por curso" e clique em <b>Baixar CSV</b> (o arquivo começa com <b>respondentes-cpa</b>). Repita para os três.</p>
+        <h2><span>1</span>CSVs de cada modelo de oferta</h2>
+        <p className="muted">No painel da avaliação, clique no modelo de oferta (filtro no topo) e baixe: <b>Respondentes por curso</b> (Baixar CSV, arquivo <b>respondentes-cpa</b>) e/ou <b>Respostas</b> (Exportar → Respostas, arquivo <b>respostas-cpa</b>). Cada caixa aceita os dois: escolha um e depois o outro. Repita para os três modelos de oferta.</p>
         <div className="av-arquivos">
-          {MODALIDADES_AO_VIVO.map(({ k, t }) => (
-            <label key={k} className={'av-arq' + (csv[k] ? ' ok' : '')}>
-              <b>{t}</b>
-              <span className="small muted">{csv[k] ? `${csv[k].length} cursos lidos` : 'Escolher o CSV'}</span>
-              <input type="file" accept=".csv,text/csv" onChange={(e) => escolher(k, e.target.files[0])} />
-            </label>
-          ))}
+          {MODALIDADES_AO_VIVO.map(({ k, t }) => {
+            const r = resumoDe(k)
+            const outras = r ? Object.keys(r.porMod).filter((x) => x !== k) : []
+            return (
+              <label key={k} className={'av-arq' + (csv[k] || respMod[k] ? ' ok' : '')}>
+                <b>{t}</b>
+                <span className="small muted">{csv[k] ? `Respondentes: ${csv[k].length} cursos lidos` : 'Respondentes por curso: escolher'}</span>
+                <span className="small muted">{respMod[k] ? (lendoProf != null ? 'Respostas: lendo…' : r?.porMod[k] ? `Respostas: ${fmtNum(r.porMod[k].alunos)} alunos · ${fmtNum(r.porMod[k].linhas)} linhas` : 'Respostas: lido') : 'Respostas: escolher'}</span>
+                {outras.length > 0 && <span className="small av-alerta">Este arquivo também traz {outras.map((x) => MODALIDADES_AO_VIVO.find((m) => m.k === x)?.t).join(', ')}: confira se é o de {t}.</span>}
+                <input type="file" accept=".csv,text/csv" onChange={(e) => { escolher(k, e.target.files[0]); e.target.value = '' }} />
+              </label>
+            )
+          })}
         </div>
         <label className="campo" style={{ maxWidth: 200 }}>
           <span className="small muted">Ciclo</span>
@@ -223,17 +264,38 @@ export default function AoVivoAdmin({ base }) {
       )}
 
       <section className="card av-passo">
-        <h2><span>4</span>Respostas, professores e evolução <span className="small muted">(opcional)</span></h2>
-        <p className="muted">O CSV "Respostas" do painel (botão Exportar → Respostas; o arquivo começa com <b>respostas-cpa</b>). Troque o modelo de oferta no painel e baixe um de cada: Presencial, Semipresencial e EAD. Pode escolher <b>vários arquivos de uma vez</b>; cada envio substitui só os modelos de oferta que vieram. Gera as respostas pergunta por pergunta (tela "Respostas parciais"), a média de cada professor (só a coordenação vê) e a curva dia a dia na página aberta. Do arquivo só saem contagens e médias; códigos de aluno e comentários não são enviados.</p>
+        <h2><span>4</span>Respostas gerais, professores e evolução <span className="small muted">(opcional)</span></h2>
+        <p className="muted">O CSV "Respostas" geral do painel (filtro <b>Todos</b> → Exportar → Respostas; arquivo <b>respostas-cpa</b>). Ele entra junto com os CSVs de Respostas de cada modelo de oferta do passo 1: cada resposta conta uma vez só, e a tabela abaixo compara os arquivos. Gera as respostas pergunta por pergunta (tela "Respostas parciais" e página aberta), a média de cada professor (só a coordenação vê) e a curva dia a dia. Do arquivo só saem contagens e médias; códigos de aluno e comentários não são enviados.</p>
         <label className={'av-arq' + (prof ? ' ok' : '')} style={{ maxWidth: 420 }}>
-          <b>CSVs de respostas</b>
-          <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${prof.modalidades.map((k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t).join(', ')} · ${fmtNum(prof.linhas)} respostas · ${new Set(prof.perguntas.map((q) => q.modalidade + q.pesquisa)).size} questionários · ${fmtNum(prof.professores.length)} professores` : 'Escolher um ou mais CSVs'}</span>
+          <b>CSV de respostas geral</b>
+          <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${prof.modalidades.map((k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t).join(', ')} · ${fmtNum(prof.linhas)} respostas · ${new Set(prof.perguntas.map((q) => q.modalidade + q.pesquisa)).size} questionários · ${fmtNum(prof.professores.length)} professores` : 'Escolher o CSV (ou vários)'}</span>
           <input type="file" multiple accept=".csv,text/csv" onChange={(e) => { escolherRespostas([...e.target.files]); e.target.value = '' }} />
         </label>
         {arqResp.length > 0 && (
           <p className="small muted">Arquivos: {arqResp.map((a) => a.name).join(' · ')}{' '}
-            <button className="av-limpar" onClick={() => { setArqResp([]); setProf(null) }}>limpar</button>
+            <button className="av-limpar" onClick={() => { setArqResp([]); lerRespostas(respMod, []) }}>limpar</button>
           </p>
+        )}
+        {comparacao.length > 0 && (
+          <div className="rolagem">
+            <table className="tabela av-tab">
+              <thead><tr><th>Modelo de oferta</th><th className="n">Arquivo da modalidade (passo 1)</th><th className="n">Arquivo geral (passo 4)</th><th>Situação</th></tr></thead>
+              <tbody>
+                {comparacao.map(({ k, t, m, g }) => {
+                  const dif = m.alunos - g.alunos
+                  return (
+                    <tr key={k}>
+                      <td><b>{t}</b></td>
+                      <td className="n">{fmtNum(m.alunos)} alunos · {fmtNum(m.linhas)} linhas</td>
+                      <td className="n">{g.alunos ? `${fmtNum(g.alunos)} alunos · ${fmtNum(g.linhas)} linhas` : 'não veio no geral'}</td>
+                      <td>{!g.alunos ? <span className="av-sit rep">Só no arquivo da modalidade</span> : dif === 0 && m.linhas === g.linhas ? <span className="av-sit ok">Confere</span> : <span className="av-sit rep">{dif > 0 ? `+${fmtNum(dif)}` : fmtNum(dif)} alunos no da modalidade</span>}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <p className="small muted">Diferença costuma ser horário de exportação (um arquivo baixado antes do outro). Na publicação, os dois entram juntos e cada resposta conta uma vez.</p>
+          </div>
         )}
         {prof?.repetidas > 0 && <p className="small muted">{fmtNum(prof.repetidas)} respostas repetidas (o mesmo aluno na mesma pergunta, em novas tentativas ou em mais de um arquivo) foram contadas uma vez só.</p>}
         {prof && Object.keys(prof.semCurso).length > 0 && (

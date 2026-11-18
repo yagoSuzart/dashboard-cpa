@@ -162,8 +162,12 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
   let linhas = 0, repetidas = 0
   const total = lista.reduce((s, a) => s + (a.size || 0), 0) || 1
   let feito = 0
+  // Resumo de cada arquivo (antes de tirar as repetições), para comparar o arquivo de cada modalidade com o geral
+  const porArquivo = []
   for (const arquivo of lista) {
     let primeiro = true
+    const resumo = { nome: arquivo.name, porMod: {} }
+    porArquivo.push(resumo)
     await new Promise((resolve, reject) => {
       Papa.parse(arquivo, {
         header: true,
@@ -186,6 +190,11 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
             const nPerg = parseInt(l['Nº Pergunta'], 10)
             const docente = String(l['Docente Alvo'] || '').trim()
             const disc = String(l['Disciplina Alvo'] || '').trim()
+            if (mod) {
+              const rm = (resumo.porMod[mod] ||= { linhas: 0, alunos: new Set() })
+              rm.linhas++
+              if (aluno) rm.alunos.add(aluno)
+            }
             const chave = `${aluno}|${pesq}|${nPerg}|${docente}|${disc}|${l.Turma || ''}`
             if (vistas.has(chave)) { repetidas++; continue }
             vistas.add(chave)
@@ -251,6 +260,7 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
   return {
     linhas,
     repetidas,
+    porArquivo: porArquivo.map((a) => ({ nome: a.nome, porMod: Object.fromEntries(Object.entries(a.porMod).map(([k, v]) => [k, { linhas: v.linhas, alunos: v.alunos.size }])) })),
     semCurso,
     modalidades: [...mods],
     evolucao: montarEvolucao(alunos, pesquisasDaMod),
