@@ -148,12 +148,17 @@ export default function AoVivoAdmin({ base }) {
       const anterior = ultima?.dados?.evolucao || null
       const evolucao = prof?.evolucao?.length ? mesclarEvolucao(prof.evolucao, anterior, prof.modalidades) : anterior
       if (temCsv) await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g, porMod, evolucao))
-      else if (ultima?.dados && evolucao) await publicarPanorama(ciclo, { ...ultima.dados, evolucao })
+      else if (ultima?.dados) {
+        // Sem os CSVs de Respondentes: mantém o ranking dos cursos da última publicação, mas usa os números do passo 2
+        const modalidades = { ...(ultima.dados.modalidades || {}) }
+        for (const [k, v] of Object.entries(porMod)) modalidades[k] = { ...(modalidades[k] || {}), ...v, painel: v }
+        await publicarPanorama(ciclo, { ...ultima.dados, ...(g.elegiveis ? { geral: g } : {}), modalidades, ...(evolucao ? { evolucao } : {}) })
+      }
       if (prof?.professores?.length) await publicarProfessores(ciclo, prof.professores)
       if (prof?.perguntas?.length) await publicarRespostas(ciclo, prof)
       const u = await ultimaPublicacao()
       setUltima(u)
-      const partes = [temCsv ? 'a página aberta já mostra os números novos' : 'a curva de evolução foi atualizada']
+      const partes = [temCsv ? 'a página aberta já mostra os números novos' : 'a página aberta já mostra os números do passo 2 (o ranking dos cursos continua o da última publicação)']
       if (prof?.professores?.length) partes.push(`o ranking de ${prof.professores.length} professores foi atualizado para a coordenação`)
       if (prof?.perguntas?.length) partes.push(`as respostas pergunta por pergunta de ${prof.modalidades.map((k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t).join(', ')} estão em "Respostas parciais"`)
       setAviso({ tipo: 'ok', texto: 'Publicado! ' + partes.join('; ') + '.' })
