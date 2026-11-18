@@ -23,6 +23,7 @@ export default function AoVivoAdmin({ base }) {
   const [numeros, setNumeros] = useState(() => Object.fromEntries(['geral', ...MODALIDADES_AO_VIVO.map((m) => m.k)].map((k) => [k, { elegiveis: '', concluidos: '', iniciados: '' }])))
   const [prof, setProf] = useState(null)
   const [lendoProf, setLendoProf] = useState(null)
+  const [arqResp, setArqResp] = useState([])
   const [soFora, setSoFora] = useState(false)
   const [aviso, setAviso] = useState(null)
   const [ocupado, setOcupado] = useState(false)
@@ -56,16 +57,23 @@ export default function AoVivoAdmin({ base }) {
       const linhas = await lerCsvRespondentes(arquivo)
       setCsv((c) => ({ ...c, [mod]: linhas }))
     } catch (e) {
-      setAviso({ tipo: 'erro', texto: e.message })
+      // O CSV de Respostas caiu no passo 1: vai direto para o passo 4
+      if (e.respostas) {
+        await escolherRespostas([arquivo])
+        setAviso({ tipo: 'ok', texto: `"${arquivo.name}" é o CSV de Respostas: ele foi para o passo 4 (respostas, professores e evolução).` })
+      } else setAviso({ tipo: 'erro', texto: e.message })
     }
   }
 
-  async function escolherRespostas(arquivos) {
-    if (!arquivos?.length) return
+  // Os CSVs de Respostas se acumulam (EAD, depois Semi, depois Presencial); o mesmo nome substitui o anterior
+  async function escolherRespostas(novos) {
+    if (!novos?.length) return
     setAviso(null)
+    const lista = [...arqResp.filter((a) => ![...novos].some((n) => n.name === a.name)), ...novos]
+    setArqResp(lista)
     setLendoProf(0)
     try {
-      setProf(await lerCsvRespostas([...arquivos], base.cursos, setLendoProf))
+      setProf(await lerCsvRespostas(lista, base.cursos, setLendoProf))
     } catch (e) {
       setAviso({ tipo: 'erro', texto: 'Não foi possível ler o CSV de respostas: ' + e.message })
     } finally {
@@ -220,9 +228,14 @@ export default function AoVivoAdmin({ base }) {
         <label className={'av-arq' + (prof ? ' ok' : '')} style={{ maxWidth: 420 }}>
           <b>CSVs de respostas</b>
           <span className="small muted">{lendoProf != null ? `Lendo… ${Math.round(lendoProf * 100)}%` : prof ? `${prof.modalidades.map((k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t).join(', ')} · ${fmtNum(prof.linhas)} respostas · ${new Set(prof.perguntas.map((q) => q.modalidade + q.pesquisa)).size} questionários · ${fmtNum(prof.professores.length)} professores` : 'Escolher um ou mais CSVs'}</span>
-          <input type="file" multiple accept=".csv,text/csv" onChange={(e) => escolherRespostas(e.target.files)} />
+          <input type="file" multiple accept=".csv,text/csv" onChange={(e) => { escolherRespostas([...e.target.files]); e.target.value = '' }} />
         </label>
-        {prof?.repetidas > 0 && <p className="small muted">{fmtNum(prof.repetidas)} linhas vieram em mais de um arquivo e foram contadas uma vez só.</p>}
+        {arqResp.length > 0 && (
+          <p className="small muted">Arquivos: {arqResp.map((a) => a.name).join(' · ')}{' '}
+            <button className="av-limpar" onClick={() => { setArqResp([]); setProf(null) }}>limpar</button>
+          </p>
+        )}
+        {prof?.repetidas > 0 && <p className="small muted">{fmtNum(prof.repetidas)} respostas repetidas (o mesmo aluno na mesma pergunta, em novas tentativas ou em mais de um arquivo) foram contadas uma vez só.</p>}
         {prof && Object.keys(prof.semCurso).length > 0 && (
           <p className="small muted">Cursos do CSV sem correspondência no cadastro (ficam de fora): {Object.keys(prof.semCurso).join(', ')}.</p>
         )}

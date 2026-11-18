@@ -37,7 +37,7 @@ function lerCsv(arquivo, opcoes = {}) {
 export async function lerCsvRespondentes(arquivo) {
   const linhas = await lerCsv(arquivo)
   if (linhas.length && 'Pesquisa' in linhas[0] && 'Resposta' in linhas[0])
-    throw new Error(`"${arquivo.name}" é o CSV de Respostas (uma linha por resposta): ele vai no passo 4, de professores. Aqui no passo 1 vai o CSV do quadro "Respondentes por curso" (o arquivo começa com "respondentes-cpa").`)
+    throw Object.assign(new Error(`"${arquivo.name}" é o CSV de Respostas (uma linha por resposta): ele vai no passo 4.`), { respostas: true })
   if (!linhas.length || !('Curso' in linhas[0]) || !('Elegíveis' in linhas[0]))
     throw new Error(`"${arquivo.name}" não parece o CSV "Respondentes por curso" do painel (faltam as colunas Curso e Elegíveis). Baixe pelo botão "Baixar CSV" do quadro "Respondentes por curso".`)
   return linhas
@@ -182,7 +182,7 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
           for (const l of res.data) {
             const aluno = l['UUID Aluno']
             const mod = modDoPeriodo(l['Período'])
-            const pesq = String(l.Pesquisa || '').trim()
+            const pesq = String(l.Pesquisa || '').trim().replace(/^CPA\s*[-–]\s*/i, '')
             const nPerg = parseInt(l['Nº Pergunta'], 10)
             const docente = String(l['Docente Alvo'] || '').trim()
             const disc = String(l['Disciplina Alvo'] || '').trim()
