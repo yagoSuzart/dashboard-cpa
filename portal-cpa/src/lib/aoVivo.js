@@ -195,7 +195,7 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
               rm.linhas++
               if (aluno) rm.alunos.add(aluno)
             }
-            const chave = `${aluno}|${pesq}|${nPerg}|${docente}|${disc}|${l.Turma || ''}`
+            const chave = `${mod}|${aluno}|${pesq}|${nPerg}|${docente}|${disc}|${l.Turma || ''}`
             if (vistas.has(chave)) { repetidas++; continue }
             vistas.add(chave)
             linhas++
@@ -204,8 +204,9 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
             ;(pesquisasDaMod[mod] ||= new Set()).add(pesq)
             const concluiu = /complet|conclu/i.test(l.Status || '')
             if (aluno) {
-              const a = alunos.get(aluno) || { mod, feitas: new Map() }
-              alunos.set(aluno, a)
+              // Por modalidade: o aluno que aparece em duas modalidades conta em cada uma
+              const a = alunos.get(mod + '|' + aluno) || { mod, feitas: new Map() }
+              alunos.set(mod + '|' + aluno, a)
               const fim = concluiu ? diaDe(l['Concluído Em']) || diaDe(l['Respondido Em']) : null
               if (fim) { const ant = a.feitas.get(pesq); if (!ant || fim > ant) a.feitas.set(pesq, fim) }
               const kp = mod + '|' + pesq
