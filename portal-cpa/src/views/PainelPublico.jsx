@@ -130,7 +130,7 @@ export default function PainelPublico({ logado = false }) {
           )}
           <section className="pp-s" id="ao-vivo">
             <div className="pp-w">
-              <div className="pp-eb">CPA {av.ciclo} · parcial de {dataHora(av.publicado_em)}</div>
+              <div className="pp-eb">CPA {av.ciclo} · ranking de {dataHora(av.dados.ranking_em || av.publicado_em)}</div>
               <h2>Quem está na frente?</h2>
               <p className="pp-sub">Ranking dos cursos em cada modelo de oferta. Adesão é o percentual de alunos do curso que já concluíram a avaliação.</p>
               <div className="pp-abas" role="tablist" aria-label="Ordenar o ranking">

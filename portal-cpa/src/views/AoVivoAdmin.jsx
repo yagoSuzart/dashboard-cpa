@@ -147,7 +147,7 @@ export default function AoVivoAdmin({ base }) {
       // A curva dia a dia vem do CSV de Respostas (as modalidades que não vieram ficam como estavam); sem ele, mantém a anterior
       const anterior = ultima?.dados?.evolucao || null
       const evolucao = prof?.evolucao?.length ? mesclarEvolucao(prof.evolucao, anterior, prof.modalidades) : anterior
-      if (temCsv) await publicarPanorama(ciclo, montarDados(conferido, base.cursos, g, porMod, evolucao))
+      if (temCsv) await publicarPanorama(ciclo, { ...montarDados(conferido, base.cursos, g, porMod, evolucao), ranking_em: new Date().toISOString() })
       else if (ultima?.dados) {
         // Sem os CSVs de Respondentes: mantém o ranking dos cursos da última publicação, mas usa os números do passo 2
         const modalidades = { ...(ultima.dados.modalidades || {}) }
@@ -183,6 +183,11 @@ export default function AoVivoAdmin({ base }) {
         <a className="btn" href="#/panorama" target="_blank" rel="noreferrer">Ver a página aberta ↗</a>
       </section>
       {ultima && <div className="aviso">Última publicação: ciclo {ultima.ciclo}, em {new Date(ultima.publicado_em).toLocaleString('pt-BR')}.</div>}
+      {ultima && (!ultima.dados?.ranking_em || new Date() - new Date(ultima.dados.ranking_em) > 6 * 3600e3) && (
+        <div className="aviso erro" role="alert">
+          <b>O ranking dos cursos está desatualizado</b>{ultima.dados?.ranking_em ? ` (é de ${new Date(ultima.dados.ranking_em).toLocaleString('pt-BR')})` : ''}. Ele só muda com o CSV <b>Respondentes por curso</b> de cada modelo de oferta no passo 1 (no painel: filtro do modelo de oferta → quadro "Respondentes por curso" → Baixar CSV). Os CSVs de Respostas não atualizam o ranking.
+        </div>
+      )}
 
       <section className="card av-passo">
         <h2><span>1</span>CSVs de cada modelo de oferta</h2>
