@@ -19,6 +19,7 @@ import ProximaPublicada from '../components/ProximaPublicada.jsx'
 import ProximaParaTI from '../components/ProximaParaTI.jsx'
 import { baixarPlanilhaTI } from '../lib/planilhaTI.js'
 import BotaoFormatoTI from '../components/BotaoFormatoTI.jsx'
+import { baixarPdfInstrumento } from '../lib/pdfInstrumento.js'
 import './proxima.css'
 
 export default function ProximaCPA({ perfil, base }) {
@@ -830,18 +831,20 @@ function Documento({ ctx }) {
   const { itens, questionarios, proposta } = dados
   const semQ = itens.filter((i) => !i.questionario_id && entra(i))
   const prefMud = prefixosAlterados(dados.prefixos)
+  const [gerandoPdf, setGerandoPdf] = useState(false)
   return (
     <div className="card" style={{ gap: 20 }}>
       <div className="card-h no-print">
         <div className="t">
           <h2>Documento para o T.I</h2>
-          <p className="muted small">Textos literais, questionário por questionário e modalidade por modalidade, com o enunciado, a escala e o eixo/dimensão de cada pergunta. Use “Imprimir / PDF” para enviar.</p>
+          <p className="muted small">Textos literais, questionário por questionário e modalidade por modalidade, com o enunciado, a escala e o eixo/dimensão de cada pergunta. O “Baixar PDF” traz só as perguntas que entram (sem as que saem), com a logo e em poucas páginas: ideal para mandar por WhatsApp.</p>
         </div>
         <div className="spacer" />
         <div className="filtros" style={{ gap: 8 }}>
           <button className="btn" onClick={() => baixarPlanilhaTI(dados, nomes)}>Baixar Excel (com abas)</button>
             <BotaoFormatoTI dados={dados} />
-          <button className="btn escuro" onClick={() => window.print()}>Imprimir / PDF</button>
+          <button className="btn escuro" disabled={gerandoPdf} onClick={async () => { setGerandoPdf(true); try { await baixarPdfInstrumento(dados) } catch (e) { alert('Não foi possível gerar o PDF: ' + e.message) } finally { setGerandoPdf(false) } }}>{gerandoPdf ? 'Gerando…' : 'Baixar PDF (com a logo)'}</button>
+          <button className="btn" onClick={() => window.print()}>Imprimir</button>
         </div>
       </div>
       {proposta.status !== 'aprovada' && proposta.status !== 'enviada_ti' && (
