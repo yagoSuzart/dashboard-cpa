@@ -6,6 +6,7 @@ import { MODALIDADES_AO_VIVO, carregarPublico, fmtNum, fmtPct, pct } from '../li
 import { DIMENSOES, SATISFACAO } from '../lib/config.js'
 import GraficoEvolucao from '../components/GraficoEvolucao.jsx'
 import RespostasPublicas from '../components/RespostasPublicas.jsx'
+import ColabAoVivo from '../components/ColabAoVivo.jsx'
 import './painelPublico.css'
 
 const TOP = 5
@@ -62,6 +63,7 @@ export default function PainelPublico({ logado = false }) {
             {d?.respostas?.perguntas?.length > 0 && <a href="#respostas" onClick={(e) => { e.preventDefault(); document.getElementById('respostas')?.scrollIntoView({ behavior: 'smooth' }) }}>O que os alunos dizem</a>}
             <a href="#placar" onClick={(e) => { e.preventDefault(); document.getElementById('placar')?.scrollIntoView({ behavior: 'smooth' }) }}>Placar por modelo de oferta</a>
             {temHist && <a href="#historico" onClick={(e) => { e.preventDefault(); document.getElementById('historico')?.scrollIntoView({ behavior: 'smooth' }) }}>Resultados {hist.ciclo}</a>}
+            <a href="#colaboradores" onClick={(e) => { e.preventDefault(); document.getElementById('colaboradores')?.scrollIntoView({ behavior: 'smooth' }) }}>Docentes e ADM <span className="cv-tag">ao vivo</span></a>
             <a href="#acao" onClick={(e) => { e.preventDefault(); document.getElementById('acao')?.scrollIntoView({ behavior: 'smooth' }) }}>Do resultado à ação</a>
           </nav>
         </div>
@@ -112,6 +114,7 @@ export default function PainelPublico({ logado = false }) {
         </div>
       </section>
       <div className="pp-faixa">Ainda dá tempo! A avaliação da CPA ainda está disponível no UniFECAF ONE · responda e faça a sua voz virar ação.</div>
+      <ColabAoVivo />
 
       {g && (
         <>

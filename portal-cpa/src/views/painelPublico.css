@@ -176,3 +176,28 @@
 .rpp-barra i { display: flex; align-items: center; justify-content: center; font: 700 11px 'Roboto Condensed', sans-serif; font-style: normal; min-width: 2px; overflow: hidden; white-space: nowrap; }
 .rpp-nota-rod { font-size: 14px; margin-top: 18px; max-width: 900px; }
 @media (max-width: 860px) { .rpp-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* CPA Docentes e Administrativo, ao vivo */
+.cv-tag { font: 700 11px 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .06em; background: var(--pp-lima); color: #0a1a10; border-radius: 99px; padding: 2px 7px; margin-left: 4px; vertical-align: middle; }
+.cv { border-bottom: 1px solid var(--pp-linha); }
+.cv-pulso { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--pp-lima); margin-right: 10px; animation: cvp 1.6s ease-in-out infinite; }
+@keyframes cvp { 0%, 100% { box-shadow: 0 0 0 0 rgba(139,227,106,.6); } 50% { box-shadow: 0 0 0 8px rgba(139,227,106,0); } }
+@media (prefers-reduced-motion: reduce) { .cv-pulso { animation: none; } }
+.cv-kpis { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1.3fr; gap: 16px; margin-top: 26px; }
+.cv-k { display: flex; flex-direction: column; gap: 4px; }
+.cv-k small { font: 600 12px 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--pp-mut); }
+.cv-k b { font: 800 46px/1 Poppins, sans-serif; color: var(--pp-ink); margin-top: 4px; }
+.cv-k.grande b { font-size: 64px; color: var(--pp-lima); }
+.cv-k span { color: var(--pp-mut); font-size: 16px; }
+.cv-k em { font-style: normal; color: #f0a33a; font-weight: 700; font-size: 16px; }
+.cv-eixos { margin-top: 18px; display: flex; flex-direction: column; gap: 16px; }
+.cv-eixo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; align-items: center; padding-top: 14px; border-top: 1px solid var(--pp-linha); }
+.cv-eixo p { margin: 0; font: 600 18px Poppins, sans-serif; color: var(--pp-ink); }
+.cv-eixo p span { display: block; font: 600 12px 'IBM Plex Mono', monospace; color: var(--pp-mut); letter-spacing: .08em; text-transform: uppercase; }
+.cv-barras { display: flex; flex-direction: column; gap: 6px; }
+.cv-b { display: grid; grid-template-columns: 110px 1fr 64px; gap: 10px; align-items: center; font-size: 14px; color: var(--pp-mut); }
+.cv-b b { text-align: right; font: 700 15px Poppins, sans-serif; color: var(--pp-mut); }
+.cv-trilho { height: 10px; background: #0b1430; border-radius: 99px; overflow: hidden; }
+.cv-trilho i { display: block; height: 100%; border-radius: 99px; }
+.cv-espera { margin-top: 18px; }
+@media (max-width: 860px) { .cv-kpis { grid-template-columns: 1fr 1fr; } .cv-eixo { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
