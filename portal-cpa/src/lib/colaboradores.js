@@ -99,7 +99,7 @@ export const BLOCOS = [
           q('e4_lideranca', 'O apoio da sua liderança imediata ao seu trabalho', 6, 'tecnico'),
           q('e4_participacao', 'A sua autonomia e participação nas decisões dentro da sua área de atuação (setor e atividades)', 6),
           q('e4_reitoria', 'O trabalho da Reitoria', 6),
-          q('e4_financeiro', 'O equilíbrio financeiro da instituição (como é apresentado na Direx e compartilhado em ata)', 10),
+          q('e4_financeiro', 'O equilíbrio financeiro da instituição (comunicado no “Aconteceu na Direx!”)', 10),
           q('e4_obrigacoes', 'O cumprimento dos compromissos com os colaboradores (salários e benefícios)', 10),
         ],
       },
