@@ -1,44 +1,21 @@
-// Página aberta: CPA de Docentes e Técnico-administrativos, ao vivo. Os números vêm direto das respostas do Portal
-// (sem planilha) e a seção se atualiza sozinha a cada minuto. Só agregados; médias de um público só com 5+ respostas.
-import { useEffect, useState } from 'react'
-import { SUPABASE } from '../lib/config.js'
+// Página aberta: CPA de Docentes e Administrativo, ao vivo. Os números vêm direto das respostas do Portal
+// (sem planilha); os dados chegam por useColabAoVivo (atualiza a cada minuto). Só agregados; médias de um público só com 5+ respostas.
+import { deHoje, fmtPctColab, pctDe, quando } from '../lib/colabPublico.js'
 import { fmtNum } from '../lib/aoVivo.js'
 
-const MINUTO = 60 * 1000
 const nota = (v) => (v == null ? '—' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const hora = (s) => new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 const corNota = (v) => (v >= 4.3 ? '#8be36a' : v >= 4 ? '#b7f19c' : v >= 3.5 ? '#f0a33a' : '#ff8a5c')
 
-async function carregarColabPublico() {
-  const r = await fetch(`${SUPABASE.url}/rest/v1/rpc/colab_panorama_publico`, {
-    method: 'POST',
-    headers: { apikey: SUPABASE.chave, 'Content-Type': 'application/json' },
-    body: '{}',
-  })
-  if (!r.ok) throw new Error('HTTP ' + r.status)
-  return r.json()
-}
-
-export default function ColabAoVivo() {
-  const [d, setD] = useState(undefined)
-
-  useEffect(() => {
-    let vivo = true
-    const puxar = () => carregarColabPublico().then((x) => vivo && setD(x)).catch(() => vivo && setD((v) => v ?? null))
-    puxar()
-    const t = setInterval(puxar, MINUTO)
-    // Volta para a aba: atualiza na hora
-    const ver = () => document.visibilityState === 'visible' && puxar()
-    document.addEventListener('visibilitychange', ver)
-    return () => { vivo = false; clearInterval(t); document.removeEventListener('visibilitychange', ver) }
-  }, [])
-
+// d: o resultado de useColabAoVivo() (carregado uma vez na página)
+export default function ColabAoVivo({ d }) {
   if (!d) return null
   const doc = d.respostas?.docente || 0
   const tec = d.respostas?.tecnico || 0
   const total = doc + tec
-  const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
-  const deHoje = (d.por_dia || []).filter((x) => x.dia === hoje).reduce((s, x) => s + x.n, 0)
+  const hoje = deHoje(d)
+  const el = d.elegiveis || {}
+  const elTotal = (el.docente || 0) + (el.tecnico || 0)
   const maxEixo = 5
 
   return (
@@ -49,9 +26,9 @@ export default function ColabAoVivo() {
         <p className="pp-sub">Números direto do Portal, sem planilha: cada avaliação enviada aparece aqui em até um minuto.</p>
 
         <div className="cv-kpis">
-          <div className="pp-card cv-k grande"><b>{fmtNum(total)}</b><span>avaliações enviadas</span>{deHoje > 0 && <em>+{fmtNum(deHoje)} hoje</em>}</div>
-          <div className="pp-card cv-k"><small>Corpo docente</small><b>{fmtNum(doc)}</b><span>professores</span></div>
-          <div className="pp-card cv-k"><small>Técnico-administrativo</small><b>{fmtNum(tec)}</b><span>colaboradores</span></div>
+          <div className="pp-card cv-k grande"><b>{fmtNum(total)}</b><span>avaliações enviadas</span>{elTotal > 0 && <span>{fmtPctColab(pctDe(total, elTotal))} de {fmtNum(elTotal)} colaboradores</span>}{hoje > 0 && <em>+{fmtNum(hoje)} hoje</em>}</div>
+          <div className="pp-card cv-k"><small>Docentes</small><b>{fmtNum(doc)}</b><span>{el.docente ? `${fmtPctColab(pctDe(doc, el.docente))} de ${fmtNum(el.docente)} professores` : 'professores'}</span></div>
+          <div className="pp-card cv-k"><small>Administrativo</small><b>{fmtNum(tec)}</b><span>{el.tecnico ? `${fmtPctColab(pctDe(tec, el.tecnico))} de ${fmtNum(el.tecnico)} colaboradores` : 'colaboradores'}</span></div>
           <div className="pp-card cv-k"><small>Recomendaria como lugar para trabalhar</small>
             {d.nps ? <><b>{d.nps.todos > 0 ? '+' : ''}{d.nps.todos}</b><span>NPS · média {String(d.nps.media).replace('.', ',')} de 10</span></> : <><b>—</b><span>aparece com 5 avaliações</span></>}
           </div>
@@ -80,7 +57,7 @@ export default function ColabAoVivo() {
         )}
 
         <p className="pp-atual">
-          {d.aberta ? 'Avaliação aberta' : 'Avaliação encerrada'}{d.fecha_em ? ` até ${new Date(d.fecha_em + 'T12:00').toLocaleDateString('pt-BR')}` : ''}
+          {d.aberta ? 'Avaliação aberta' : d.abre_em && new Date(d.abre_em) > new Date() ? `A avaliação abre ${quando(d.abre_em)}` : 'Avaliação encerrada'}{d.fecha_em ? ` até ${new Date(d.fecha_em + 'T12:00').toLocaleDateString('pt-BR')}` : ''}
           {d.ultima ? ` · última avaliação recebida em ${hora(d.ultima)}` : ''} · atualiza sozinho a cada minuto
         </p>
       </div>

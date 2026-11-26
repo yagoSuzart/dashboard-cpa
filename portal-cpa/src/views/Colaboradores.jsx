@@ -1,11 +1,11 @@
-// CPA do corpo docente e do corpo técnico-administrativo, dentro do Portal.
+// CPA dos docentes e do administrativo, dentro do Portal.
 // Só Gestor(a) Técnico(a), Coordenação da CPA e Pró-Reitoria veem (o banco também garante isso).
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  GERE_COLAB, MIN_GRUPO, PUBLICOS, atualizarCampanha, carregarRespostas, instrumentoDe,
+  GERE_COLAB, MIN_GRUPO, PUBLICOS, atualizarCampanha, carregarAuditoria, carregarRespostas, contarRespostas, estadoCampanha, instrumentoDe, zerarRespostas,
   comentarioDoBloco, criarCampanha, csvRespostas, linkDaCampanha, listarCampanhas, mediaDeGrupo, perguntasFechadas, resumoPergunta,
 } from '../lib/colaboradores.js'
-import { fmtInt, fmtNota, textoComentario } from '../lib/cpa.js'
+import { fmtInt, fmtNota } from '../lib/cpa.js'
 import { Carregando, Erro, Vazio } from '../components/ui.jsx'
 import ColabEditor from '../components/ColabEditor.jsx'
 import './colaboradores.css'
@@ -33,7 +33,7 @@ export default function Colaboradores({ perfil }) {
     <>
       <section className="cab">
         <div className="txt">
-          <div className="eyebrow">CPA · corpo docente e técnico-administrativo</div>
+          <div className="eyebrow">CPA · docentes e administrativo</div>
           <h1>A avaliação de quem faz a UniFECAF.</h1>
           <p className="muted">Link público e anônimo, fora do ambiente do aluno. Os resultados ficam só aqui, para a Coordenação da CPA, a Pró-Reitoria e a gestão técnica.</p>
         </div>
@@ -64,7 +64,7 @@ function SemCampanha({ gere, onIr }) {
   return (
     <div className="card" style={{ alignItems: 'flex-start' }}>
       <h2>Ainda não há um período aberto.</h2>
-      <p className="muted">{gere ? 'Crie o período em “Link e período” para gerar o link que vai para os professores e para o corpo técnico-administrativo.' : 'A Coordenação da CPA abre o período e gera o link.'}</p>
+      <p className="muted">{gere ? 'Crie o período em “Link e período” para gerar o link que vai para os professores e para o administrativo.' : 'A Coordenação da CPA abre o período e gera o link.'}</p>
       {gere && <button className="btn escuro" onClick={onIr}>Criar o período</button>}
     </div>
   )
@@ -79,7 +79,7 @@ function QuestionarioSemPeriodo({ perfil, gere, onCriado }) {
     setErro(null)
     try {
       const ano = new Date().getFullYear()
-      const c = await criarCampanha(`CPA ${ano} · Docentes e técnico-administrativos`, `${ano}.${new Date().getMonth() < 6 ? 1 : 2}`, '', perfil.id)
+      const c = await criarCampanha(`CPA ${ano} · Docentes e Administrativo`, `${ano}.${new Date().getMonth() < 6 ? 1 : 2}`, '', perfil.id)
       await onCriado(c)
     } catch (e) {
       setErro(e)
@@ -141,7 +141,7 @@ function Resultados({ camp }) {
     <>
       <div className="filtros">
         <div className="seg" role="group" aria-label="Público">
-          {[['', 'Todos'], ['docente', 'Docentes'], ['tecnico', 'Técnico-administrativos']].map(([k, t]) => (
+          {[['', 'Todos'], ['docente', 'Docentes'], ['tecnico', 'Administrativo']].map(([k, t]) => (
             <button key={k} aria-pressed={pub === k} onClick={() => setPub(k)}>{t}</button>
           ))}
         </div>
@@ -179,7 +179,7 @@ function PorEixo({ inst, lista, resp, pub }) {
   const comparar = !pub && doc.length >= MIN_GRUPO && tec.length >= MIN_GRUPO
   return (
     <section className="card">
-      <div className="card-h"><div className="t"><h2>Por eixo</h2><p className="muted small">Média de 1 a 5, sem contar “Não sei / Não se aplica”.{comparar ? ' Ao lado, docentes e técnico-administrativos separados.' : ''}</p></div></div>
+      <div className="card-h"><div className="t"><h2>Por eixo</h2><p className="muted small">Média de 1 a 5, sem contar “Não sei / Não se aplica”.{comparar ? ' Ao lado, docentes e administrativo separados.' : ''}</p></div></div>
       <div className="cb-eixos">
         {inst.blocos.map((b) => {
           const perg = perguntasFechadas(inst, pub || undefined).filter((p) => p.bloco.id === b.id && p.escala === 'satisfacao')
@@ -264,7 +264,7 @@ function Comentarios({ inst, lista, filtro, setFiltro }) {
       <ul className="cb-coment">
         {vis.map((x, i) => (
           <li key={x.r.id + x.f.id + i}>
-            <p>{textoComentario(x.texto)}</p>
+            <p>{String(x.texto)}</p>
             <span className="small muted">{PUBLICOS[x.r.publico]?.t} · {x.f.t}</span>
           </li>
         ))}
@@ -276,7 +276,7 @@ function Comentarios({ inst, lista, filtro, setFiltro }) {
 /* ---------------- link e período ---------------- */
 function Links({ campanhas, perfil, gere, onMudou, onSel }) {
   const ano = new Date().getFullYear()
-  const [f, setF] = useState({ titulo: `CPA ${ano} · Docentes e técnico-administrativos`, ciclo: `${ano}.${new Date().getMonth() < 6 ? 1 : 2}`, fecha: '', copiar: true })
+  const [f, setF] = useState({ titulo: `CPA ${ano} · Docentes e Administrativo`, ciclo: `${ano}.${new Date().getMonth() < 6 ? 1 : 2}`, fecha: '', copiar: true })
   const [msg, setMsg] = useState(null)
   const [ocupado, setOcupado] = useState(false)
 
@@ -312,7 +312,7 @@ function Links({ campanhas, perfil, gere, onMudou, onSel }) {
     }
   }
   const convite = (c) =>
-    `Olá! A Comissão Própria de Avaliação (CPA) da UniFECAF convida você, professor(a) ou colaborador(a) técnico-administrativo, a participar da autoavaliação institucional. É anônima e leva cerca de 10 minutos: ${linkDaCampanha(c)}`
+    `Olá! A Comissão Própria de Avaliação (CPA) da UniFECAF convida você, professor(a) ou colaborador(a) do administrativo, a participar da avaliação institucional. É anônima e leva cerca de 10 minutos: ${linkDaCampanha(c)}`
 
   return (
     <>
@@ -326,7 +326,7 @@ function Links({ campanhas, perfil, gere, onMudou, onSel }) {
               <h2>{c.titulo}</h2>
             </div>
             <div className="spacer" />
-            <span className={'selo ' + (c.aberta ? 'verde' : 'cinza')}>{c.aberta ? 'aberta para respostas' : 'fechada'}</span>
+            {(() => { const e = estadoCampanha(c); return <span className={'selo ' + (e.k === 'aberta' ? 'verde' : e.k === 'agendada' ? 'laranja' : 'cinza')}>{e.t}</span> })()}
             {c.fecha_em && <span className="selo cinza">até {new Date(c.fecha_em + 'T12:00').toLocaleDateString('pt-BR')}</span>}
           </div>
           <div className="cb-link">
@@ -335,12 +335,15 @@ function Links({ campanhas, perfil, gere, onMudou, onSel }) {
             <button className="btn sm" onClick={() => copiar(c)}>Copiar link</button>
             <a className="btn sm" href={'https://wa.me/?text=' + encodeURIComponent(convite(c))} target="_blank" rel="noreferrer">Enviar no WhatsApp</a>
           </div>
-          <p className="small muted">O mesmo link serve para professores e técnico-administrativos: a primeira pergunta é “você é…”. Cada público vê só as perguntas dele.</p>
+          <p className="small muted">O mesmo link serve para professores e administrativo: a primeira pergunta é “você é…”. Cada público vê só as perguntas dele.</p>
+          {gere && <Controle c={c} onMudou={onMudou} setMsg={setMsg} />}
           {gere && (
             <div className="filtros">
               {c.aberta
                 ? <button className="btn" onClick={() => mudar(c, { aberta: false }, 'Período fechado. O link passa a mostrar “avaliação fechada”.')}>Fechar para respostas</button>
                 : <button className="btn escuro" onClick={() => mudar(c, { aberta: true }, 'Período aberto. Já pode mandar o link.')}>Abrir para respostas</button>}
+              <label className="small" htmlFor={'ab-' + c.id}>Abre automaticamente em</label>
+              <input id={'ab-' + c.id} type="datetime-local" className="input" style={{ height: 36, fontSize: 13, width: 210 }} value={c.abre_em ? paraLocal(c.abre_em) : ''} onChange={(e) => mudar(c, { abre_em: e.target.value ? new Date(e.target.value).toISOString() : null }, e.target.value ? 'Abertura programada salva: antes disso, só a Coordenação da CPA (logada) consegue responder, em modo teste.' : 'Abertura programada removida.')} />
               <label className="small" htmlFor={'fe-' + c.id}>Fecha automaticamente em</label>
               <input id={'fe-' + c.id} type="date" className="input" style={{ height: 36, fontSize: 13, width: 170 }} value={c.fecha_em || ''} onChange={(e) => mudar(c, { fecha_em: e.target.value || null }, 'Data de encerramento salva.')} />
             </div>
@@ -365,5 +368,98 @@ function Links({ campanhas, perfil, gere, onMudou, onSel }) {
         </section>
       )}
     </>
+  )
+}
+
+// datetime-local precisa de "AAAA-MM-DDTHH:MM" no horário do aparelho
+function paraLocal(iso) {
+  const d = new Date(iso)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+/* ---------------- controle do período (Coordenação da CPA) ---------------- */
+// Elegíveis (para a % de participação na página aberta), zerar respostas de teste e o histórico do período
+function Controle({ c, onMudou, setMsg }) {
+  const [n, setN] = useState(null)
+  const [aud, setAud] = useState(null)
+  const [el, setEl] = useState({ docente: c.elegiveis_docente ?? '', tecnico: c.elegiveis_tecnico ?? '' })
+  const [zerando, setZerando] = useState(false)
+  const [palavra, setPalavra] = useState('')
+  const [ocupado, setOcupado] = useState(false)
+
+  const recarregar = useCallback(() => {
+    contarRespostas(c.id).then(setN).catch(() => setN(null))
+    carregarAuditoria(c.id).then(setAud).catch(() => setAud([]))
+  }, [c.id])
+  useEffect(() => { recarregar() }, [recarregar, c])
+
+  const salvarEl = async () => {
+    try {
+      const num = (v) => (v === '' || v == null ? null : Math.max(0, parseInt(String(v).replace(/\D/g, ''), 10) || 0))
+      await atualizarCampanha(c.id, { elegiveis_docente: num(el.docente), elegiveis_tecnico: num(el.tecnico) })
+      await onMudou()
+      setMsg({ tipo: 'ok', txt: 'Número de elegíveis salvo: a página aberta já mostra a % de participação.' })
+    } catch (e) {
+      setMsg({ tipo: 'erro', txt: e.message })
+    }
+  }
+  const zerar = async () => {
+    setOcupado(true)
+    try {
+      const apagadas = await zerarRespostas(c.id, palavra.trim())
+      setZerando(false)
+      setPalavra('')
+      recarregar()
+      await onMudou()
+      setMsg({ tipo: 'ok', txt: `Pronto: ${apagadas} ${apagadas === 1 ? 'resposta apagada' : 'respostas apagadas'}. O período começa do zero (fica registrado no histórico).` })
+    } catch (e) {
+      setMsg({ tipo: 'erro', txt: e.message })
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  return (
+    <div className="cb-controle">
+      <div className="cb-ctl-linha">
+        <b>Respostas gravadas:</b> <span>{n == null ? '…' : fmtInt(n)}</span>
+        <span className="small muted">· respostas não podem ser alteradas por ninguém; só o botão abaixo apaga, e fica registrado.</span>
+      </div>
+      <div className="cb-ctl-linha">
+        <b>Elegíveis</b>
+        <label className="small" htmlFor={'eld-' + c.id}>Docentes</label>
+        <input id={'eld-' + c.id} className="input" inputMode="numeric" style={{ width: 110, height: 36 }} value={el.docente} onChange={(e) => setEl({ ...el, docente: e.target.value.replace(/\D/g, '') })} />
+        <label className="small" htmlFor={'elt-' + c.id}>Administrativo</label>
+        <input id={'elt-' + c.id} className="input" inputMode="numeric" style={{ width: 110, height: 36 }} value={el.tecnico} onChange={(e) => setEl({ ...el, tecnico: e.target.value.replace(/\D/g, '') })} />
+        <button className="btn sm" onClick={salvarEl}>Salvar elegíveis</button>
+      </div>
+      <div className="cb-ctl-linha">
+        {!zerando ? (
+          <button className="btn sm cb-perigo" disabled={!n} onClick={() => setZerando(true)}>Zerar respostas deste período…</button>
+        ) : (
+          <>
+            <span className="small"><b>Apagar as {fmtInt(n || 0)} respostas</b> (notas e comentários) deste período? Não tem volta. Digite <b>ZERAR</b>:</span>
+            <input className="input" style={{ width: 120, height: 36 }} value={palavra} onChange={(e) => setPalavra(e.target.value)} aria-label="Digite ZERAR para confirmar" />
+            <button className="btn sm cb-perigo" disabled={ocupado || palavra.trim() !== 'ZERAR'} onClick={zerar}>{ocupado ? 'Zerando…' : 'Zerar agora'}</button>
+            <button className="btn sm" onClick={() => { setZerando(false); setPalavra('') }}>Cancelar</button>
+          </>
+        )}
+      </div>
+      {aud?.length > 0 && (
+        <details className="cb-aud">
+          <summary className="small">Histórico do período ({aud.length})</summary>
+          <ul>
+            {aud.map((a) => (
+              <li key={a.id} className="small">
+                <span className="muted">{new Date(a.em).toLocaleString('pt-BR')}</span> · {a.acao}
+                {a.detalhe?.apagadas != null ? ` (${a.detalhe.apagadas})` : ''}
+                {a.acao === 'mudou as datas' ? ` (abre: ${a.detalhe.abre_em ? new Date(a.detalhe.abre_em).toLocaleString('pt-BR') : '—'} · fecha: ${a.detalhe.fecha_em || '—'})` : ''}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
   )
 }

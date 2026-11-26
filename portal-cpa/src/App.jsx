@@ -210,7 +210,7 @@ export default function App() {
           itens: [
             ...(GERE_AO_VIVO.includes(r) ? [{ k: 'ao-vivo', t: 'Atualizar números da CPA' }] : []),
             ...(LE_PROPOSTA.includes(r) ? [{ k: 'proxima', t: 'Próxima CPA' }] : []),
-            ...(VE_COLAB.includes(r) ? [{ k: 'colaboradores', t: 'CPA Docentes e Técnicos' }] : []),
+            ...(VE_COLAB.includes(r) ? [{ k: 'colaboradores', t: 'CPA Docentes e Administrativo' }] : []),
             ...(podeImportar ? [{ k: 'importar', t: 'Importar respostas' }] : []),
             ...(r === 'admin' ? [{ k: 'admin', t: 'Administração' }] : []),
           ],

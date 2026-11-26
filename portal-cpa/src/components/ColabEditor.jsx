@@ -1,6 +1,7 @@
-// Editor do questionário da CPA de docentes e técnico-administrativos (como na Próxima CPA):
+// Editor do questionário da CPA de docentes e administrativo (como na Próxima CPA):
 // editar texto, público e dimensão, reordenar, excluir e acrescentar perguntas, seções e abertas.
-// Cada período tem o seu questionário; depois da primeira resposta ele fica travado (o banco também trava).
+// Cada período tem o seu questionário. Com respostas, os textos continuam editáveis; a estrutura (acrescentar,
+// excluir, público, escala) só sem respostas (o banco também garante).
 import { useEffect, useId, useState } from 'react'
 import {
   ESCALAS_COLAB, INSTRUMENTO_PADRAO, PUBLICOS, TEXTO_COMENTARIO, contarRespostas, instrumentoDe, novoId, novoInstrumento,
@@ -11,7 +12,7 @@ import { leitura as lidoJunto, naoEncaixa } from '../lib/concordancia.js'
 import { SelosEixoDim } from './ProximaSelos.jsx'
 
 const copia = (x) => JSON.parse(JSON.stringify(x))
-const PUB_OPCOES = [['ambos', 'Docentes e técnicos'], ['docente', 'Só docentes'], ['tecnico', 'Só técnico-administrativos']]
+const PUB_OPCOES = [['ambos', 'Docentes e administrativo'], ['docente', 'Só docentes'], ['tecnico', 'Só administrativo']]
 const PREFIXOS = ['Qual o seu grau de satisfação com:', 'Qual o seu nível de conhecimento sobre:']
 
 export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = false }) {
@@ -32,6 +33,8 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
   }, [camp.id, leitura])
 
   const travado = leitura || !gere || nResp == null || nResp > 0
+  // Texto: dá para corrigir mesmo com respostas (as respostas são guardadas pelo código da pergunta)
+  const travaTexto = leitura || !gere || nResp == null
   const salvar = async (novo, txt) => {
     const antes = inst
     setInst(novo)
@@ -62,10 +65,10 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
     const linhas = [['Seção', 'Enunciado', 'Pergunta', 'Público', 'Eixo', 'Dimensão', 'Escala']]
     for (const b of inst.blocos) {
       for (const g of b.grupos) for (const p of g.perguntas) linhas.push([b.titulo, g.prefixo, p.texto, PUB_OPCOES.find(([k]) => k === p.p)?.[1], 'Eixo ' + b.eixo, p.dim ? 'D' + p.dim + ' · ' + DIMS[p.dim] : '', g.escala === 'conhecimento' ? '1 a 5 (conhecimento) + Prefiro não responder' : '1 a 5 + Não sei / Não se aplica'])
-      linhas.push([b.titulo, '', TEXTO_COMENTARIO, 'Docentes e técnicos', '', '', 'Aberta (opcional)'])
+      linhas.push([b.titulo, '', TEXTO_COMENTARIO, 'Docentes e administrativo', '', '', 'Aberta (opcional)'])
     }
-    linhas.push(['Para fechar', '', inst.final.nps.texto, 'Docentes e técnicos', '', '', '0 a 10'])
-    for (const a of inst.final.abertas) linhas.push(['Para fechar', '', a.texto, 'Docentes e técnicos', '', '', 'Aberta (opcional)'])
+    linhas.push(['Para fechar', '', inst.final.nps.texto, 'Docentes e administrativo', '', '', '0 a 10'])
+    for (const a of inst.final.abertas) linhas.push(['Para fechar', '', a.texto, 'Docentes e administrativo', '', '', 'Aberta (opcional)'])
     const esc = (v) => { const s = v == null ? '' : String(v); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s }
     const url = URL.createObjectURL(new Blob(['﻿' + linhas.map((l) => l.map(esc).join(';')).join('\n')], { type: 'text/csv;charset=utf-8' }))
     const a = document.createElement('a')
@@ -83,17 +86,17 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
     <>
       <div className="filtros">
         <div className="seg" role="group" aria-label="Mostrar perguntas de">
-          {[['', 'Todas'], ['docente', 'Como o docente vê'], ['tecnico', 'Como o técnico vê']].map(([k, t]) => (
+          {[['', 'Todas'], ['docente', 'Como o docente vê'], ['tecnico', 'Como o administrativo vê']].map(([k, t]) => (
             <button key={k} aria-pressed={ver === k} onClick={() => setVer(k)}>{t}</button>
           ))}
         </div>
-        <span className="small muted">Docentes: {nDoc} fechadas · Técnicos: {nTec} fechadas · + satisfação geral (0 a 10) e {abertasTotal} abertas (opcionais)</span>
+        <span className="small muted">Docentes: {nDoc} fechadas · Administrativo: {nTec} fechadas · + satisfação geral (0 a 10) e {abertasTotal} abertas (opcionais)</span>
         <span style={{ flex: 1 }} />
         <a className="btn sm" href={leitura ? '#/avaliar/previa' : '#/avaliar/previa.' + camp.codigo} target="_blank" rel="noreferrer">Ver como a pessoa responde ↗</a>
         <button className="btn sm" onClick={baixar}>Baixar para revisar (CSV)</button>
       </div>
 
-      {nResp > 0 && <div className="aviso">Este período já tem {nResp} {nResp === 1 ? 'resposta' : 'respostas'}: o questionário ficou travado para não misturar resultados. Para mudar, crie um novo período em “Link e período”.</div>}
+      {nResp > 0 && gere && !leitura && <div className="aviso">Este período já tem {nResp} {nResp === 1 ? 'resposta' : 'respostas'}: dá para <b>corrigir textos</b> (perguntas, enunciados, títulos), mas não acrescentar, excluir ou trocar público e escala. Se forem respostas de teste, zere-as em “Link e período” e tudo volta a ficar editável.</div>}
       {!gere && !leitura && <div className="aviso">Só a Coordenação da CPA edita o questionário. Aqui você vê a versão deste período.</div>}
       {!travado && <div className="aviso ok">Você pode editar à vontade enquanto ninguém respondeu. Cada mudança é salva na hora{salvando ? '… salvando' : '.'}</div>}
       {msg && <div className={'aviso ' + msg.tipo} role="status">{msg.txt}</div>}
@@ -103,7 +106,7 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
           <div className="card-h">
             <div className="t">
               <span className="eyebrow">Eixo {b.eixo} · seção {bi + 1}</span>
-              <TextoEditavel valor={b.titulo} travado={travado} rotulo="Título da seção" grande onSalvar={(t) => mudar((n) => { n.blocos[bi].titulo = t }, 'Título da seção salvo.')} />
+              <TextoEditavel valor={b.titulo} travado={travaTexto} rotulo="Título da seção" grande onSalvar={(t) => mudar((n) => { n.blocos[bi].titulo = t }, 'Título da seção salvo.')} />
             </div>
             <div className="spacer" />
             {!travado && (
@@ -123,7 +126,7 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
             <div key={gi} className="ce-grupo">
               <div className="ce-grupo-cab">
                 {g.subtitulo && <b>{g.subtitulo}</b>}
-                <TextoEditavel valor={g.prefixo} travado={travado} rotulo="Enunciado (prefixo)" classe="cb-prefixo" sugestoes={PREFIXOS} onSalvar={(t) => mudar((n) => { n.blocos[bi].grupos[gi].prefixo = t }, 'Enunciado salvo.')} />
+                <TextoEditavel valor={g.prefixo} travado={travaTexto} rotulo="Enunciado (prefixo)" classe="cb-prefixo" sugestoes={PREFIXOS} onSalvar={(t) => mudar((n) => { n.blocos[bi].grupos[gi].prefixo = t }, 'Enunciado salvo.')} />
                 <div className="filtros" style={{ gap: 8 }}>
                   <span className="small muted">Escala: 1 = {ESCALAS_COLAB[g.escala].ancoras[0]} · 5 = {ESCALAS_COLAB[g.escala].ancoras[1]} · “{ESCALAS_COLAB[g.escala].na}” fora da média</span>
                   {!travado && (
@@ -140,7 +143,7 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
               <ol className="ce-lista">
                 {g.perguntas.map((p, pi) => visivel(p) && (
                   <li key={p.id} className="ce-q">
-                    <TextoEditavel valor={p.texto} travado={travado} rotulo="Texto da pergunta" onSalvar={(t) => mudar((n) => { n.blocos[bi].grupos[gi].perguntas[pi].texto = t }, 'Pergunta salva.')} />
+                    <TextoEditavel valor={p.texto} travado={travaTexto} rotulo="Texto da pergunta" onSalvar={(t) => mudar((n) => { n.blocos[bi].grupos[gi].perguntas[pi].texto = t }, 'Pergunta salva.')} />
                     <span className="small" style={{ color: 'var(--blue-ink)' }}>Lido junto: “{lidoJunto(g.prefixo, p.texto)}”</span>
                     <div className="chips" style={{ gap: 6 }}>
                       {naoEncaixa(g.prefixo, p.texto) && <span className="selo laranja">não encaixa no enunciado</span>}
@@ -174,13 +177,13 @@ export default function ColabEditor({ camp, perfil, gere, onSalvo, leitura = fal
       <section className="card ce-bloco">
         <div className="card-h"><div className="t"><span className="eyebrow">Para fechar</span><h2>Satisfação geral e perguntas abertas</h2></div></div>
         <div className="ce-q">
-          <TextoEditavel valor={inst.final.nps.texto} travado={travado} rotulo="Pergunta de 0 a 10" onSalvar={(t) => mudar((n) => { n.final.nps.texto = t }, 'Pergunta de satisfação geral salva.')} />
+          <TextoEditavel valor={inst.final.nps.texto} travado={travaTexto} rotulo="Pergunta de 0 a 10" onSalvar={(t) => mudar((n) => { n.final.nps.texto = t }, 'Pergunta de satisfação geral salva.')} />
           <span className="small muted">Nota de 0 a 10 (obrigatória)</span>
         </div>
         <ol className="ce-lista">
           {inst.final.abertas.map((a, ai) => (
             <li key={a.id} className="ce-q">
-              <TextoEditavel valor={a.texto} travado={travado} rotulo="Pergunta aberta" onSalvar={(t) => mudar((n) => { n.final.abertas[ai].texto = t }, 'Pergunta aberta salva.')} />
+              <TextoEditavel valor={a.texto} travado={travaTexto} rotulo="Pergunta aberta" onSalvar={(t) => mudar((n) => { n.final.abertas[ai].texto = t }, 'Pergunta aberta salva.')} />
               <span className="small muted">Aberta (opcional)</span>
               {!travado && (
                 <div className="filtros ce-acoes">

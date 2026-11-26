@@ -7,6 +7,8 @@ import { DIMENSOES, SATISFACAO } from '../lib/config.js'
 import GraficoEvolucao from '../components/GraficoEvolucao.jsx'
 import RespostasPublicas from '../components/RespostasPublicas.jsx'
 import ColabAoVivo from '../components/ColabAoVivo.jsx'
+import HeroColab from '../components/HeroColab.jsx'
+import { useColabAoVivo } from '../lib/colabPublico.js'
 import './painelPublico.css'
 
 const TOP = 5
@@ -20,6 +22,8 @@ export default function PainelPublico({ logado = false }) {
   const [erro, setErro] = useState(false)
   const [modo, setModo] = useState('adesao') // adesao | alunos
   const [aberto, setAberto] = useState({})
+  const [topo, setTopo] = useState('alunos') // alunos | colab
+  const colab = useColabAoVivo()
 
   useEffect(() => {
     let vivo = true
@@ -81,7 +85,13 @@ export default function PainelPublico({ logado = false }) {
             </div>
           </div>
           <div className="pp-vivo">
-            {erro ? (
+            <div className="hc-abas" role="tablist" aria-label="Quem está avaliando">
+              <button role="tab" aria-selected={topo === 'alunos'} onClick={() => setTopo('alunos')}>Alunos</button>
+              <button role="tab" aria-selected={topo === 'colab'} onClick={() => setTopo('colab')}>Docentes e ADM <span className="cv-tag">ao vivo</span></button>
+            </div>
+            {topo === 'colab' ? (
+              <HeroColab d={colab} />
+            ) : erro ? (
               <p className="pp-mut">Não foi possível carregar os números agora. Tente de novo em instantes.</p>
             ) : !d ? (
               <p className="pp-mut">Carregando…</p>
@@ -114,7 +124,7 @@ export default function PainelPublico({ logado = false }) {
         </div>
       </section>
       <div className="pp-faixa">Ainda dá tempo! A avaliação da CPA ainda está disponível no UniFECAF ONE · responda e faça a sua voz virar ação.</div>
-      <ColabAoVivo />
+      <ColabAoVivo d={colab} />
 
       {g && (
         <>

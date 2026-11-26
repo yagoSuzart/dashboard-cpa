@@ -92,3 +92,5 @@
   .av-hero-form { padding: 28px 16px 40px; }
   .av-hero-caixa h2 { font-size: 28px; }
 }
+
+.av-teste { background: #fff4dc; border: 1px solid #f0c36a; color: #6b4a00; border-radius: 12px; padding: 10px 14px; font-size: 14px; font-weight: 600; margin: 12px auto; max-width: 760px; }

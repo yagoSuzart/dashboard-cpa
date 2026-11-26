@@ -61,3 +61,11 @@
   .ce-txt { flex-direction: column; }
   .ce-sel { max-width: 100%; flex: 1 1 100%; }
 }
+
+/* Controle do período */
+.cb-controle { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 12px; background: #f6f8fb; }
+.cb-ctl-linha { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cb-perigo { border-color: #c2410c; color: #9a3412; }
+.cb-perigo:not(:disabled):hover { background: #fff1ea; }
+.cb-aud ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.cmt-texto, .cb-coment p { white-space: pre-wrap; }

@@ -1,4 +1,4 @@
-// CPA do corpo docente e do corpo técnico-administrativo.
+// CPA dos docentes e do administrativo.
 // O questionário parte do instrumento anterior (Excelente / Regular / Insuficiente / Inexistente)
 // e segue o mesmo formato da CPA dos alunos: prefixo + escala de 1 a 5, com "Não sei / Não se aplica"
 // contado à parte (fora da média), um comentário aberto por eixo e a satisfação geral de 0 a 10.
@@ -9,7 +9,7 @@ export const GERE_COLAB = ['admin', 'diretor_cpa']
 
 export const PUBLICOS = {
   docente: { t: 'Corpo docente', curto: 'Docentes', eu: 'Sou professor(a)' },
-  tecnico: { t: 'Corpo técnico-administrativo', curto: 'Técnico-administrativos', eu: 'Sou do corpo técnico-administrativo' },
+  tecnico: { t: 'Administrativo', curto: 'Administrativo', eu: 'Sou do administrativo' },
 }
 
 export const NAO_SEI = 6
@@ -34,9 +34,9 @@ export const BLOCOS = [
       {
         prefixo: SATISFACAO, escala: 'satisfacao',
         perguntas: [
-          q('e1_autoavaliacao', 'O processo de autoavaliação institucional (CPA) da UniFECAF', 8),
+          q('e1_autoavaliacao', 'O processo de avaliação institucional da UniFECAF', 8),
           q('e1_divulgacao', 'A divulgação dos resultados da CPA para a comunidade acadêmica', 8),
-          q('e1_melhorias', 'As melhorias realizadas pela instituição a partir dos resultados da avaliação', 8),
+          q('e1_melhorias', 'As melhorias realizadas a partir dos resultados da avaliação institucional', 8),
         ],
       },
     ],
@@ -47,7 +47,7 @@ export const BLOCOS = [
       {
         prefixo: CONHECIMENTO, escala: 'conhecimento',
         perguntas: [
-          q('e2_missao', 'A missão, a visão e os valores da UniFECAF', 1),
+          q('e2_missao', 'A Missão, Visão e os Princípios da UniFECAF', 1),
           q('e2_pdi', 'O Plano de Desenvolvimento Institucional (PDI)', 1),
           q('e2_ppc', 'O Projeto Pedagógico (PPC) dos cursos em que você leciona', 1, 'docente'),
           q('e2_cursos', 'Os cursos oferecidos pela UniFECAF e seus diferenciais', 1, 'tecnico'),
@@ -77,7 +77,7 @@ export const BLOCOS = [
           q('e3_pos_ead', 'A oferta de cursos de pós-graduação EAD', 2),
           q('e3_recursos', 'Os recursos e metodologias disponíveis para as suas aulas (plataforma, materiais, laboratórios)', 2, 'docente'),
           q('e3_pesquisa', 'Os incentivos à pesquisa, à extensão e à produção acadêmica', 2, 'docente'),
-          q('e3_comunicacao', 'Os canais de comunicação internos e externos (e-mail, grupos de WhatsApp, Instagram, portal, calendários)', 4),
+          q('e3_comunicacao', 'Os canais de comunicação internos e externos (InCicle, e-mail, grupos de WhatsApp, Instagram)', 4),
           q('e3_site', 'O site da UniFECAF', 4),
           q('e3_apoio_aluno', 'O atendimento e o apoio oferecidos aos alunos (secretaria, financeiro, apoio psicopedagógico)', 9),
         ],
@@ -97,9 +97,9 @@ export const BLOCOS = [
           q('e4_clima', 'O clima de trabalho', 5),
           q('e4_coordenacao', 'O apoio da coordenação do curso ao seu trabalho', 6, 'docente'),
           q('e4_lideranca', 'O apoio da sua liderança imediata ao seu trabalho', 6, 'tecnico'),
-          q('e4_participacao', 'A sua participação nas decisões que afetam o seu trabalho', 6),
+          q('e4_participacao', 'A sua autonomia e participação nas decisões dentro da sua área de atuação (setor e atividades)', 6),
           q('e4_reitoria', 'O trabalho da Reitoria', 6),
-          q('e4_financeiro', 'O equilíbrio financeiro da instituição', 10),
+          q('e4_financeiro', 'O equilíbrio financeiro da instituição (como é apresentado na Direx e compartilhado em ata)', 10),
           q('e4_obrigacoes', 'O cumprimento dos compromissos com os colaboradores (salários e benefícios)', 10),
         ],
       },
@@ -228,6 +228,29 @@ export async function carregarRespostas(campanhaId) {
     if (data.length < 1000) break
   }
   return out
+}
+
+// Zerar as respostas de um período (só admin/Coordenação da CPA; o banco pede a palavra ZERAR e registra na auditoria)
+export async function zerarRespostas(campanhaId, confirma) {
+  const { data, error } = await sb.rpc('colab_zerar', { p_campanha: campanhaId, p_confirma: confirma })
+  if (error) throw error
+  return data
+}
+
+// Histórico do período: quem abriu, fechou, mudou datas, editou o questionário ou zerou respostas
+export async function carregarAuditoria(campanhaId) {
+  const { data, error } = await sb.from('cpa_colab_auditoria').select('*').eq('campanha_id', campanhaId).order('em', { ascending: false }).limit(50)
+  if (error) throw error
+  return data
+}
+
+// Estado do período agora: aberta, agendada (abre depois), fechada ou encerrada pela data
+export function estadoCampanha(c, agora = new Date()) {
+  const hoje = agora.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+  if (!c.aberta) return { k: 'fechada', t: 'fechada' }
+  if (c.fecha_em && c.fecha_em < hoje) return { k: 'encerrada', t: 'encerrada pela data' }
+  if (c.abre_em && new Date(c.abre_em) > agora) return { k: 'agendada', t: 'abre ' + new Date(c.abre_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) }
+  return { k: 'aberta', t: 'aberta para respostas' }
 }
 
 export function linkDaCampanha(c) {

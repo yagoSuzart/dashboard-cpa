@@ -201,3 +201,10 @@
 .cv-trilho i { display: block; height: 100%; border-radius: 99px; }
 .cv-espera { margin-top: 18px; }
 @media (max-width: 860px) { .cv-kpis { grid-template-columns: 1fr 1fr; } .cv-eixo { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+
+/* Topo: Alunos | Docentes e ADM */
+.hc-abas { display: flex; gap: 6px; margin: -6px 0 18px; background: #0b1430; border: 1px solid var(--pp-linha); border-radius: 99px; padding: 4px; width: fit-content; }
+.hc-abas button { border: 0; background: transparent; color: #cfd8ea; border-radius: 99px; padding: 8px 16px; font: 600 15px Poppins, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.hc-abas button[aria-selected='true'] { background: var(--pp-ink); color: #0a1430; }
+.pp-vivo h3 .cv-pulso { width: 8px; height: 8px; margin-right: 8px; vertical-align: middle; }
+.hc-mini { grid-template-columns: repeat(2, 1fr); }

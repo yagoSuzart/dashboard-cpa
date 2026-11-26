@@ -1,4 +1,4 @@
-// Página pública (sem login) da CPA para o corpo docente e o corpo técnico-administrativo.
+// Página pública (sem login) da CPA para os docentes e o administrativo.
 // Anônima: não pede nome, e-mail nem matrícula. O rascunho fica só no aparelho de quem responde.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ESCALAS_COLAB, NAO_SEI, PUBLICOS, TEXTO_COMENTARIO, blocosDo, campanhaPublica, comentarioDoBloco, enviarAvaliacao, instrumentoDe } from '../lib/colaboradores.js'
@@ -106,6 +106,8 @@ export default function AvaliarColaborador({ codigo }) {
     }
   }
 
+  // Fechada para o público: a Coordenação da CPA (logada) segue em modo teste; os demais veem quando abre
+  const testando = !!camp && !camp.aberta && !!camp.pode_testar && !previa
   const casca = (conteudo) => (
     <div className="avl" ref={topo}>
       <header className="av-top">
@@ -115,6 +117,7 @@ export default function AvaliarColaborador({ codigo }) {
           <span>A voz da comunidade acadêmica.</span>
         </div>
       </header>
+      {testando && <div className="av-teste" role="note">Modo teste da CPA: a avaliação ainda está fechada ao público. Suas respostas ficam gravadas; zere-as em “Link e período” antes de abrir.</div>}
       <main className="av-main">{conteudo}</main>
       <footer className="av-rodape">CPA UniFECAF · respostas anônimas, analisadas somente em conjunto.</footer>
     </div>
@@ -128,12 +131,21 @@ export default function AvaliarColaborador({ codigo }) {
         <p className="muted">Confira se o endereço está completo ou peça o link novamente à Comissão Própria de Avaliação.</p>
       </section>,
     )
-  if (!camp.aberta)
+  if (!camp.aberta && !testando)
     return casca(
       <section className="av-card">
         <span className="eyebrow">{camp.titulo}</span>
-        <h1>Esta avaliação está fechada.</h1>
-        <p className="muted">Obrigado pelo interesse. Quando um novo período for aberto, a CPA envia o link.</p>
+        {camp.abre_em && new Date(camp.abre_em) > new Date() ? (
+          <>
+            <h1>A avaliação abre {new Date(camp.abre_em).toLocaleString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}.</h1>
+            <p className="muted">Guarde este link: a partir desse horário é só voltar aqui e responder.</p>
+          </>
+        ) : (
+          <>
+            <h1>Esta avaliação está fechada.</h1>
+            <p className="muted">Obrigado pelo interesse. Quando um novo período for aberto, a CPA envia o link.</p>
+          </>
+        )}
       </section>,
     )
   if (enviado)
@@ -170,14 +182,15 @@ export default function AvaliarColaborador({ codigo }) {
           </div>
         </div>
         <div className="av-hero-form">
+          {testando && <div className="av-teste" role="note">Modo teste da CPA: fechada ao público. Suas respostas ficam gravadas; zere-as antes de abrir.</div>}
           <div className="av-hero-caixa">
-            <div className="eyebrow">Autoavaliação institucional</div>
+            <div className="eyebrow">Avaliação institucional</div>
             <h2>Para começar, você é:</h2>
             <p className="muted">É a única informação que pedimos. Cada grupo vê as perguntas que fazem sentido para o seu dia a dia.</p>
             <div className="av-publico" role="radiogroup" aria-label="Você é">
               {Object.entries(PUBLICOS).map(([k, p]) => (
                 <button key={k} type="button" role="radio" className="av-opcao" aria-checked={r.publico === k} aria-pressed={r.publico === k} onClick={() => setR((x) => ({ ...x, publico: k }))}>
-                  <b>{k === 'docente' ? 'Docente' : 'Técnico-administrativo'}</b>
+                  <b>{k === 'docente' ? 'Docente' : 'Administrativo'}</b>
                   <span className="small muted">{p.t}</span>
                 </button>
               ))}
