@@ -58,3 +58,21 @@
 @media (max-width: 640px) { .rp-linha { flex-direction: column; align-items: stretch; } .rp-num { width: auto; flex-direction: row; gap: 8px; align-items: baseline; text-align: left; } }
 .av-limpar { background: none; border: 0; padding: 0; color: var(--navy); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .av-alerta { color: #8a5a00; font-weight: 600; }
+
+/* Análise rica do CSV de Respostas */
+.rr { display: flex; flex-direction: column; gap: 14px; }
+.rr-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.rr-kpis div { background: #f6f8fb; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.rr-kpis b { font: 800 26px Poppins, sans-serif; color: var(--navy); }
+.rr-kpis span { font-size: 13px; color: var(--muted); }
+.rr-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.rr-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
+.rr-card h4 { font: 700 16px Poppins, sans-serif; margin: 0; }
+.rr-barras { display: flex; align-items: flex-end; gap: 3px; height: 150px; padding-top: 18px; }
+.rr-b { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+.rr-b i { display: block; width: 100%; border-radius: 4px 4px 0 0; min-height: 1px; }
+.rr-v { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.rr-r { font-size: 11px; color: var(--muted); height: 16px; white-space: nowrap; }
+.rr-ent { display: flex; flex-wrap: wrap; gap: 8px; }
+.rr-ent span { background: #f6f8fb; border-radius: 99px; padding: 4px 12px; font-size: 13px; }
+.rr .tabela th.n, .rr .tabela td.n { text-align: right; }

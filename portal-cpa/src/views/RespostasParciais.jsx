@@ -2,7 +2,8 @@
 // modelo de oferta. Vem do CSV "Respostas" do painel que a CPA publica (só contagens; sem alunos e sem comentários).
 // A supervisão global vê tudo; a coordenação vê as perguntas gerais e as do próprio curso (o banco já filtra).
 import { useEffect, useMemo, useState } from 'react'
-import { MODALIDADES_AO_VIVO, carregarRespostas, fmtNum } from '../lib/aoVivo.js'
+import { MODALIDADES_AO_VIVO, carregarRespostas, carregarResumoRespostas, fmtNum } from '../lib/aoVivo.js'
+import ResumoRespostas from '../components/ResumoRespostas.jsx'
 import { MODALIDADE_LABEL } from '../lib/config.js'
 import { Carregando, Vazio } from '../components/ui.jsx'
 import './aoVivo.css'
@@ -82,8 +83,10 @@ export default function RespostasParciais({ base }) {
   const [curso, setCurso] = useState('')
   const [ordem, setOrdem] = useState('questionario')
 
+  const [resumo, setResumo] = useState(null)
   useEffect(() => {
     let vivo = true
+    carregarResumoRespostas().then((x) => vivo && setResumo(x)).catch(() => {})
     carregarRespostas().then((x) => vivo && setDados(x)).catch((e) => vivo && setErro(e))
     return () => { vivo = false }
   }, [])
@@ -155,6 +158,12 @@ export default function RespostasParciais({ base }) {
         </div>
       </section>
 
+      {resumo && Object.keys(resumo).length > 0 && (
+        <section className="card" style={{ gap: 12 }}>
+          <div className="card-h"><div className="t"><h2>Panorama do arquivo</h2><p className="muted small">Funil de conclusão, dias e horários, semestre, curso e tempo de resposta, tirados do último CSV de Respostas publicado.</p></div></div>
+          <ResumoRespostas resumo={resumo} nomeCurso={(id) => { const c = base.cursos.find((x) => x.id === id); return c ? `${c.nome}` : id }} />
+        </section>
+      )}
       {!dados.perguntas.length ? (
         <Vazio>A CPA ainda não publicou as respostas deste ciclo. Em "Atualizar números da CPA", passo 4, suba o CSV de Respostas de cada modelo de oferta.</Vazio>
       ) : (

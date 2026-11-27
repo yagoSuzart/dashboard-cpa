@@ -6,6 +6,7 @@ import {
   MODALIDADES_AO_VIVO, carregarConfig, conferir, fmtNum, fmtPct, lerCsvRespondentes, lerCsvRespostas, mesclarEvolucao, montarDados, pct,
   publicarPanorama, publicarProfessores, publicarRespostas, salvarConfig, ultimaPublicacao,
 } from '../lib/aoVivo.js'
+import ResumoRespostas from '../components/ResumoRespostas.jsx'
 import './aoVivo.css'
 
 const SITUACAO = {
@@ -155,12 +156,13 @@ export default function AoVivoAdmin({ base }) {
         await publicarPanorama(ciclo, { ...ultima.dados, ...(g.elegiveis ? { geral: g } : {}), modalidades, ...(evolucao ? { evolucao } : {}) })
       }
       if (prof?.professores?.length) await publicarProfessores(ciclo, prof.professores)
-      if (prof?.perguntas?.length) await publicarRespostas(ciclo, prof)
+      const pr = prof?.perguntas?.length ? await publicarRespostas(ciclo, prof) : {}
       const u = await ultimaPublicacao()
       setUltima(u)
       const partes = [temCsv ? 'a página aberta já mostra os números novos' : 'a página aberta já mostra os números do passo 2 (o ranking dos cursos continua o da última publicação)']
       if (prof?.professores?.length) partes.push(`o ranking de ${prof.professores.length} professores foi atualizado para a coordenação`)
       if (prof?.perguntas?.length) partes.push(`as respostas pergunta por pergunta de ${prof.modalidades.map((k) => MODALIDADES_AO_VIVO.find((m) => m.k === k)?.t).join(', ')} estão em "Respostas parciais"`)
+      if (pr?.avisoResumo) partes.push('a análise detalhada do arquivo não foi gravada (' + pr.avisoResumo + ')')
       setAviso({ tipo: 'ok', texto: 'Publicado! ' + partes.join('; ') + '.' })
     } catch (e) {
       setAviso({ tipo: 'erro', texto: 'Não foi possível publicar: ' + (e.message || e) })
@@ -306,6 +308,12 @@ export default function AoVivoAdmin({ base }) {
             </table>
             <p className="small muted">Diferença costuma ser horário de exportação (um arquivo baixado antes do outro). Na publicação, os dois entram juntos e cada resposta conta uma vez.</p>
           </div>
+        )}
+        {prof?.resumo && Object.keys(prof.resumo).length > 0 && (
+          <details className="av-mod" open>
+            <summary><b>O que o arquivo mostra</b> · funil, dias e horários, semestre, curso, tempo de resposta (só agregados; vai junto na publicação)</summary>
+            <ResumoRespostas resumo={prof.resumo} nomeCurso={(id) => { const c = base.cursos.find((x) => x.id === id); return c ? c.nome : id }} />
+          </details>
         )}
         {prof?.repetidas > 0 && <p className="small muted">{fmtNum(prof.repetidas)} respostas repetidas (o mesmo aluno na mesma pergunta, em novas tentativas ou em mais de um arquivo) foram contadas uma vez só.</p>}
         {prof && Object.keys(prof.semCurso).length > 0 && (

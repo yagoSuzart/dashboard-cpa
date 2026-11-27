@@ -5,6 +5,7 @@ import Papa from 'papaparse'
 import { sb } from './dados.js'
 import { SUPABASE } from './config.js'
 import { cursoIdDaPlanilha, normalizar } from './cpa.js'
+import { acumular, fechar, novoAcumulador } from './respostasRicas.js'
 
 export const MODALIDADES_AO_VIVO = [
   // Cores validadas para o fundo escuro da página (faixa de luminosidade, contraste e daltonismo)
@@ -160,6 +161,7 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
   const vistas = new Set()
   const mods = new Set()
   let linhas = 0, repetidas = 0
+  const ricos = novoAcumulador()
   const total = lista.reduce((s, a) => s + (a.size || 0), 0) || 1
   let feito = 0
   // Resumo de cada arquivo (antes de tirar as repetições), para comparar o arquivo de cada modalidade com o geral
@@ -235,6 +237,12 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
               if (tipo !== 'textarea') { const v = String(Number(resp)); if (v !== 'NaN') q.dist[v] = (q.dist[v] || 0) + 1 }
             }
 
+            // Análise rica (funil, semestre, curso, horários, tempo de resposta): só agregados
+            acumular(ricos, {
+              l, mod, pesq, aluno, concluiu, resp, tipo: String(l.Tipo || '').trim() || 'rating_scale',
+              cursoDocente: /docente/i.test(pesq) && curso ? cursoId || curso : null,
+            })
+
             // Professores (só o questionário Docente, notas 1 a 5)
             if (!/docente/i.test(pesq)) continue
             const v = Number(resp)
@@ -261,6 +269,7 @@ export async function lerCsvRespostas(arquivos, cursos, onProgresso) {
   return {
     linhas,
     repetidas,
+    resumo: fechar(ricos, alunos, pesquisasDaMod),
     porArquivo: porArquivo.map((a) => ({ nome: a.nome, porMod: Object.fromEntries(Object.entries(a.porMod).map(([k, v]) => [k, { linhas: v.linhas, alunos: v.alunos.size }])) })),
     semCurso,
     modalidades: [...mods],
@@ -354,6 +363,25 @@ export async function publicarRespostas(ciclo, r) {
   }
   await envia('cpa_respostas_pesquisas', r.pesquisas)
   await envia('cpa_respostas_perguntas', r.perguntas)
+  // Análise rica do arquivo (uma linha por modelo de oferta)
+  // (se a tabela ainda não existir, o resto já foi publicado: avisa sem derrubar a publicação)
+  if (r.resumo) {
+    const { error: e1 } = await sb.from('cpa_respostas_resumo').delete().eq('ciclo', ciclo).in('modalidade', mods)
+    if (e1) return { avisoResumo: e1.message }
+    const linhasResumo = mods.filter((m) => r.resumo[m]).map((m) => ({ ciclo, modalidade: m, dados: r.resumo[m], publicado_em: agora }))
+    if (linhasResumo.length) {
+      const { error: e2 } = await sb.from('cpa_respostas_resumo').insert(linhasResumo)
+      if (e2) return { avisoResumo: e2.message }
+    }
+  }
+  return {}
+}
+
+export async function carregarResumoRespostas() {
+  const { data, error } = await sb.from('cpa_respostas_resumo').select('*').order('publicado_em', { ascending: false })
+  if (error) return {}
+  const ciclo = data?.[0]?.ciclo
+  return Object.fromEntries((data || []).filter((x) => x.ciclo === ciclo).map((x) => [x.modalidade, { ...x.dados, publicado_em: x.publicado_em }]))
 }
 
 export async function carregarRespostas() {
