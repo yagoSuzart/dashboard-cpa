@@ -208,3 +208,20 @@
 .hc-abas button[aria-selected='true'] { background: var(--pp-ink); color: #0a1430; }
 .pp-vivo h3 .cv-pulso { width: 8px; height: 8px; margin-right: 8px; vertical-align: middle; }
 .hc-mini { grid-template-columns: repeat(2, 1fr); }
+
+/* Participação (análise do CSV de Respostas) no tema escuro */
+.pp-rr .rr { margin-top: 22px; }
+.pp-rr .seg { background: #0b1430; border: 1px solid var(--pp-linha); border-radius: 99px; padding: 4px; display: inline-flex; gap: 4px; width: fit-content; }
+.pp-rr .seg button { border: 0; background: transparent; color: #cfd8ea; border-radius: 99px; padding: 8px 16px; font: 600 15px Poppins, sans-serif; cursor: pointer; }
+.pp-rr .seg button[aria-pressed='true'] { background: var(--pp-ink); color: #0a1430; }
+.pp-rr .rr-kpis div, .pp-rr .rr-ent span { background: var(--pp-card); border: 1px solid var(--pp-linha); }
+.pp-rr .rr-kpis b { color: var(--pp-lima); }
+.pp-rr .rr-kpis span, .pp-rr .small.muted, .pp-rr .rr-v, .pp-rr .rr-r { color: var(--pp-mut); }
+.pp-rr .rr-card { background: var(--pp-card); border-color: var(--pp-linha); }
+.pp-rr .rr-card h4 { color: var(--pp-ink); }
+.pp-rr .rr-b i { background: #3987e5 !important; }
+.pp-rr .rr-b i.dest { background: #f0a33a !important; }
+.pp-rr .tabela { color: var(--pp-ink); width: 100%; border-collapse: collapse; font-size: 15px; }
+.pp-rr .tabela th { color: var(--pp-mut); text-align: left; padding: 8px 10px; font-weight: 600; border-bottom: 1px solid var(--pp-linha); }
+.pp-rr .tabela td { padding: 8px 10px; border-bottom: 1px solid var(--pp-linha); }
+.pp-rr .rr-ent b { color: var(--pp-ink); }

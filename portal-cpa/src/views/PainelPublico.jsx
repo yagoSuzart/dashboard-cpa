@@ -2,7 +2,8 @@
 // modelo de oferta —, as notas gerais do ciclo anterior e os números dos planos de ação. Só agregados: comentários,
 // professores e planos detalhados ficam depois do login (botão "Área do coordenador · Entrar").
 import { useEffect, useMemo, useState } from 'react'
-import { MODALIDADES_AO_VIVO, carregarPublico, fmtNum, fmtPct, pct } from '../lib/aoVivo.js'
+import { MODALIDADES_AO_VIVO, carregarPublico, carregarResumoPublico, fmtNum, fmtPct, pct } from '../lib/aoVivo.js'
+import ResumoRespostas from '../components/ResumoRespostas.jsx'
 import { DIMENSOES, SATISFACAO } from '../lib/config.js'
 import GraficoEvolucao from '../components/GraficoEvolucao.jsx'
 import RespostasPublicas from '../components/RespostasPublicas.jsx'
@@ -24,6 +25,8 @@ export default function PainelPublico({ logado = false }) {
   const [aberto, setAberto] = useState({})
   const [topo, setTopo] = useState('alunos') // alunos | colab
   const colab = useColabAoVivo()
+  const [resumo, setResumo] = useState(null)
+  useEffect(() => { carregarResumoPublico().then(setResumo).catch(() => {}) }, [])
 
   useEffect(() => {
     let vivo = true
@@ -65,6 +68,7 @@ export default function PainelPublico({ logado = false }) {
             <a href="#ao-vivo" onClick={(e) => { e.preventDefault(); document.getElementById('ao-vivo')?.scrollIntoView({ behavior: 'smooth' }) }}>Ranking dos cursos</a>
             {av?.dados?.evolucao?.length > 0 && <a href="#evolucao" onClick={(e) => { e.preventDefault(); document.getElementById('evolucao')?.scrollIntoView({ behavior: 'smooth' }) }}>Evolução</a>}
             {d?.respostas?.perguntas?.length > 0 && <a href="#respostas" onClick={(e) => { e.preventDefault(); document.getElementById('respostas')?.scrollIntoView({ behavior: 'smooth' }) }}>O que os alunos dizem</a>}
+            {resumo && Object.keys(resumo).length > 0 && <a href="#participacao" onClick={(e) => { e.preventDefault(); document.getElementById('participacao')?.scrollIntoView({ behavior: 'smooth' }) }}>Participação</a>}
             <a href="#placar" onClick={(e) => { e.preventDefault(); document.getElementById('placar')?.scrollIntoView({ behavior: 'smooth' }) }}>Placar por modelo de oferta</a>
             {temHist && <a href="#historico" onClick={(e) => { e.preventDefault(); document.getElementById('historico')?.scrollIntoView({ behavior: 'smooth' }) }}>Resultados {hist.ciclo}</a>}
             <a href="#colaboradores" onClick={(e) => { e.preventDefault(); document.getElementById('colaboradores')?.scrollIntoView({ behavior: 'smooth' }) }}>Docentes e ADM <span className="cv-tag">ao vivo</span></a>
@@ -195,6 +199,16 @@ export default function PainelPublico({ logado = false }) {
                 <h2>Como os alunos estão avaliando a <span>UniFECAF</span>.</h2>
                 <p className="pp-sub">Cada pergunta da avaliação, com a distribuição das notas e a média, em cada modelo de oferta.</p>
                 <RespostasPublicas r={d.respostas} />
+              </div>
+            </section>
+          )}
+          {resumo && Object.keys(resumo).length > 0 && (
+            <section className="pp-s pp-rr" id="participacao">
+              <div className="pp-w">
+                <div className="pp-eb">Como os alunos estão participando · CPA {av.ciclo}</div>
+                <h2>Quem respondeu, <span>quando e como.</span></h2>
+                <p className="pp-sub">Funil de conclusão, dias e horários de resposta, semestre, curso e tempo para responder, tirados das respostas da CPA (só números somados).</p>
+                <ResumoRespostas resumo={resumo} nomeCurso={(id) => mods.PRESENCIAL?.cursos?.find((c) => c.id === id)?.nome || id.replace(/__.*/, '').replace(/_/g, ' ')} />
               </div>
             </section>
           )}

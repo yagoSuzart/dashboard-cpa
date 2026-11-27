@@ -2,6 +2,7 @@
 // horários, tempo para responder, abandono, comentários e turmas de entrada. Só agregados.
 import { useState } from 'react'
 import { MODALIDADES_AO_VIVO, fmtNum } from '../lib/aoVivo.js'
+import './resumoRespostas.css'
 
 const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 const pc = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0)
@@ -16,7 +17,7 @@ function Barras({ itens, rotulo, valor, cor = 'var(--navy)', destaque }) {
       {itens.map((it, i) => (
         <div key={i} className="rr-b" title={`${rotulo(it, i)}: ${fmtNum(valor(it))}`}>
           <span className="rr-v">{valor(it) ? fmtNum(valor(it)) : ''}</span>
-          <i style={{ height: (valor(it) / max) * 100 + '%', background: destaque?.(it, i) ? '#e0791b' : cor }} />
+          <i className={destaque?.(it, i) ? 'dest' : ''} style={{ height: (valor(it) / max) * 100 + '%', background: destaque?.(it, i) ? '#e0791b' : cor }} />
           <span className="rr-r">{rotulo(it, i)}</span>
         </div>
       ))}
@@ -33,6 +34,7 @@ export default function ResumoRespostas({ resumo, nomeCurso = (id) => id }) {
   const picoDia = r.por_dia.reduce((m, d) => (d.n > (m?.n || 0) ? d : m), null)
   const nComent = Object.values(r.comentarios || {}).reduce((s, n) => s + n, 0)
   const nAband = Object.values(r.abandono || {}).reduce((s, n) => s + n, 0)
+  const temMedia = (r.cursos || []).some((c) => c.media != null)
   const pesqs = [...new Set([...Object.keys(r.tempo_mediano || {}), ...Object.keys(r.comentarios || {}), ...Object.keys(r.abandono || {})])].sort()
 
   return (
@@ -107,18 +109,18 @@ export default function ResumoRespostas({ resumo, nomeCurso = (id) => id }) {
       {r.cursos?.length > 0 && (
         <section className="rr-card">
           <h4>Por curso</h4>
-          <p className="small muted">O curso de cada aluno vem das respostas dele no questionário Docente. Média de 1 a 5 de cada questionário.</p>
+          <p className="small muted">O curso de cada aluno vem das respostas dele no questionário Docente.{temMedia ? ' Média de 1 a 5 de cada questionário.' : ''}</p>
           <div className="rolagem">
             <table className="tabela">
-              <thead><tr><th>Curso</th><th className="n">Alunos</th><th className="n">Concluíram tudo</th><th className="n">Média geral</th>{Object.keys(r.cursos[0]?.medias || {}).length > 0 && [...new Set(r.cursos.flatMap((c) => Object.keys(c.medias)))].sort().map((p) => <th key={p} className="n">{p}</th>)}</tr></thead>
+              <thead><tr><th>Curso</th><th className="n">Alunos</th><th className="n">Concluíram tudo</th>{temMedia && <th className="n">Média geral</th>}{Object.keys(r.cursos[0]?.medias || {}).length > 0 && [...new Set(r.cursos.flatMap((c) => Object.keys(c.medias || {})))].sort().map((p) => <th key={p} className="n">{p}</th>)}</tr></thead>
               <tbody>
                 {r.cursos.map((c) => {
-                  const cols = [...new Set(r.cursos.flatMap((x) => Object.keys(x.medias)))].sort()
+                  const cols = [...new Set(r.cursos.flatMap((x) => Object.keys(x.medias || {})))].sort()
                   return (
                     <tr key={c.curso_id}>
                       <td>{nomeCurso(c.curso_id)}</td><td className="n">{fmtNum(c.alunos)}</td><td className="n">{pc(c.concluiram, c.alunos)}%</td>
-                      <td className="n" style={{ color: corNota(c.media), fontWeight: 700 }}>{nota(c.media)}</td>
-                      {cols.map((p) => <td key={p} className="n" style={{ color: corNota(c.medias[p]) }}>{nota(c.medias[p])}</td>)}
+                      {temMedia && <td className="n" style={{ color: corNota(c.media), fontWeight: 700 }}>{nota(c.media)}</td>}
+                      {cols.map((p) => <td key={p} className="n" style={{ color: corNota(c.medias?.[p]) }}>{nota(c.medias?.[p])}</td>)}
                     </tr>
                   )
                 })}

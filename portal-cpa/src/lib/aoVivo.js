@@ -377,6 +377,15 @@ export async function publicarRespostas(ciclo, r) {
   return {}
 }
 
+// Página aberta (sem login): o resumo sem as médias por curso
+export async function carregarResumoPublico() {
+  const r = await fetch(`${SUPABASE.url}/rest/v1/rpc/cpa_resumo_publico`, {
+    method: 'POST', headers: { apikey: SUPABASE.chave, 'Content-Type': 'application/json' }, body: '{}',
+  })
+  if (!r.ok) return {}
+  return r.json()
+}
+
 export async function carregarResumoRespostas() {
   const { data, error } = await sb.from('cpa_respostas_resumo').select('*').order('publicado_em', { ascending: false })
   if (error) return {}
